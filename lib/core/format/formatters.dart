@@ -1,0 +1,35 @@
+import 'package:intl/intl.dart';
+
+/// Ekranda gösterilen sayı, para ve saat biçimleri.
+///
+/// Tek yerde toplandı: "2 sa 12 dk" ile "2s 12d" ekrandan ekrana
+/// değişmesin.
+abstract final class Formatters {
+  static String money(double amount, String currency) {
+    final format = NumberFormat.currency(
+      locale: 'tr_TR',
+      symbol: _symbols[currency] ?? '$currency ',
+      decimalDigits: 0,
+    );
+    return format.format(amount);
+  }
+
+  static String duration(int minutes) {
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    if (h == 0) return '$m dk';
+    if (m == 0) return '$h sa';
+    return '$h sa $m dk';
+  }
+
+  /// Yerel duvar saatinden "09:55".
+  static String clock(DateTime wallClock) =>
+      '${_two(wallClock.hour)}:${_two(wallClock.minute)}';
+
+  /// "20 Kasım Cuma". `initializeDateFormatting('tr')` çağrılmış olmalı.
+  static String day(DateTime date) => DateFormat('d MMMM EEEE', 'tr').format(date);
+
+  static String _two(int n) => n.toString().padLeft(2, '0');
+
+  static const Map<String, String> _symbols = {'TRY': '₺', 'EUR': '€'};
+}

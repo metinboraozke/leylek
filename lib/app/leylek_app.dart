@@ -1,0 +1,48 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import '../core/theme/leylek_theme.dart';
+import '../features/places/domain/usecases/suggest_places.dart';
+import '../features/route_search/presentation/cubit/search_cubit.dart';
+import '../features/route_search/presentation/cubit/search_form_cubit.dart';
+import '../features/route_search/presentation/pages/search_page.dart';
+import 'dependencies.dart';
+
+class LeylekApp extends StatelessWidget {
+  const LeylekApp({required this.dependencies, this.today, super.key});
+
+  final AppDependencies dependencies;
+
+  /// Formun ilk tarihi için "bugün". Testte sabitlenir.
+  final DateTime? today;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = today ?? DateTime.now();
+    return RepositoryProvider<SuggestPlaces>.value(
+      value: dependencies.suggestPlaces,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            // Varsayılan tarih bir hafta sonrası: bugüne uçuş fiyatı
+            // verisi çoğu zaman yok, bir hafta sonrası daha anlamlı.
+            create: (_) => SearchFormCubit(
+              initialDate: DateTime(now.year, now.month, now.day + 7),
+            ),
+          ),
+          BlocProvider(create: (_) => SearchCubit(dependencies.searchRoutes)),
+        ],
+        child: MaterialApp(
+          title: 'Leylek',
+          debugShowCheckedModeBanner: false,
+          theme: LeylekTheme.light(),
+          locale: const Locale('tr'),
+          supportedLocales: const [Locale('tr'), Locale('en')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          home: const SearchPage(),
+        ),
+      ),
+    );
+  }
+}

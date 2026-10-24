@@ -1,0 +1,21 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+  language:
+    # JSON'dan gelen `dynamic` değerler sessizce tür değiştirmesin;
+    # her dönüşüm açıkça yazılsın (core/json/json_reader.dart).
+    strict-casts: true
+    strict-raw-types: true
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    prefer_final_locals: true
+    prefer_final_fields: true
+    always_declare_return_types: true
+    avoid_print: true
+    directives_ordering: true
+    sort_constructors_first: true
+    unawaited_futures: true

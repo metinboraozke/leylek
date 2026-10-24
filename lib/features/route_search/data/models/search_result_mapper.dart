@@ -1,0 +1,100 @@
+import '../../../../core/json/json_reader.dart';
+import '../../../../core/time/zoned_time.dart';
+import '../../domain/entities/money.dart';
+import '../../domain/entities/route_option.dart';
+import '../../domain/entities/search_result.dart';
+import 'api_codes.dart';
+
+/// `/v1/search` yanıtını domain varlıklarına çevirir.
+///
+/// Yanıt sözleşmesi backend planındaki örnekle aynı. Ayrı DTO sınıfları
+/// yazmak yerine doğrudan eşleme yapıyoruz: ara katman yalnızca aynı
+/// alanları bir kez daha kopyalardı. Biçim bozuksa [FormatException]
+/// fırlar ve depo bunu [UnexpectedFailure]'a çevirir.
+abstract final class SearchResultMapper {
+  static SearchResult fromJson(Json json) {
+    final currency = json.obj('query').str('currency');
+    final options = json
+        .objList('options')
+        .map((o) => _option(o, currency))
+        .toList()
+      ..sort((a, b) => a.rank.compareTo(b.rank));
+
+    return SearchResult(
+      options: List.unmodifiable(options),
+      warnings: json.strList('warnings').map(ApiCodes.warning).toList(growable: false),
+      attribution: json
+          .objList('attribution')
+          .map((a) => Attribution(name: a.str('name'), url: a.strOrNull('url')))
+          .toList(growable: false),
+      isSample: json.objOrNull('meta')?.boolean('sample') ?? false,
+    );
+  }
+
+  static RouteOption _option(Json o, String currency) {
+    final via = o.objOrNull('via');
+    final ground = o.objOrNull('ground');
+    return RouteOption(
+      rank: o.integer('rank'),
+      kind: ApiCodes.kind(o.str('kind')),
+      badges: o.strList('badges').map(ApiCodes.badge).whereType<RouteBadge>().toSet(),
+      reason: ApiCodes.reason(o.strOrNull('reason')),
+      flags: o.strList('flags').map(ApiCodes.flag).toSet(),
+      via: via == null ? null : _via(via),
+      flight: _flight(o.obj('flight'), currency),
+      ground: ground == null ? null : _ground(ground),
+      total: _total(o.obj('total'), currency),
+    );
+  }
+
+  static ViaAirport _via(Json v) => ViaAirport(
+        iata: v.str('iata'),
+        name: v.str('name'),
+        countryCode: v.str('country'),
+        distanceKm: v.integer('distanceKm'),
+      );
+
+  static Flight _flight(Json f, String currency) => Flight(
+        price: Money(f.number('price'), currency),
+        airline: f.str('airline'),
+        flightNumber: f.strOrNull('flightNumber'),
+        transfers: f.integer('transfers'),
+        departAt: ZonedTime.parse(f.str('departAt')),
+        arriveAt: ZonedTime.parse(f.str('arriveAt')),
+        priceSeenHoursAgo: f.integerOrNull('priceSeenHoursAgo'),
+        airportIata: f.strOrNull('airport'),
+      );
+
+  static GroundJourney _ground(Json g) {
+    final fare = g.obj('fare');
+    return GroundJourney(
+      departAt: ZonedTime.parse(g.str('departAt')),
+      arriveAt: ZonedTime.parse(g.str('arriveAt')),
+      durationMin: g.integer('durationMin'),
+      waitMin: g.integer('waitMin'),
+      transfers: g.integer('transfers'),
+      legs: g
+          .objList('legs')
+          .map((l) => GroundLeg(
+                mode: ApiCodes.mode(l.str('mode')),
+                from: l.str('from'),
+                to: l.str('to'),
+                line: l.strOrNull('line'),
+                operator: l.strOrNull('operator'),
+              ))
+          .toList(growable: false),
+      fare: Money(fare.number('amount'), fare.str('currency')),
+      fareSource: ApiCodes.fareSource(fare.str('source')),
+    );
+  }
+
+  static RouteTotal _total(Json t, String currency) {
+    final savings = t.numberOrNull('savings');
+    return RouteTotal(
+      price: Money(t.number('price'), currency),
+      doorToDoorMin: t.integer('doorToDoorMin'),
+      extraMin: t.integer('extraMin'),
+      savings: savings == null ? null : Money(savings, currency),
+    );
+  }
+}

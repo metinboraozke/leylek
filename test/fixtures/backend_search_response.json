@@ -1,0 +1,201 @@
+{
+  "query": {
+    "from": "İstanbul",
+    "to": "Salzburg",
+    "date": "2026-11-20",
+    "radiusKm": 250,
+    "currency": "TRY"
+  },
+  "recommendedRank": 1,
+  "options": [
+    {
+      "rank": 1,
+      "kind": "VIA",
+      "badges": [
+        "CHEAPEST",
+        "RECOMMENDED"
+      ],
+      "reason": "CHEAPEST",
+      "via": {
+        "iata": "MUC",
+        "name": "Münih",
+        "country": "DE",
+        "distanceKm": 112
+      },
+      "flight": {
+        "price": 5200,
+        "airline": "TK",
+        "flightNumber": "1",
+        "transfers": 0,
+        "departAt": "2026-11-20T08:05:00+03:00",
+        "arriveAt": "2026-11-20T08:55:00+01:00",
+        "priceSeenHoursAgo": 24
+      },
+      "ground": {
+        "departAt": "2026-11-20T10:36:00+01:00",
+        "arriveAt": "2026-11-20T12:48:00+01:00",
+        "durationMin": 132,
+        "waitMin": 101,
+        "transfers": 1,
+        "legs": [
+          {
+            "mode": "SUBURBAN",
+            "from": "MUC Flughafen",
+            "to": "Hbf",
+            "line": "S8",
+            "operator": "MVV"
+          },
+          {
+            "mode": "REGIONAL_RAIL",
+            "from": "Hbf",
+            "to": "Salzburg Hbf",
+            "line": "RE 5",
+            "operator": "BRB"
+          }
+        ],
+        "fare": {
+          "amount": 975,
+          "currency": "TRY",
+          "source": "estimated"
+        }
+      },
+      "total": {
+        "price": 6175,
+        "doorToDoorMin": 403,
+        "extraMin": 0,
+        "savings": 3625
+      },
+      "score": 178.03,
+      "flags": [
+        "SEPARATE_TICKETS",
+        "GROUND_FARE_ESTIMATED",
+        "TIGHT_CONNECTION"
+      ]
+    },
+    {
+      "rank": 2,
+      "kind": "VIA",
+      "badges": [
+        "FASTEST"
+      ],
+      "reason": null,
+      "via": {
+        "iata": "INN",
+        "name": "Innsbruck",
+        "country": "AT",
+        "distanceKm": 141
+      },
+      "flight": {
+        "price": 6080,
+        "airline": "TK",
+        "flightNumber": "1",
+        "transfers": 0,
+        "departAt": "2026-11-20T10:20:00+03:00",
+        "arriveAt": "2026-11-20T11:05:00+01:00",
+        "priceSeenHoursAgo": 24
+      },
+      "ground": {
+        "departAt": "2026-11-20T12:57:00+01:00",
+        "arriveAt": "2026-11-20T14:55:00+01:00",
+        "durationMin": 118,
+        "waitMin": 112,
+        "transfers": 1,
+        "legs": [
+          {
+            "mode": "SUBURBAN",
+            "from": "INN Flughafen",
+            "to": "Hbf",
+            "line": "S8",
+            "operator": "MVV"
+          },
+          {
+            "mode": "REGIONAL_RAIL",
+            "from": "Hbf",
+            "to": "Salzburg Hbf",
+            "line": "RE 5",
+            "operator": "BRB"
+          }
+        ],
+        "fare": {
+          "amount": 1440,
+          "currency": "TRY",
+          "source": "transitous"
+        }
+      },
+      "total": {
+        "price": 7520,
+        "doorToDoorMin": 395,
+        "extraMin": 0,
+        "savings": 2280
+      },
+      "score": 208,
+      "flags": [
+        "SEPARATE_TICKETS",
+        "TIGHT_CONNECTION"
+      ]
+    },
+    {
+      "rank": 3,
+      "kind": "DIRECT",
+      "badges": [],
+      "reason": null,
+      "flight": {
+        "airport": "SZG",
+        "price": 9800,
+        "airline": "TK",
+        "flightNumber": "1",
+        "transfers": 1,
+        "departAt": "2026-11-20T07:15:00+03:00",
+        "arriveAt": "2026-11-20T11:40:00+01:00",
+        "priceSeenHoursAgo": 24
+      },
+      "total": {
+        "price": 9800,
+        "doorToDoorMin": 430,
+        "extraMin": 0,
+        "savings": 0
+      },
+      "score": 245,
+      "flags": []
+    }
+  ],
+  "dropped": [
+    {
+      "iata": "FMM",
+      "reason": "NO_GROUND_CONNECTION"
+    },
+    {
+      "iata": "NUE",
+      "reason": "NO_GROUND_CONNECTION"
+    }
+  ],
+  "warnings": [
+    "PARTIAL_RESULTS"
+  ],
+  "attribution": [
+    {
+      "name": "Transitous",
+      "url": "https://transitous.org/sources/"
+    },
+    {
+      "name": "OpenStreetMap katkıcıları",
+      "url": "https://www.openstreetmap.org/copyright"
+    },
+    {
+      "name": "OurAirports",
+      "url": "https://ourairports.com/data/"
+    },
+    {
+      "name": "GeoNames",
+      "url": "https://www.geonames.org/"
+    },
+    {
+      "name": "Uçuş fiyatları: Aviasales verisi, son 48 saatte görülen",
+      "url": null
+    }
+  ],
+  "meta": {
+    "generatedAt": "2026-10-22T10:00:00.000Z",
+    "sample": false
+  }
+}
