@@ -61,7 +61,9 @@ abstract final class LeylekTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: LeylekColors.beak,
+          // Butonlar göğün koyu tonunda; gaga turuncusu yalnızca logo ve
+          // küçük vurgularda kalır.
+          backgroundColor: LeylekColors.skyDeep,
           foregroundColor: LeylekColors.feather,
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
