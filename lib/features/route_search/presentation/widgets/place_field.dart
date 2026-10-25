@@ -35,7 +35,9 @@ class PlaceField extends StatefulWidget {
 }
 
 class _PlaceFieldState extends State<PlaceField> {
-  late final TextEditingController _controller = TextEditingController(text: widget.value.text);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value.text,
+  );
   final FocusNode _focusNode = FocusNode();
 
   @override
@@ -75,18 +77,19 @@ class _PlaceFieldState extends State<PlaceField> {
       displayStringForOption: (place) => place.label,
       optionsBuilder: _suggest,
       onSelected: widget.onSelected,
-      fieldViewBuilder: (context, controller, focusNode, onSubmitted) => TextField(
-        controller: controller,
-        focusNode: focusNode,
-        onChanged: widget.onTyped,
-        onSubmitted: (_) => onSubmitted(),
-        textInputAction: TextInputAction.next,
-        decoration: InputDecoration(
-          labelText: widget.label,
-          prefixIcon: Icon(widget.icon),
-          errorText: widget.errorText,
-        ),
-      ),
+      fieldViewBuilder: (context, controller, focusNode, onSubmitted) =>
+          TextField(
+            controller: controller,
+            focusNode: focusNode,
+            onChanged: widget.onTyped,
+            onSubmitted: (_) => onSubmitted(),
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(
+              labelText: widget.label,
+              prefixIcon: Icon(widget.icon),
+              errorText: widget.errorText,
+            ),
+          ),
       optionsViewBuilder: (context, onSelected, options) => _Options(
         options: options.toList(growable: false),
         onSelected: onSelected,

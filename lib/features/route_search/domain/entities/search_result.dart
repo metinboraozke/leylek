@@ -21,6 +21,8 @@ class SearchResult extends Equatable {
     required this.options,
     required this.warnings,
     required this.attribution,
+    this.fromName = '',
+    this.toName = '',
     this.isSample = false,
   });
 
@@ -28,6 +30,10 @@ class SearchResult extends Equatable {
   final List<RouteOption> options;
   final List<SearchWarning> warnings;
   final List<Attribution> attribution;
+
+  /// Sunucunun çözdüğü yer adları, ör. "İstanbul", "Salzburg".
+  final String fromName;
+  final String toName;
 
   /// Backend bağlı değilken gösterilen örnek veri mi.
   final bool isSample;
@@ -40,5 +46,12 @@ class SearchResult extends Equatable {
   }
 
   @override
-  List<Object?> get props => [options, warnings, attribution, isSample];
+  List<Object?> get props => [
+    options,
+    warnings,
+    attribution,
+    fromName,
+    toName,
+    isSample,
+  ];
 }

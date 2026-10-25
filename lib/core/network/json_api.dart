@@ -35,22 +35,26 @@ class NetworkException implements Exception {
 
 class DioJsonApi implements JsonApi {
   DioJsonApi({required String baseUrl, Dio? dio})
-      : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: baseUrl,
-                // Backend'in kendi üst süresi 25 sn; biraz pay bırakıyoruz.
-                connectTimeout: const Duration(seconds: 10),
-                receiveTimeout: const Duration(seconds: 30),
-                responseType: ResponseType.json,
-                headers: {'Accept': 'application/json'},
-              ),
-            );
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              baseUrl: baseUrl,
+              // Backend'in kendi üst süresi 25 sn; biraz pay bırakıyoruz.
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 30),
+              responseType: ResponseType.json,
+              headers: {'Accept': 'application/json'},
+            ),
+          );
 
   final Dio _dio;
 
   @override
-  Future<Json> getJson(String path, {Map<String, Object?> query = const {}}) async {
+  Future<Json> getJson(
+    String path, {
+    Map<String, Object?> query = const {},
+  }) async {
     try {
       final response = await _dio.get<Object?>(
         path,

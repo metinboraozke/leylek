@@ -36,5 +36,12 @@ class SearchQuery extends Equatable {
       '${date.day.toString().padLeft(2, '0')}';
 
   @override
-  List<Object?> get props => [from, to, isoDate, radiusKm, maxGroundHours, currency];
+  List<Object?> get props => [
+    from,
+    to,
+    isoDate,
+    radiusKm,
+    maxGroundHours,
+    currency,
+  ];
 }

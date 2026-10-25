@@ -12,6 +12,7 @@ class RouteSearchRepositoryImpl implements RouteSearchRepository {
   final RouteSearchDataSource _source;
 
   @override
-  Future<Result<SearchResult>> search(SearchQuery query) =>
-      guard(() async => SearchResultMapper.fromJson(await _source.search(query)));
+  Future<Result<SearchResult>> search(SearchQuery query) => guard(
+    () async => SearchResultMapper.fromJson(await _source.search(query)),
+  );
 }

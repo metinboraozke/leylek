@@ -40,6 +40,8 @@ dependencies:
   intl: ^0.20.2
   flutter_localizations:
     sdk: flutter
+  lottie: ^3.6.1
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +66,28 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    # Leylek uçuş animasyonu (LottieFiles, "Stork with baby").
+    # Kendi lisansına tabi; depo herkese açılmadan önce kontrol edilecek.
+    - assets/lottie/
+    # Kara şekilleri: Natural Earth (kamu malı), sadeleştirilmiş.
+    - assets/geo/
+
+  # Plus Jakarta Sans (SIL Open Font License 1.1, assets/fonts/OFL.txt).
+  # Uygulamaya gömülü: yazı tipi ağdan indirilmez.
+  fonts:
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-Regular.ttf
+        - asset: assets/fonts/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
 
   # To add assets to your application, add an assets section, like this:
   # assets:

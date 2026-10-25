@@ -18,7 +18,8 @@ sealed class Failure extends Equatable {
 /// Bağlantı yok ya da istek zaman aşımına uğradı. Yeniden denemek mantıklı.
 final class NetworkFailure extends Failure {
   const NetworkFailure([
-    super.message = 'Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.',
+    super.message =
+        'Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.',
   ]);
 }
 

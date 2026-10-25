@@ -36,20 +36,19 @@ class SearchFormState extends Equatable {
     PlaceInput? to,
     DateTime? date,
     int? radiusKm,
-  }) =>
-      SearchFormState(
-        from: from ?? this.from,
-        to: to ?? this.to,
-        date: date ?? this.date,
-        radiusKm: radiusKm ?? this.radiusKm,
-      );
+  }) => SearchFormState(
+    from: from ?? this.from,
+    to: to ?? this.to,
+    date: date ?? this.date,
+    radiusKm: radiusKm ?? this.radiusKm,
+  );
 
   SearchQuery toQuery() => SearchQuery(
-        from: from.value,
-        to: to.value,
-        date: date,
-        radiusKm: radiusKm,
-      );
+    from: from.value,
+    to: to.value,
+    date: date,
+    radiusKm: radiusKm,
+  );
 
   @override
   List<Object?> get props => [from, to, date, radiusKm];
@@ -58,24 +57,33 @@ class SearchFormState extends Equatable {
 /// Arama formunun durumu. Arama yapmaz; yalnızca formu tutar (SRP).
 class SearchFormCubit extends Cubit<SearchFormState> {
   SearchFormCubit({required DateTime initialDate, SearchFormState? initial})
-      : super(initial ?? SearchFormState(date: initialDate));
+    : super(initial ?? SearchFormState(date: initialDate));
 
   /// Kullanıcı elle yazınca önceki seçim geçersiz olur.
-  void typeFrom(String text) => emit(state.copyWith(from: PlaceInput(text: text)));
+  void typeFrom(String text) =>
+      emit(state.copyWith(from: PlaceInput(text: text)));
 
   void typeTo(String text) => emit(state.copyWith(to: PlaceInput(text: text)));
 
-  void selectFrom(Place place) =>
-      emit(state.copyWith(from: PlaceInput(text: place.label, place: place)));
+  void selectFrom(Place place) => emit(
+    state.copyWith(
+      from: PlaceInput(text: place.label, place: place),
+    ),
+  );
 
-  void selectTo(Place place) =>
-      emit(state.copyWith(to: PlaceInput(text: place.label, place: place)));
+  void selectTo(Place place) => emit(
+    state.copyWith(
+      to: PlaceInput(text: place.label, place: place),
+    ),
+  );
 
   void swap() => emit(state.copyWith(from: state.to, to: state.from));
 
   void setDate(DateTime date) => emit(state.copyWith(date: date));
 
-  void setRadius(int km) => emit(state.copyWith(
-        radiusKm: km.clamp(SearchQuery.minRadiusKm, SearchQuery.maxRadiusKm),
-      ));
+  void setRadius(int km) => emit(
+    state.copyWith(
+      radiusKm: km.clamp(SearchQuery.minRadiusKm, SearchQuery.maxRadiusKm),
+    ),
+  );
 }

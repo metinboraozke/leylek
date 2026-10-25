@@ -11,7 +11,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
 
   @override
   Future<Result<List<Place>>> suggest(String query) => guard(() async {
-        final dtos = await _source.suggest(query);
-        return dtos.map((dto) => dto.toEntity()).toList(growable: false);
-      });
+    final dtos = await _source.suggest(query);
+    return dtos.map((dto) => dto.toEntity()).toList(growable: false);
+  });
 }

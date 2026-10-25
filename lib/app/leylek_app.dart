@@ -6,16 +6,25 @@ import '../core/theme/leylek_theme.dart';
 import '../features/places/domain/usecases/suggest_places.dart';
 import '../features/route_search/presentation/cubit/search_cubit.dart';
 import '../features/route_search/presentation/cubit/search_form_cubit.dart';
+import '../features/route_search/presentation/motion.dart';
 import '../features/route_search/presentation/pages/search_page.dart';
 import 'dependencies.dart';
 
 class LeylekApp extends StatelessWidget {
-  const LeylekApp({required this.dependencies, this.today, super.key});
+  const LeylekApp({
+    required this.dependencies,
+    this.today,
+    this.timing,
+    super.key,
+  });
 
   final AppDependencies dependencies;
 
   /// Formun ilk tarihi için "bugün". Testte sabitlenir.
   final DateTime? today;
+
+  /// Animasyon süreleri; verilmezse standart (ya da "hareketi azalt").
+  final SearchTiming? timing;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +49,9 @@ class LeylekApp extends StatelessWidget {
           locale: const Locale('tr'),
           supportedLocales: const [Locale('tr'), Locale('en')],
           localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          home: const SearchPage(),
+          home: timing == null
+              ? const SearchPage()
+              : SearchMotion(timing: timing!, child: const SearchPage()),
         ),
       ),
     );

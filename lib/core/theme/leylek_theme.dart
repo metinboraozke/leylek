@@ -23,6 +23,8 @@ abstract final class LeylekTheme {
 
     return ThemeData(
       useMaterial3: true,
+      // Modern, geometrik ve Türkçe karakterleri tam destekleyen gömülü yazı tipi.
+      fontFamily: 'PlusJakartaSans',
       colorScheme: scheme,
       scaffoldBackgroundColor: LeylekColors.mist,
       appBarTheme: const AppBarTheme(
@@ -62,7 +64,9 @@ abstract final class LeylekTheme {
           backgroundColor: LeylekColors.beak,
           foregroundColor: LeylekColors.feather,
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),

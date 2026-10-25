@@ -13,13 +13,16 @@ class ApiRouteSearchDataSource implements RouteSearchDataSource {
   final JsonApi _api;
 
   @override
-  Future<Json> search(SearchQuery query) => _api.getJson('/v1/search', query: {
-        'from': query.from,
-        'to': query.to,
-        'date': query.isoDate,
-        'radiusKm': query.radiusKm,
-        'maxGroundHours': query.maxGroundHours,
-        'currency': query.currency,
-        'lang': 'tr',
-      });
+  Future<Json> search(SearchQuery query) => _api.getJson(
+    '/v1/search',
+    query: {
+      'from': query.from,
+      'to': query.to,
+      'date': query.isoDate,
+      'radiusKm': query.radiusKm,
+      'maxGroundHours': query.maxGroundHours,
+      'currency': query.currency,
+      'lang': 'tr',
+    },
+  );
 }

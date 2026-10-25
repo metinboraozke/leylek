@@ -21,7 +21,7 @@ describe('/search hattı uçtan uca (dış servisler sahte)', () => {
     const res = await service(new FakeFlights(salzburgFlights()), ground).search(query);
 
     expect(res.options.length).toBeGreaterThanOrEqual(3);
-    expect(res.options.length).toBeLessThanOrEqual(5);
+    expect(res.options.length).toBeLessThanOrEqual(4);
     const prices = res.options.map((o) => o.total.price);
     expect(prices).toEqual([...prices].sort((a, b) => a - b));
     expect(res.options.some((o) => o.kind === 'DIRECT')).toBe(true);
@@ -50,6 +50,11 @@ describe('/search hattı uçtan uca (dış servisler sahte)', () => {
     expect(via.ground!.legs.map((l) => l.line)).toEqual(['S8', 'RE 5']);
     expect(via.ground!.fare.currency).toBe('TRY');
     expect(via.flags).toContain('SEPARATE_TICKETS');
+    // Rezervasyon: havayolunun sitesi + adresi bilinen işletmeci; ortaklık bağlantısı yok
+    expect(via.booking).toEqual([
+      { kind: 'FLIGHT', provider: 'Turkish Airlines', url: 'https://www.turkishairlines.com', lines: ['TK 1'] },
+      { kind: 'GROUND', provider: 'MVV', url: 'https://www.mvv-muenchen.de/', lines: ['S8'] },
+    ]);
     // İniş 07:55Z + 90 dk = 09:25Z → 09:30Z kovası; sahte yolculuk 6 dk sonra
     expect(via.ground!.departAt).toBe('2026-11-20T10:36:00+01:00');
     expect(via.ground!.waitMin).toBe(101);

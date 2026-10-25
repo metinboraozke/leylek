@@ -20,14 +20,13 @@ void main() {
     DateTime? date,
     int radiusKm = 250,
     double maxGroundHours = 5,
-  }) =>
-      SearchQuery(
-        from: from,
-        to: to,
-        date: date ?? DateTime(2026, 11, 20),
-        radiusKm: radiusKm,
-        maxGroundHours: maxGroundHours,
-      );
+  }) => SearchQuery(
+    from: from,
+    to: to,
+    date: date ?? DateTime(2026, 11, 20),
+    radiusKm: radiusKm,
+    maxGroundHours: maxGroundHours,
+  );
 
   setUpAll(() => registerFallbackValue(query()));
 
@@ -35,7 +34,8 @@ void main() {
     repo = _MockRepo();
     searchRoutes = SearchRoutes(repo, clock: () => today);
     when(() => repo.search(any())).thenAnswer(
-      (_) async => const Ok(SearchResult(options: [], warnings: [], attribution: [])),
+      (_) async =>
+          const Ok(SearchResult(options: [], warnings: [], attribution: [])),
     );
   });
 
@@ -58,26 +58,40 @@ void main() {
     expect(await invalidField(query(to: '')), ValidationField.to);
   });
 
-  test('aynı kalkış ve varışı büyük-küçük harf ve aksandan bağımsız reddeder', () async {
-    expect(await invalidField(query(from: 'Münih', to: 'MUNIH')), ValidationField.to);
-  });
+  test(
+    'aynı kalkış ve varışı büyük-küçük harf ve aksandan bağımsız reddeder',
+    () async {
+      expect(
+        await invalidField(query(from: 'Münih', to: 'MUNIH')),
+        ValidationField.to,
+      );
+    },
+  );
 
   test('bugünü kabul eder, dünü reddeder', () async {
     expect(await invalidField(query(date: DateTime(2026, 10, 22))), isNull);
-    expect(await invalidField(query(date: DateTime(2026, 10, 21))), ValidationField.date);
+    expect(
+      await invalidField(query(date: DateTime(2026, 10, 21))),
+      ValidationField.date,
+    );
   });
 
   test('330 günden ilerisini reddeder', () async {
     final limit = DateTime(2026, 10, 22).add(const Duration(days: 330));
     expect(await invalidField(query(date: limit)), isNull);
-    expect(await invalidField(query(date: limit.add(const Duration(days: 1)))),
-        ValidationField.date);
+    expect(
+      await invalidField(query(date: limit.add(const Duration(days: 1)))),
+      ValidationField.date,
+    );
   });
 
   test('yarıçap ve kara süresi sınırlarını uygular', () async {
     expect(await invalidField(query(radiusKm: 49)), ValidationField.radius);
     expect(await invalidField(query(radiusKm: 401)), ValidationField.radius);
-    expect(await invalidField(query(maxGroundHours: 0.5)), ValidationField.maxGroundHours);
+    expect(
+      await invalidField(query(maxGroundHours: 0.5)),
+      ValidationField.maxGroundHours,
+    );
   });
 
   test('geçersiz sorguda depoya hiç gitmez', () async {

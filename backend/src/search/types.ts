@@ -30,7 +30,8 @@ export const PARAMS = {
   /** Saat başı zaman değeri (EUR). */
   vot: 12,
   minCards: 3,
-  maxCards: 5,
+  /** Sonuç ekranı en fazla 4 slayt gösterir. */
+  maxCards: 4,
   /** Doğrudan uçuşta havalimanından şehre ulaşım tahmini. */
   directGroundMin: 45,
   tightConnectionMin: 120,

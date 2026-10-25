@@ -70,6 +70,7 @@ interface RawLeg {
   displayName?: string;
   tripShortName?: string;
   agencyName?: string;
+  agencyUrl?: string;
   fareTransferIndex?: number;
 }
 
@@ -104,6 +105,7 @@ export function mapItinerary(raw: RawItinerary): GroundItinerary | null {
       endMs: e,
       line: leg.routeShortName || leg.displayName || leg.tripShortName || null,
       operator: leg.agencyName || null,
+      operatorUrl: leg.agencyUrl || null,
       priced: typeof leg.fareTransferIndex === 'number',
     });
   }

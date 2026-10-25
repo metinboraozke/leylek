@@ -11,13 +11,18 @@ import 'package:leylek/features/route_search/domain/entities/route_option.dart';
 /// biçimi değişirse bu dosya yeniden üretilmeli ve bu test geçmeli.
 void main() {
   test('backend yanıtı uygulamada hatasız okunur', () {
-    final raw = File('test/fixtures/backend_search_response.json').readAsStringSync();
+    final raw = File(
+      'test/fixtures/backend_search_response.json',
+    ).readAsStringSync();
     final result = SearchResultMapper.fromJson(jsonDecode(raw) as Json);
 
     expect(result.options.length, greaterThanOrEqualTo(3));
     expect(result.isSample, isFalse);
     expect(result.recommended, isNotNull);
-    expect(result.options.where((o) => o.kind == RouteKind.direct), hasLength(1));
+    expect(
+      result.options.where((o) => o.kind == RouteKind.direct),
+      hasLength(1),
+    );
     final prices = result.options.map((o) => o.total.price.amount).toList();
     expect(prices, [...prices]..sort());
     final via = result.options.firstWhere((o) => o.kind == RouteKind.via);

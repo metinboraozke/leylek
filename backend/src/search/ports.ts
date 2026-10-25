@@ -58,6 +58,8 @@ export interface GroundLegData {
   endMs: number;
   line: string | null;
   operator: string | null;
+  /** İşletmecinin sitesi (Transitous `agencyUrl`); rezervasyon kartı için. */
+  operatorUrl: string | null;
   /** Bu bacağın fiyatı bir ücret grubunda var mı. */
   priced: boolean;
 }

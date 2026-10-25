@@ -100,7 +100,7 @@ export function scoreCards(cards: Card[], directDoorToDoorMin: number | null): v
 /**
  * 06 · Kartları seç, fiyata göre sırala, rozetleri ver.
  *
- *   • En fazla 5 kart: puanı en iyi olanlar, doğrudan uçuş her zaman içeride.
+ *   • En fazla 4 kart: puanı en iyi olanlar, doğrudan uçuş her zaman içeride.
  *   • Sıra: toplam fiyata göre artan; eşitlikte kısa süren önde.
  *   • CHEAPEST ilk karta, FASTEST en kısa süreliye, RECOMMENDED puanı en
  *     iyi olana. Kara bacağı doğrulanmamış kart önerilen olamaz.

@@ -18,7 +18,9 @@ void main() {
   });
 
   test('örnek kaynak yerel ve İngilizce adla bulur', () async {
-    final suggest = SuggestPlaces(PlacesRepositoryImpl(const SamplePlacesDataSource()));
+    final suggest = SuggestPlaces(
+      PlacesRepositoryImpl(const SamplePlacesDataSource()),
+    );
 
     final byTurkish = await suggest('münih');
     expect((byTurkish as Ok<List<Place>>).value.single.iata, 'MUC');

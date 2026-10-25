@@ -14,7 +14,10 @@ class ApiPlacesDataSource implements PlacesDataSource {
 
   @override
   Future<List<PlaceDto>> suggest(String query) async {
-    final json = await _api.getJson('/v1/places', query: {'q': query, 'lang': 'tr'});
+    final json = await _api.getJson(
+      '/v1/places',
+      query: {'q': query, 'lang': 'tr'},
+    );
     final places = json['places'];
     if (places is! List) throw const FormatException('"places" listesi yok');
     return [

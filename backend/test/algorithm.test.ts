@@ -197,7 +197,7 @@ describe('06 · puan, sıra ve rozetler', () => {
     expect(rankCards(scenario(), null)[0]!.savingsEur).toBeNull();
   });
 
-  it('5 karttan fazlası puanla kırpılır, doğrudan uçuş her zaman kalır', () => {
+  it('4 karttan fazlası puanla kırpılır, doğrudan uçuş her zaman kalır', () => {
     const cards = scenario();
     const extra = ['FMM', 'NUE', 'VIE'].map((iata) => {
       const c = cand(iata, 100, '2026-11-20T08:00:00+03:00');
@@ -206,7 +206,7 @@ describe('06 · puan, sıra ve rozetler', () => {
     const all = [...cards, ...extra];
     for (const c of all) c.score = c.kind === 'DIRECT' ? 9999 : c.totalEur;
     const ranked = rankCards(all, 245);
-    expect(ranked).toHaveLength(5);
+    expect(ranked).toHaveLength(4);
     expect(ranked.some((c) => c.kind === 'DIRECT')).toBe(true);
   });
 
@@ -226,5 +226,31 @@ describe('06 · puan, sıra ve rozetler', () => {
     const late = quote('MUC', 110, '2026-11-20T09:30:00+03:00', 170);
     expect(alternateFlightCard(base, early, 90)?.totalEur).toBe(182);
     expect(alternateFlightCard(base, late, 90)).toBeNull();
+  });
+});
+
+describe('rezervasyon bağlantıları', async () => {
+  const { flightLink, groundLinks, safeHttps } = await import('../src/search/booking.js');
+  const { directCard } = await import('../src/search/rank.js');
+
+  it('tanınmayan havayolunda Google Flights araması, ortaklık işareti yok', () => {
+    const q = { ...quote('MUC', 130, '2026-11-20T08:05:00+03:00', 170), airline: 'ZZ', flightNumber: '9' };
+    const link = flightLink(directCard(q, ap('MUC'), 0), '2026-11-20');
+    expect(link.provider).toBe('Google Flights');
+    const url = new URL(link.url);
+    expect(url.hostname).toBe('www.google.com');
+    expect(url.searchParams.get('q')).toBe('Flights from IST to MUC on 2026-11-20 one way');
+    expect(link.url).not.toMatch(/marker|aviasales|travelpayouts/);
+  });
+
+  it('işletmeciye göre toplar, adresi olmayanı atlar, yalnızca https', () => {
+    const leg = (operator: string | null, operatorUrl: string | null, line: string) => ({
+      mode: 'RAIL', fromName: '', toName: '', from: { lat: 0, lon: 0 }, to: { lat: 0, lon: 0 }, startMs: 0, endMs: 0,
+      line, operator, operatorUrl, priced: false,
+    });
+    const links = groundLinks([leg('ÖBB', 'http://www.oebb.at', 'RJX 69'), leg('ÖBB', 'http://www.oebb.at', 'REX 1'), leg('Stadtbus', null, '170')]);
+    expect(links).toEqual([{ kind: 'GROUND', provider: 'ÖBB', url: 'https://www.oebb.at/', lines: ['RJX 69', 'REX 1'] }]);
+    expect(safeHttps('javascript:alert(1)')).toBeNull();
+    expect(safeHttps('www.flixbus.de')).toBe('https://www.flixbus.de/');
   });
 });

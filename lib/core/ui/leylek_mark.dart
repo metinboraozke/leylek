@@ -14,9 +14,9 @@ class LeylekMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        label: 'Leylek logosu',
-        child: CustomPaint(size: Size.square(size), painter: _MarkPainter()),
-      );
+    label: 'Leylek logosu',
+    child: CustomPaint(size: Size.square(size), painter: _MarkPainter()),
+  );
 }
 
 class _MarkPainter extends CustomPainter {
@@ -25,7 +25,10 @@ class _MarkPainter extends CustomPainter {
     canvas.scale(size.width / 72);
 
     canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(0, 0, 72, 72), const Radius.circular(18)),
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(0, 0, 72, 72),
+        const Radius.circular(18),
+      ),
       Paint()..color = LeylekColors.sky,
     );
 
@@ -46,7 +49,11 @@ class _MarkPainter extends CustomPainter {
       ..lineTo(35, 28)
       ..close();
     canvas.drawPath(beak, Paint()..color = LeylekColors.beak);
-    canvas.drawCircle(const Offset(29, 23), 2, Paint()..color = LeylekColors.wingtip);
+    canvas.drawCircle(
+      const Offset(29, 23),
+      2,
+      Paint()..color = LeylekColors.wingtip,
+    );
 
     final dash = Paint()
       ..color = LeylekColors.beak

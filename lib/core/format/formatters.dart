@@ -27,7 +27,12 @@ abstract final class Formatters {
       '${_two(wallClock.hour)}:${_two(wallClock.minute)}';
 
   /// "20 Kasım Cuma". `initializeDateFormatting('tr')` çağrılmış olmalı.
-  static String day(DateTime date) => DateFormat('d MMMM EEEE', 'tr').format(date);
+  static String day(DateTime date) =>
+      DateFormat('d MMMM EEEE', 'tr').format(date);
+
+  /// Biniş kartındaki kısa tarih: "20 Kas Cum".
+  static String shortDay(DateTime date) =>
+      DateFormat('d MMM EEE', 'tr').format(date);
 
   static String _two(int n) => n.toString().padLeft(2, '0');
 

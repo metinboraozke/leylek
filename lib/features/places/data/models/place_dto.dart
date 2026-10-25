@@ -13,13 +13,13 @@ class PlaceDto {
   });
 
   factory PlaceDto.fromJson(Json json) => PlaceDto(
-        id: json.str('id'),
-        name: json.str('name'),
-        countryCode: json.str('countryCode'),
-        countryName: json.str('countryName'),
-        kind: json.str('kind'),
-        iata: json.strOrNull('iata'),
-      );
+    id: json.str('id'),
+    name: json.str('name'),
+    countryCode: json.str('countryCode'),
+    countryName: json.str('countryName'),
+    kind: json.str('kind'),
+    iata: json.strOrNull('iata'),
+  );
 
   final String id;
   final String name;
@@ -29,11 +29,11 @@ class PlaceDto {
   final String? iata;
 
   Place toEntity() => Place(
-        id: id,
-        name: name,
-        countryCode: countryCode,
-        countryName: countryName,
-        kind: kind == 'AIRPORT' ? PlaceKind.airport : PlaceKind.city,
-        iata: iata,
-      );
+    id: id,
+    name: name,
+    countryCode: countryCode,
+    countryName: countryName,
+    kind: kind == 'AIRPORT' ? PlaceKind.airport : PlaceKind.city,
+    iata: iata,
+  );
 }

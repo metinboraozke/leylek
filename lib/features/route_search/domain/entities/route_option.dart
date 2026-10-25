@@ -73,6 +73,8 @@ class Flight extends Equatable {
     this.priceSeenHoursAgo,
     this.flightNumber,
     this.airportIata,
+    this.fromIata,
+    this.toIata,
   });
 
   final Money price;
@@ -91,19 +93,25 @@ class Flight extends Equatable {
   /// Doğrudan uçuş kartında iniş havalimanı.
   final String? airportIata;
 
+  /// Kalkış ve iniş havalimanı kodları, ör. IST → MUC.
+  final String? fromIata;
+  final String? toIata;
+
   Duration get duration => arriveAt.difference(departAt);
 
   @override
   List<Object?> get props => [
-        price,
-        airline,
-        flightNumber,
-        transfers,
-        departAt,
-        arriveAt,
-        priceSeenHoursAgo,
-        airportIata,
-      ];
+    price,
+    airline,
+    flightNumber,
+    transfers,
+    departAt,
+    arriveAt,
+    priceSeenHoursAgo,
+    airportIata,
+    fromIata,
+    toIata,
+  ];
 }
 
 class GroundLeg extends Equatable {
@@ -113,6 +121,8 @@ class GroundLeg extends Equatable {
     required this.to,
     this.line,
     this.operator,
+    this.departAt,
+    this.arriveAt,
   });
 
   final TransitMode mode;
@@ -122,9 +132,19 @@ class GroundLeg extends Equatable {
   /// Hat adı, ör. `S8`, `RE 5`.
   final String? line;
   final String? operator;
+  final ZonedTime? departAt;
+  final ZonedTime? arriveAt;
 
   @override
-  List<Object?> get props => [mode, from, to, line, operator];
+  List<Object?> get props => [
+    mode,
+    from,
+    to,
+    line,
+    operator,
+    departAt,
+    arriveAt,
+  ];
 }
 
 class GroundJourney extends Equatable {
@@ -151,8 +171,16 @@ class GroundJourney extends Equatable {
   final FareSource fareSource;
 
   @override
-  List<Object?> get props =>
-      [departAt, arriveAt, durationMin, waitMin, transfers, legs, fare, fareSource];
+  List<Object?> get props => [
+    departAt,
+    arriveAt,
+    durationMin,
+    waitMin,
+    transfers,
+    legs,
+    fare,
+    fareSource,
+  ];
 }
 
 class RouteTotal extends Equatable {
@@ -177,6 +205,30 @@ class RouteTotal extends Equatable {
   List<Object?> get props => [price, doorToDoorMin, extraMin, savings];
 }
 
+enum BookingKind { flight, ground }
+
+/// "Rezervasyona git" kartı: sağlayıcının kendi sitesi, ortaklık işaretsiz.
+class BookingLink extends Equatable {
+  const BookingLink({
+    required this.kind,
+    required this.provider,
+    required this.url,
+    required this.lines,
+  });
+
+  final BookingKind kind;
+
+  /// Havayolu ya da işletmeci adı, ör. "Turkish Airlines", "ÖBB".
+  final String provider;
+  final Uri url;
+
+  /// Bu bağlantıyla alınacak hatlar, ör. ["TK 1629"].
+  final List<String> lines;
+
+  @override
+  List<Object?> get props => [kind, provider, url, lines];
+}
+
 /// Sonuç listesindeki bir kart.
 class RouteOption extends Equatable {
   const RouteOption({
@@ -189,6 +241,7 @@ class RouteOption extends Equatable {
     this.reason,
     this.via,
     this.ground,
+    this.booking = const [],
   });
 
   /// Fiyata göre sıra, 1'den başlar.
@@ -203,10 +256,22 @@ class RouteOption extends Equatable {
   /// Yalnızca aktarmalı kartta dolu.
   final ViaAirport? via;
   final GroundJourney? ground;
+  final List<BookingLink> booking;
 
   bool get isRecommended => badges.contains(RouteBadge.recommended);
+  bool get isCheapest => badges.contains(RouteBadge.cheapest);
 
   @override
-  List<Object?> get props =>
-      [rank, kind, flight, total, badges, flags, reason, via, ground];
+  List<Object?> get props => [
+    rank,
+    kind,
+    flight,
+    total,
+    badges,
+    flags,
+    reason,
+    via,
+    ground,
+    booking,
+  ];
 }

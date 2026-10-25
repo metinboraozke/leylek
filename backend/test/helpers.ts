@@ -125,8 +125,8 @@ export class FakeGround implements GroundRouter {
         transfers: 1,
         fares: r.fares ?? [],
         legs: [
-          { mode: 'SUBURBAN', fromName: `${iata} Flughafen`, toName: 'Hbf', from: request.from, to: { lat: (request.from.lat + request.to.lat) / 2, lon: (request.from.lon + request.to.lon) / 2 }, startMs, endMs: mid, line: 'S8', operator: 'MVV', priced: r.priced ?? false },
-          { mode: r.mode ?? 'REGIONAL_RAIL', fromName: 'Hbf', toName: 'Salzburg Hbf', from: { lat: (request.from.lat + request.to.lat) / 2, lon: (request.from.lon + request.to.lon) / 2 }, to: request.to, startMs: mid, endMs, line: 'RE 5', operator: 'BRB', priced: r.priced ?? false },
+          { mode: 'SUBURBAN', fromName: `${iata} Flughafen`, toName: 'Hbf', from: request.from, to: { lat: (request.from.lat + request.to.lat) / 2, lon: (request.from.lon + request.to.lon) / 2 }, startMs, endMs: mid, line: 'S8', operator: 'MVV', operatorUrl: 'https://www.mvv-muenchen.de', priced: r.priced ?? false },
+          { mode: r.mode ?? 'REGIONAL_RAIL', fromName: 'Hbf', toName: 'Salzburg Hbf', from: { lat: (request.from.lat + request.to.lat) / 2, lon: (request.from.lon + request.to.lon) / 2 }, to: request.to, startMs: mid, endMs, line: 'RE 5', operator: 'BRB', operatorUrl: null, priced: r.priced ?? false },
         ],
       },
     ];

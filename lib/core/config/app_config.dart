@@ -8,9 +8,8 @@
 class AppConfig {
   const AppConfig({required this.apiBaseUrl});
 
-  factory AppConfig.fromEnvironment() => const AppConfig(
-        apiBaseUrl: String.fromEnvironment('API_BASE_URL'),
-      );
+  factory AppConfig.fromEnvironment() =>
+      const AppConfig(apiBaseUrl: String.fromEnvironment('API_BASE_URL'));
 
   final String apiBaseUrl;
 

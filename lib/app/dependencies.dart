@@ -15,7 +15,10 @@ import '../features/route_search/domain/usecases/search_routes.dart';
 /// adresi verilmişse gerçek API, verilmemişse örnek veri kaynakları
 /// takılır; ekranlar farkı bilmez.
 class AppDependencies {
-  const AppDependencies({required this.suggestPlaces, required this.searchRoutes});
+  const AppDependencies({
+    required this.suggestPlaces,
+    required this.searchRoutes,
+  });
 
   factory AppDependencies.create(AppConfig config) {
     final PlacesDataSource places;

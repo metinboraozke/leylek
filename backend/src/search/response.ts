@@ -1,5 +1,6 @@
 import { toOffsetIso } from '../core/time.js';
 import type { Place, PlaceIndex } from '../data/place-index.js';
+import { bookingLinks } from './booking.js';
 import type { Dropped, RankedCard, SearchQuery } from './types.js';
 
 /**
@@ -57,6 +58,8 @@ export function toResponse(ctx: ResponseContext) {
           : undefined,
       flight: {
         airport: c.kind === 'DIRECT' ? c.airport.iata : undefined,
+        fromAirport: c.flight.originAirport,
+        toAirport: c.flight.destAirport,
         price: money(c.flight.priceEur),
         airline: c.flight.airline,
         flightNumber: c.flight.flightNumber,
@@ -78,6 +81,8 @@ export function toResponse(ctx: ResponseContext) {
               to: l.toName,
               line: l.line,
               operator: l.operator,
+              departAt: toOffsetIso(l.startMs, c.airport.tz),
+              arriveAt: toOffsetIso(l.endMs, ctx.to.tz),
             })),
             fare: {
               amount: money(c.ground.fareEur),
@@ -94,6 +99,7 @@ export function toResponse(ctx: ResponseContext) {
       },
       score: Math.round(c.score * 100) / 100,
       flags: [...c.flags],
+      booking: bookingLinks(c, ctx.query.date),
     })),
     dropped: ctx.dropped,
     warnings: ctx.warnings,

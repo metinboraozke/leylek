@@ -37,10 +37,12 @@ extension JsonReader on Json {
     if (value is! List) {
       throw FormatException('"$key" alanı liste değil: $value');
     }
-    return value.map((item) {
-      if (item is Map<String, dynamic>) return item;
-      throw FormatException('"$key" listesinde nesne olmayan öğe: $item');
-    }).toList(growable: false);
+    return value
+        .map((item) {
+          if (item is Map<String, dynamic>) return item;
+          throw FormatException('"$key" listesinde nesne olmayan öğe: $item');
+        })
+        .toList(growable: false);
   }
 
   List<String> strList(String key) {

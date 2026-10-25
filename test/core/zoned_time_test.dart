@@ -12,8 +12,10 @@ void main() {
     });
 
     test('negatif ofset ve Z biçimini okur', () {
-      expect(ZonedTime.parse('2026-11-20T08:05:00-04:30').offset,
-          const Duration(hours: -4, minutes: -30));
+      expect(
+        ZonedTime.parse('2026-11-20T08:05:00-04:30').offset,
+        const Duration(hours: -4, minutes: -30),
+      );
       expect(ZonedTime.parse('2026-11-20T08:05:00Z').offset, Duration.zero);
     });
 
@@ -24,7 +26,10 @@ void main() {
     });
 
     test('ofseti olmayan metni reddeder', () {
-      expect(() => ZonedTime.parse('2026-11-20T08:05:00'), throwsFormatException);
+      expect(
+        () => ZonedTime.parse('2026-11-20T08:05:00'),
+        throwsFormatException,
+      );
     });
   });
 }

@@ -13,16 +13,27 @@ void main() {
   });
 
   test('sunucu hatası mesajı ve koduyla ServerFailure olur', () async {
-    final r = await guard<int>(() async =>
-        throw const ApiException('Kapsam dışı', code: 'OUT_OF_COVERAGE', statusCode: 422));
+    final r = await guard<int>(
+      () async => throw const ApiException(
+        'Kapsam dışı',
+        code: 'OUT_OF_COVERAGE',
+        statusCode: 422,
+      ),
+    );
     expect(
       _failureOf(r),
-      const ServerFailure('Kapsam dışı', code: 'OUT_OF_COVERAGE', statusCode: 422),
+      const ServerFailure(
+        'Kapsam dışı',
+        code: 'OUT_OF_COVERAGE',
+        statusCode: 422,
+      ),
     );
   });
 
   test('ağ hatası NetworkFailure olur', () async {
-    final r = await guard<int>(() async => throw const NetworkException('timeout'));
+    final r = await guard<int>(
+      () async => throw const NetworkException('timeout'),
+    );
     expect(_failureOf(r), isA<NetworkFailure>());
   });
 

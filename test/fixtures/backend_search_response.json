@@ -23,6 +23,8 @@
         "distanceKm": 112
       },
       "flight": {
+        "fromAirport": "IST",
+        "toAirport": "MUC",
         "price": 5200,
         "airline": "TK",
         "flightNumber": "1",
@@ -43,14 +45,18 @@
             "from": "MUC Flughafen",
             "to": "Hbf",
             "line": "S8",
-            "operator": "MVV"
+            "operator": "MVV",
+            "departAt": "2026-11-20T10:36:00+01:00",
+            "arriveAt": "2026-11-20T11:42:00+01:00"
           },
           {
             "mode": "REGIONAL_RAIL",
             "from": "Hbf",
             "to": "Salzburg Hbf",
             "line": "RE 5",
-            "operator": "BRB"
+            "operator": "BRB",
+            "departAt": "2026-11-20T11:42:00+01:00",
+            "arriveAt": "2026-11-20T12:48:00+01:00"
           }
         ],
         "fare": {
@@ -70,6 +76,24 @@
         "SEPARATE_TICKETS",
         "GROUND_FARE_ESTIMATED",
         "TIGHT_CONNECTION"
+      ],
+      "booking": [
+        {
+          "kind": "FLIGHT",
+          "provider": "Turkish Airlines",
+          "url": "https://www.turkishairlines.com",
+          "lines": [
+            "TK 1"
+          ]
+        },
+        {
+          "kind": "GROUND",
+          "provider": "MVV",
+          "url": "https://www.mvv-muenchen.de/",
+          "lines": [
+            "S8"
+          ]
+        }
       ]
     },
     {
@@ -86,6 +110,8 @@
         "distanceKm": 141
       },
       "flight": {
+        "fromAirport": "IST",
+        "toAirport": "INN",
         "price": 6080,
         "airline": "TK",
         "flightNumber": "1",
@@ -106,14 +132,18 @@
             "from": "INN Flughafen",
             "to": "Hbf",
             "line": "S8",
-            "operator": "MVV"
+            "operator": "MVV",
+            "departAt": "2026-11-20T12:57:00+01:00",
+            "arriveAt": "2026-11-20T13:56:00+01:00"
           },
           {
             "mode": "REGIONAL_RAIL",
             "from": "Hbf",
             "to": "Salzburg Hbf",
             "line": "RE 5",
-            "operator": "BRB"
+            "operator": "BRB",
+            "departAt": "2026-11-20T13:56:00+01:00",
+            "arriveAt": "2026-11-20T14:55:00+01:00"
           }
         ],
         "fare": {
@@ -132,6 +162,24 @@
       "flags": [
         "SEPARATE_TICKETS",
         "TIGHT_CONNECTION"
+      ],
+      "booking": [
+        {
+          "kind": "FLIGHT",
+          "provider": "Turkish Airlines",
+          "url": "https://www.turkishairlines.com",
+          "lines": [
+            "TK 1"
+          ]
+        },
+        {
+          "kind": "GROUND",
+          "provider": "MVV",
+          "url": "https://www.mvv-muenchen.de/",
+          "lines": [
+            "S8"
+          ]
+        }
       ]
     },
     {
@@ -141,6 +189,8 @@
       "reason": null,
       "flight": {
         "airport": "SZG",
+        "fromAirport": "IST",
+        "toAirport": "SZG",
         "price": 9800,
         "airline": "TK",
         "flightNumber": "1",
@@ -156,7 +206,17 @@
         "savings": 0
       },
       "score": 245,
-      "flags": []
+      "flags": [],
+      "booking": [
+        {
+          "kind": "FLIGHT",
+          "provider": "Turkish Airlines",
+          "url": "https://www.turkishairlines.com",
+          "lines": [
+            "TK 1"
+          ]
+        }
+      ]
     }
   ],
   "dropped": [

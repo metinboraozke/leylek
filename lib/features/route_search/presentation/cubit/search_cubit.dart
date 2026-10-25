@@ -57,6 +57,14 @@ class SearchCubit extends Cubit<SearchState> {
   int _generation = 0;
 
   Future<void> search(SearchQuery query) async {
+    // Geçersiz girdide "aranıyor" durumuna hiç girilmez: uçuş animasyonu
+    // başlamadan hata formdaki alanın altında görünür.
+    final invalid = _searchRoutes.validate(query);
+    if (invalid != null) {
+      emit(SearchError(query, invalid));
+      return;
+    }
+
     final generation = ++_generation;
     emit(SearchInProgress(query));
     final result = await _searchRoutes(query);
@@ -70,5 +78,11 @@ class SearchCubit extends Cubit<SearchState> {
   Future<void> retry() async {
     final current = state;
     if (current is SearchError) await search(current.query);
+  }
+
+  /// Sonuç ekranından forma dönüş. Süren bir arama varsa sonucu yok sayılır.
+  void reset() {
+    _generation++;
+    emit(const SearchIdle());
   }
 }
