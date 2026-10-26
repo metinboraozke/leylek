@@ -4,6 +4,7 @@
     "to": "Salzburg",
     "date": "2026-11-20",
     "radiusKm": 250,
+    "stopoverDays": 1,
     "currency": "TRY"
   },
   "recommendedRank": 1,
@@ -34,10 +35,10 @@
         "priceSeenHoursAgo": 24
       },
       "ground": {
-        "departAt": "2026-11-20T10:36:00+01:00",
-        "arriveAt": "2026-11-20T12:48:00+01:00",
+        "departAt": "2026-11-21T09:06:00+01:00",
+        "arriveAt": "2026-11-21T11:18:00+01:00",
         "durationMin": 132,
-        "waitMin": 101,
+        "waitMin": 1451,
         "transfers": 1,
         "legs": [
           {
@@ -46,8 +47,8 @@
             "to": "Hbf",
             "line": "S8",
             "operator": "MVV",
-            "departAt": "2026-11-20T10:36:00+01:00",
-            "arriveAt": "2026-11-20T11:42:00+01:00"
+            "departAt": "2026-11-21T09:06:00+01:00",
+            "arriveAt": "2026-11-21T10:12:00+01:00"
           },
           {
             "mode": "REGIONAL_RAIL",
@@ -55,27 +56,32 @@
             "to": "Salzburg Hbf",
             "line": "RE 5",
             "operator": "BRB",
-            "departAt": "2026-11-20T11:42:00+01:00",
-            "arriveAt": "2026-11-20T12:48:00+01:00"
+            "departAt": "2026-11-21T10:12:00+01:00",
+            "arriveAt": "2026-11-21T11:18:00+01:00"
           }
         ],
         "fare": {
-          "amount": 975,
+          "amount": 1002,
           "currency": "TRY",
           "source": "estimated"
         }
       },
       "total": {
-        "price": 6175,
-        "doorToDoorMin": 403,
+        "price": 6202,
+        "doorToDoorMin": 1753,
+        "travelMin": 302,
         "extraMin": 0,
-        "savings": 3625
+        "savings": 3598
       },
-      "score": 178.03,
+      "stopover": {
+        "days": 1,
+        "city": "Münih"
+      },
+      "score": 158.8,
       "flags": [
         "SEPARATE_TICKETS",
         "GROUND_FARE_ESTIMATED",
-        "TIGHT_CONNECTION"
+        "STOPOVER"
       ],
       "booking": [
         {
@@ -99,42 +105,40 @@
     {
       "rank": 2,
       "kind": "VIA",
-      "badges": [
-        "FASTEST"
-      ],
+      "badges": [],
       "reason": null,
       "via": {
-        "iata": "INN",
-        "name": "Innsbruck",
-        "country": "AT",
-        "distanceKm": 141
+        "iata": "MUC",
+        "name": "Münih",
+        "country": "DE",
+        "distanceKm": 112
       },
       "flight": {
         "fromAirport": "IST",
-        "toAirport": "INN",
-        "price": 6080,
+        "toAirport": "MUC",
+        "price": 6000,
         "airline": "TK",
         "flightNumber": "1",
         "transfers": 0,
-        "departAt": "2026-11-20T10:20:00+03:00",
-        "arriveAt": "2026-11-20T11:05:00+01:00",
+        "departAt": "2026-11-20T06:00:00+03:00",
+        "arriveAt": "2026-11-20T06:50:00+01:00",
         "priceSeenHoursAgo": 24
       },
       "ground": {
-        "departAt": "2026-11-20T12:57:00+01:00",
-        "arriveAt": "2026-11-20T14:55:00+01:00",
-        "durationMin": 118,
-        "waitMin": 112,
+        "departAt": "2026-11-21T09:06:00+01:00",
+        "arriveAt": "2026-11-21T11:18:00+01:00",
+        "durationMin": 132,
+        "waitMin": 1576,
         "transfers": 1,
         "legs": [
           {
             "mode": "SUBURBAN",
-            "from": "INN Flughafen",
+            "from": "MUC Flughafen",
             "to": "Hbf",
             "line": "S8",
             "operator": "MVV",
-            "departAt": "2026-11-20T12:57:00+01:00",
-            "arriveAt": "2026-11-20T13:56:00+01:00"
+            "departAt": "2026-11-21T09:06:00+01:00",
+            "arriveAt": "2026-11-21T10:12:00+01:00"
           },
           {
             "mode": "REGIONAL_RAIL",
@@ -142,26 +146,32 @@
             "to": "Salzburg Hbf",
             "line": "RE 5",
             "operator": "BRB",
-            "departAt": "2026-11-20T13:56:00+01:00",
-            "arriveAt": "2026-11-20T14:55:00+01:00"
+            "departAt": "2026-11-21T10:12:00+01:00",
+            "arriveAt": "2026-11-21T11:18:00+01:00"
           }
         ],
         "fare": {
-          "amount": 1440,
+          "amount": 1002,
           "currency": "TRY",
-          "source": "transitous"
+          "source": "estimated"
         }
       },
       "total": {
-        "price": 7520,
-        "doorToDoorMin": 395,
+        "price": 7002,
+        "doorToDoorMin": 1878,
+        "travelMin": 302,
         "extraMin": 0,
-        "savings": 2280
+        "savings": 2798
       },
-      "score": 208,
+      "stopover": {
+        "days": 1,
+        "city": "Münih"
+      },
+      "score": 178.8,
       "flags": [
         "SEPARATE_TICKETS",
-        "TIGHT_CONNECTION"
+        "GROUND_FARE_ESTIMATED",
+        "STOPOVER"
       ],
       "booking": [
         {
@@ -184,8 +194,99 @@
     },
     {
       "rank": 3,
-      "kind": "DIRECT",
+      "kind": "VIA",
       "badges": [],
+      "reason": null,
+      "via": {
+        "iata": "INN",
+        "name": "Innsbruck",
+        "country": "AT",
+        "distanceKm": 141
+      },
+      "flight": {
+        "fromAirport": "IST",
+        "toAirport": "INN",
+        "price": 6080,
+        "airline": "TK",
+        "flightNumber": "1",
+        "transfers": 0,
+        "departAt": "2026-11-20T10:20:00+03:00",
+        "arriveAt": "2026-11-20T11:05:00+01:00",
+        "priceSeenHoursAgo": 24
+      },
+      "ground": {
+        "departAt": "2026-11-21T09:12:00+01:00",
+        "arriveAt": "2026-11-21T11:10:00+01:00",
+        "durationMin": 118,
+        "waitMin": 1327,
+        "transfers": 1,
+        "legs": [
+          {
+            "mode": "SUBURBAN",
+            "from": "INN Flughafen",
+            "to": "Hbf",
+            "line": "S8",
+            "operator": "MVV",
+            "departAt": "2026-11-21T09:12:00+01:00",
+            "arriveAt": "2026-11-21T10:11:00+01:00"
+          },
+          {
+            "mode": "REGIONAL_RAIL",
+            "from": "Hbf",
+            "to": "Salzburg Hbf",
+            "line": "RE 5",
+            "operator": "BRB",
+            "departAt": "2026-11-21T10:11:00+01:00",
+            "arriveAt": "2026-11-21T11:10:00+01:00"
+          }
+        ],
+        "fare": {
+          "amount": 1440,
+          "currency": "TRY",
+          "source": "transitous"
+        }
+      },
+      "total": {
+        "price": 7520,
+        "doorToDoorMin": 1610,
+        "travelMin": 283,
+        "extraMin": 0,
+        "savings": 2280
+      },
+      "stopover": {
+        "days": 1,
+        "city": "Innsbruck"
+      },
+      "score": 188,
+      "flags": [
+        "SEPARATE_TICKETS",
+        "STOPOVER"
+      ],
+      "booking": [
+        {
+          "kind": "FLIGHT",
+          "provider": "Turkish Airlines",
+          "url": "https://www.turkishairlines.com",
+          "lines": [
+            "TK 1"
+          ]
+        },
+        {
+          "kind": "GROUND",
+          "provider": "MVV",
+          "url": "https://www.mvv-muenchen.de/",
+          "lines": [
+            "S8"
+          ]
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "DIRECT",
+      "badges": [
+        "FASTEST"
+      ],
       "reason": null,
       "flight": {
         "airport": "SZG",
@@ -202,6 +303,7 @@
       "total": {
         "price": 9800,
         "doorToDoorMin": 430,
+        "travelMin": 430,
         "extraMin": 0,
         "savings": 0
       },

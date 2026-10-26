@@ -52,6 +52,7 @@ abstract final class SearchResultMapper {
       flight: _flight(o.obj('flight'), currency),
       ground: ground == null ? null : _ground(ground),
       total: _total(o.obj('total'), currency),
+      stopover: _stopover(o.objOrNull('stopover')),
       booking: o
           .objList('booking')
           .map(_booking)
@@ -124,11 +125,20 @@ abstract final class SearchResultMapper {
   static ZonedTime? _timeOrNull(String? iso) =>
       iso == null ? null : ZonedTime.parse(iso);
 
+  static Stopover? _stopover(Json? s) {
+    if (s == null) return null;
+    final days = s.integer('days');
+    return days > 0
+        ? Stopover(days: days, city: s.strOrNull('city') ?? '')
+        : null;
+  }
+
   static RouteTotal _total(Json t, String currency) {
     final savings = t.numberOrNull('savings');
     return RouteTotal(
       price: Money(t.number('price'), currency),
       doorToDoorMin: t.integer('doorToDoorMin'),
+      travelMin: t.integerOrNull('travelMin'),
       extraMin: t.integer('extraMin'),
       savings: savings == null ? null : Money(savings, currency),
     );

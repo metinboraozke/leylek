@@ -24,23 +24,27 @@ class SearchFormState extends Equatable {
     this.from = const PlaceInput(),
     this.to = const PlaceInput(),
     this.radiusKm = SearchQuery.defaultRadiusKm,
+    this.stopoverDays = 0,
   });
 
   final PlaceInput from;
   final PlaceInput to;
   final DateTime date;
   final int radiusKm;
+  final int stopoverDays;
 
   SearchFormState copyWith({
     PlaceInput? from,
     PlaceInput? to,
     DateTime? date,
     int? radiusKm,
+    int? stopoverDays,
   }) => SearchFormState(
     from: from ?? this.from,
     to: to ?? this.to,
     date: date ?? this.date,
     radiusKm: radiusKm ?? this.radiusKm,
+    stopoverDays: stopoverDays ?? this.stopoverDays,
   );
 
   SearchQuery toQuery() => SearchQuery(
@@ -48,10 +52,11 @@ class SearchFormState extends Equatable {
     to: to.value,
     date: date,
     radiusKm: radiusKm,
+    stopoverDays: stopoverDays,
   );
 
   @override
-  List<Object?> get props => [from, to, date, radiusKm];
+  List<Object?> get props => [from, to, date, radiusKm, stopoverDays];
 }
 
 /// Arama formunun durumu. Arama yapmaz; yalnızca formu tutar (SRP).
@@ -80,6 +85,10 @@ class SearchFormCubit extends Cubit<SearchFormState> {
   void swap() => emit(state.copyWith(from: state.to, to: state.from));
 
   void setDate(DateTime date) => emit(state.copyWith(date: date));
+
+  void setStopover(int days) => emit(
+    state.copyWith(stopoverDays: days.clamp(0, SearchQuery.maxStopoverDays)),
+  );
 
   void setRadius(int km) => emit(
     state.copyWith(

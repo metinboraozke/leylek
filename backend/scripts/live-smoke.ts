@@ -33,7 +33,7 @@ if (!config.travelpayoutsToken) {
   process.exit(1);
 }
 
-const [from = 'İstanbul', to = 'Salzburg', date] = process.argv.slice(2);
+const [from = 'İstanbul', to = 'Salzburg', date, stay = '0'] = process.argv.slice(2);
 const day = date ?? new Date(Date.now() + 28 * 86_400_000).toISOString().slice(0, 10);
 
 const dataset = await loadDataset(config.dataDir);
@@ -60,7 +60,7 @@ const service = new SearchService({
 
 console.log(`${from} → ${to}, ${day}  (User-Agent: ${config.userAgent})\n`);
 const started = Date.now();
-const res = await service.search({ from, to, date: day, radiusKm: 250, maxGroundHours: 5, currency: 'TRY' });
+const res = await service.search({ from, to, date: day, radiusKm: 250, maxGroundHours: 5, currency: 'TRY', stopoverDays: Number(stay) });
 
 for (const o of res.options) {
   const title = o.kind === 'DIRECT' ? `Doğrudan ${o.flight.airport}` : `${o.via?.name} (${o.via?.iata}) üzerinden`;

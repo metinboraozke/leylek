@@ -23,6 +23,7 @@ enum RouteFlag {
   groundNotVerified,
   ferry,
   priceStale,
+  stopover,
   unknown,
 }
 
@@ -189,10 +190,14 @@ class RouteTotal extends Equatable {
     required this.doorToDoorMin,
     required this.extraMin,
     this.savings,
-  });
+    int? travelMin,
+  }) : travelMin = travelMin ?? doorToDoorMin;
 
   final Money price;
   final int doorToDoorMin;
+
+  /// Konaklama hariç yolda geçen süre.
+  final int travelMin;
 
   /// Doğrudan uçuşa göre fazladan geçen süre.
   final int extraMin;
@@ -202,7 +207,24 @@ class RouteTotal extends Equatable {
   final Money? savings;
 
   @override
-  List<Object?> get props => [price, doorToDoorMin, extraMin, savings];
+  List<Object?> get props => [
+    price,
+    doorToDoorMin,
+    travelMin,
+    extraMin,
+    savings,
+  ];
+}
+
+/// Aktarma şehrinde bilerek kalınan günler.
+class Stopover extends Equatable {
+  const Stopover({required this.days, required this.city});
+
+  final int days;
+  final String city;
+
+  @override
+  List<Object?> get props => [days, city];
 }
 
 enum BookingKind { flight, ground }
@@ -242,6 +264,7 @@ class RouteOption extends Equatable {
     this.via,
     this.ground,
     this.booking = const [],
+    this.stopover,
   });
 
   /// Fiyata göre sıra, 1'den başlar.
@@ -258,6 +281,9 @@ class RouteOption extends Equatable {
   final GroundJourney? ground;
   final List<BookingLink> booking;
 
+  /// Konaklamalı aramada aktarma şehrinde kalış; yoksa `null`.
+  final Stopover? stopover;
+
   bool get isRecommended => badges.contains(RouteBadge.recommended);
   bool get isCheapest => badges.contains(RouteBadge.cheapest);
 
@@ -273,5 +299,6 @@ class RouteOption extends Equatable {
     via,
     ground,
     booking,
+    stopover,
   ];
 }

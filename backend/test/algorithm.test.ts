@@ -90,19 +90,19 @@ describe('05 · kara bacağı hesabı', () => {
   it('isteği inişten 90 dk sonra, 15 dakikaya yuvarlanmış anla atar', async () => {
     const router = new FakeGround({ MUC: { waitMin: 6, durationMin: 132 } });
     const c = candidate();
-    await computeGround(c, salzburg, 5, deps(router));
+    await computeGround(c, salzburg, { maxGroundHours: 5, stopoverDays: 0 }, deps(router));
     const req = router.requests[0]!;
     expect(req.earliestDepartMs).toBe(ceilTo15(c.cheapest.arriveMs + 90 * 60_000));
     expect(req.maxTravelMinutes).toBe(5 * 60 + 480);
   });
 
   it('fiyatsız yolculukta tahmini ücret, fiyatlıda gerçek ücret', async () => {
-    const est = await computeGround(candidate(), salzburg, 5, deps(new FakeGround({ MUC: { waitMin: 6, durationMin: 132 } })));
+    const est = await computeGround(candidate(), salzburg, { maxGroundHours: 5, stopoverDays: 0 }, deps(new FakeGround({ MUC: { waitMin: 6, durationMin: 132 } })));
     expect(est.status).toBe('verified');
     if (est.status !== 'verified') return;
     expect(est.ground.fareSource).toBe('estimated');
 
-    const real = await computeGround(candidate(), salzburg, 5, deps(new FakeGround({ MUC: { waitMin: 6, durationMin: 132, fares: [{ amount: 32.5, currency: 'EUR' }], priced: true } })));
+    const real = await computeGround(candidate(), salzburg, { maxGroundHours: 5, stopoverDays: 0 }, deps(new FakeGround({ MUC: { waitMin: 6, durationMin: 132, fares: [{ amount: 32.5, currency: 'EUR' }], priced: true } })));
     if (real.status !== 'verified') throw new Error('doğrulanmalıydı');
     expect(real.ground.fareSource).toBe('transitous');
     expect(real.ground.fareEur).toBe(32.5);
@@ -110,26 +110,26 @@ describe('05 · kara bacağı hesabı', () => {
   });
 
   it('bağlantı yoksa impossible, servis hata verirse tahminle unverified', async () => {
-    expect(await computeGround(candidate(), salzburg, 5, deps(new FakeGround({ MUC: { waitMin: 0, durationMin: 0, none: true } }))))
+    expect(await computeGround(candidate(), salzburg, { maxGroundHours: 5, stopoverDays: 0 }, deps(new FakeGround({ MUC: { waitMin: 0, durationMin: 0, none: true } }))))
       .toEqual({ status: 'impossible', reason: 'NO_GROUND_CONNECTION' });
-    const failed = await computeGround(candidate(), salzburg, 5, deps(new FakeGround({ MUC: { waitMin: 0, durationMin: 0, fail: true } })));
+    const failed = await computeGround(candidate(), salzburg, { maxGroundHours: 5, stopoverDays: 0 }, deps(new FakeGround({ MUC: { waitMin: 0, durationMin: 0, fail: true } })));
     expect(failed.status).toBe('unverified');
     if (failed.status === 'unverified') expect(failed.ground.verified).toBe(false);
   });
 
   it('durak bulunursa kimliğiyle, bulunamazsa ya da hata verirse koordinatla sorar', async () => {
     const router = new FakeGround({ MUC: { waitMin: 6, durationMin: 132 } });
-    const withStop = { nearestStop: async () => ({ id: 'stop:muc', name: 'München Flughafen Terminal', lat: 48.354, lon: 11.785, modes: ['SUBURBAN'] }) };
-    await computeGround(candidate(), salzburg, 5, { ...deps(router), stops: withStop });
+    const withStop = { cityStation: async () => null, nearestStop: async () => ({ id: 'stop:muc', name: 'München Flughafen Terminal', lat: 48.354, lon: 11.785, modes: ['SUBURBAN'] }) };
+    await computeGround(candidate(), salzburg, { maxGroundHours: 5, stopoverDays: 0 }, { ...deps(router), stops: withStop });
     expect(router.requests[0]!.fromStopId).toBe('stop:muc');
 
-    const failing = { nearestStop: async () => { throw new Error('geocode 500'); } };
-    await computeGround(candidate(), salzburg, 5, { ...deps(router), stops: failing });
+    const failing = { cityStation: async () => null, nearestStop: async () => { throw new Error('geocode 500'); } };
+    await computeGround(candidate(), salzburg, { maxGroundHours: 5, stopoverDays: 0 }, { ...deps(router), stops: failing });
     expect(router.requests[1]!.fromStopId).toBeUndefined();
   });
 
   it('kara süresi sınırı aşan yolculuğu kullanmaz', async () => {
-    const r = await computeGround(candidate(), salzburg, 2, deps(new FakeGround({ MUC: { waitMin: 0, durationMin: 200 } })));
+    const r = await computeGround(candidate(), salzburg, { maxGroundHours: 2, stopoverDays: 0 }, deps(new FakeGround({ MUC: { waitMin: 0, durationMin: 200 } })));
     expect(r).toEqual({ status: 'impossible', reason: 'GROUND_TOO_LONG' });
   });
 });
@@ -252,5 +252,53 @@ describe('rezervasyon bağlantıları', async () => {
     expect(links).toEqual([{ kind: 'GROUND', provider: 'ÖBB', url: 'https://www.oebb.at/', lines: ['RJX 69', 'REX 1'] }]);
     expect(safeHttps('javascript:alert(1)')).toBeNull();
     expect(safeHttps('www.flixbus.de')).toBe('https://www.flixbus.de/');
+  });
+});
+
+describe('aktarma şehrinde konaklama', async () => {
+  const { earliestGroundDepart } = await import('../src/search/ground.js');
+
+  it('N gün konaklamada kara bacağı inişin yerel gününden N gün sonra 09:00\'da başlar', () => {
+    const q = quote('MUC', 130, '2026-11-20T08:05:00+03:00', 170); // 07:55Z iniş
+    expect(new Date(earliestGroundDepart(q, ap('MUC'), 'TR', 1)).toISOString()).toBe('2026-11-21T08:00:00.000Z');
+    expect(new Date(earliestGroundDepart(q, ap('MUC'), 'TR', 2)).toISOString()).toBe('2026-11-22T08:00:00.000Z');
+    // Konaklamasız: 90 dk tampon, 15 dakikaya yukarı
+    expect(new Date(earliestGroundDepart(q, ap('MUC'), 'TR', 0)).toISOString()).toBe('2026-11-20T09:30:00.000Z');
+  });
+
+  it('konaklamalıda şehrin istasyonundan çıkar; dar aktarma ve gece etiketi almaz', async () => {
+    const router = new FakeGround({ MUC: { waitMin: 10, durationMin: 132 } });
+    const c: Candidate = { ...flights('MUC', 130), estimate: { roadKm: 150, hours: 2.75, costEur: 20 }, estimateScore: 150 };
+    const stops = {
+      nearestStop: async () => ({ id: 'airport-stop', name: '', lat: 0, lon: 0, modes: [] }),
+      cityStation: async () => ({ id: 'muenchen-hbf', name: 'München Hbf', lat: 48.14, lon: 11.56, modes: ['LONG_DISTANCE'] }),
+    };
+    const cityNear = () => ({ name: 'Münih', lat: 48.1374, lon: 11.5755 });
+    const r = await computeGround(c, salzburg, { maxGroundHours: 5, stopoverDays: 1, destStopId: 'salzburg-hbf' }, { router, fx: fakeFx, airports: ix.airports, stops, cityNear });
+    const req = router.requests[0]!;
+    expect(req.fromStopId).toBe('muenchen-hbf');
+    expect(req.toStopId).toBe('salzburg-hbf');
+    expect(new Date(req.earliestDepartMs).toISOString()).toBe('2026-11-21T08:00:00.000Z');
+    if (r.status !== 'verified') throw new Error('doğrulanmalıydı');
+
+    const card = viaCard(c, c.cheapest, r.ground, 1);
+    expect(card.flags.has('STOPOVER')).toBe(true);
+    expect(card.flags.has('TIGHT_CONNECTION')).toBe(false);
+    expect(card.flags.has('OVERNIGHT_WAIT')).toBe(false);
+    expect(card.stayMin).toBeGreaterThan(20 * 60);
+  });
+
+  it('konaklama süresi puana "fazla süre" olarak yansımaz', () => {
+    const c: Candidate = { ...flights('MUC', 130), estimate: { roadKm: 0, hours: 0, costEur: 0 }, estimateScore: 0 };
+    const g = (departIso: string): CardGround => ({
+      departMs: Date.parse(departIso), arriveMs: Date.parse(departIso) + 132 * 60_000, waitMin: 0, transfers: 1,
+      legs: [], fareEur: 32, estimatedEur: 0, fareSource: 'transitous', verified: true,
+    });
+    const sameDay = viaCard(c, c.cheapest, g('2026-11-20T10:46:00Z'), 0);
+    const nextDay = viaCard(c, c.cheapest, g('2026-11-21T08:10:00Z'), 1);
+    const direct = directCard(quote('SZG', 245, '2026-11-20T07:15:00+03:00', 385, { transfers: 1 }), ap('SZG'), 3);
+    scoreCards([sameDay, nextDay, direct], direct.doorToDoorMin);
+    expect(nextDay.extraMin).toBeLessThanOrEqual(sameDay.extraMin + 30);
+    expect(nextDay.score).toBeLessThan(sameDay.score + 20);
   });
 });

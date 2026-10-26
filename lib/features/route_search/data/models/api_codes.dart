@@ -33,6 +33,7 @@ abstract final class ApiCodes {
     'GROUND_NOT_VERIFIED' => RouteFlag.groundNotVerified,
     'FERRY' => RouteFlag.ferry,
     'PRICE_STALE' => RouteFlag.priceStale,
+    'STOPOVER' => RouteFlag.stopover,
     _ => RouteFlag.unknown,
   };
 

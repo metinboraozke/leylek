@@ -503,3 +503,52 @@ class WaitStrip extends StatelessWidget {
     ),
   );
 }
+
+/// Uçuş ile kara yolu arasında aktarma şehrinde kalış.
+class StayStrip extends StatelessWidget {
+  const StayStrip({required this.days, required this.city, super.key});
+
+  final int days;
+  final String city;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: LeylekColors.skySoft,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.hotel_rounded,
+            size: 18,
+            color: LeylekColors.skyDeep,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${Formatters.locative(city)} $days gün kal',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: LeylekColors.skyDeep,
+                  ),
+                ),
+                const Text(
+                  'Havalimanından şehre ulaşım ve konaklama fiyata dahil değil.',
+                  style: TextStyle(fontSize: 12, color: LeylekColors.muted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}

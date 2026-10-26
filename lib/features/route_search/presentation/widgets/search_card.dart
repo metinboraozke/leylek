@@ -76,6 +76,11 @@ class SearchCard extends StatelessWidget {
             errorText: errorFor(ValidationField.date),
             onPicked: form.setDate,
           ),
+          const SizedBox(height: 12),
+          _StopoverPicker(
+            days: state.stopoverDays,
+            onChanged: form.setStopover,
+          ),
           const SizedBox(height: 6),
           _RadiusSlider(radiusKm: state.radiusKm, onChanged: form.setRadius),
           if (failure != null && invalid == null) ...[
@@ -153,6 +158,72 @@ class _DateTile extends StatelessWidget {
       ),
       child: Text(Formatters.day(date), style: const TextStyle(fontSize: 16)),
     ),
+  );
+}
+
+/// Aktarma şehrinde kaç gün kalınacağı: yatay kaydırılan seçenek hapları.
+class _StopoverPicker extends StatelessWidget {
+  const _StopoverPicker({required this.days, required this.onChanged});
+
+  final int days;
+  final ValueChanged<int> onChanged;
+
+  static const _options = [
+    (0, 'Konaklamasız'),
+    (1, '1 gün kal'),
+    (2, '2 gün kal'),
+    (3, '3 gün kal'),
+  ];
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.only(left: 4, bottom: 8),
+        child: Text(
+          'Aktarma şehrinde konaklama',
+          style: TextStyle(fontSize: 13.5, color: LeylekColors.muted),
+        ),
+      ),
+      SizedBox(
+        height: 38,
+        child: ListView.separated(
+          key: const Key('stopover-picker'),
+          scrollDirection: Axis.horizontal,
+          itemCount: _options.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
+          itemBuilder: (context, i) {
+            final (value, label) = _options[i];
+            final selected = value == days;
+            return ChoiceChip(
+              key: Key('stopover-$value'),
+              label: Text(label),
+              selected: selected,
+              onSelected: (_) => onChanged(value),
+              showCheckmark: false,
+              avatar: value == 0
+                  ? null
+                  : Icon(
+                      Icons.hotel_rounded,
+                      size: 16,
+                      color: selected
+                          ? LeylekColors.feather
+                          : LeylekColors.skyDeep,
+                    ),
+              labelStyle: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: selected ? LeylekColors.feather : LeylekColors.wingtip,
+              ),
+              selectedColor: LeylekColors.skyDeep,
+              backgroundColor: LeylekColors.skySoft,
+              side: BorderSide.none,
+              shape: const StadiumBorder(),
+            );
+          },
+        ),
+      ),
+    ],
   );
 }
 

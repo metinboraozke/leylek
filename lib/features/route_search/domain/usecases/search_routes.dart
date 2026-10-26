@@ -64,6 +64,12 @@ class SearchRoutes implements UseCase<SearchResult, SearchQuery> {
       );
     }
 
+    if (q.stopoverDays < 0 || q.stopoverDays > SearchQuery.maxStopoverDays) {
+      return const ValidationFailure(
+        'Konaklama 0–${SearchQuery.maxStopoverDays} gün olabilir.',
+        field: ValidationField.stopover,
+      );
+    }
     if (q.radiusKm < SearchQuery.minRadiusKm ||
         q.radiusKm > SearchQuery.maxRadiusKm) {
       return const ValidationFailure(

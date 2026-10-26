@@ -72,6 +72,18 @@ export function overlapsNight(
   return false;
 }
 
+/**
+ * [instantMs]'nin yerel gününden [addDays] gün sonra, yerel saatle
+ * [hour]:00 anı (UTC ms). Konaklamalı rotada kara bacağının sabah
+ * kalkışı için.
+ */
+export function localTimeOnDay(instantMs: number, timeZone: string, addDays: number, hour: number): number {
+  const day = localDay(instantMs, timeZone);
+  const naive = Date.parse(`${day}T00:00:00Z`) + addDays * DAY_MS + hour * 60 * MINUTE_MS;
+  // Ofset o günün kendi ofseti (yaz saati geçişi arada kalabilir).
+  return naive - offsetMinutes(naive, timeZone) * MINUTE_MS;
+}
+
 /** Bir saat dilimindeki yerel günü `YYYY-MM-DD` olarak verir. */
 export function localDay(instantMs: number, timeZone: string): string {
   return new Date(instantMs + offsetMinutes(instantMs, timeZone) * MINUTE_MS).toISOString().slice(0, 10);

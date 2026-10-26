@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:leylek/app/dependencies.dart';
@@ -9,6 +10,7 @@ import 'package:leylek/features/places/domain/usecases/suggest_places.dart';
 import 'package:leylek/features/route_search/data/datasources/sample_route_search_data_source.dart';
 import 'package:leylek/features/route_search/data/repositories/route_search_repository_impl.dart';
 import 'package:leylek/features/route_search/domain/usecases/search_routes.dart';
+import 'package:leylek/features/route_search/presentation/cubit/search_form_cubit.dart';
 import 'package:leylek/features/route_search/presentation/motion.dart';
 import 'package:leylek/features/route_search/presentation/widgets/flight_scene.dart';
 import 'package:leylek/features/route_search/presentation/widgets/idle_stork.dart';
@@ -177,6 +179,35 @@ void main() {
       expect(find.text('Salzburg (SZG)'), findsOneWidget);
     },
   );
+
+  testWidgets('konaklama hapları formu günceller, seçilen tek olur', (
+    tester,
+  ) async {
+    phoneScreen(tester);
+    await tester.pumpWidget(
+      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+    );
+    await tester.pump();
+
+    final context = tester.element(find.byType(SearchCard));
+    final form = BlocProvider.of<SearchFormCubit>(context);
+    expect(form.state.stopoverDays, 0);
+
+    // Haplar yatay kaydırılan bir şeritte; ekran dışındakine kaydırılır.
+    await tester.dragUntilVisible(
+      find.byKey(const Key('stopover-2')),
+      find.byKey(const Key('stopover-picker')),
+      const Offset(-80, 0),
+    );
+    await tester.ensureVisible(find.byKey(const Key('stopover-2')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('stopover-2')));
+    await tester.pump();
+    expect(form.state.stopoverDays, 2);
+    expect(form.state.toQuery().stopoverDays, 2);
+    final chip = tester.widget<ChoiceChip>(find.byKey(const Key('stopover-2')));
+    expect(chip.selected, isTrue);
+  });
 
   testWidgets('eksik varışta animasyon başlamaz, hata alanın altında', (
     tester,

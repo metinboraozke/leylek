@@ -38,6 +38,8 @@ export interface GroundRequest {
    */
   fromStopId?: string;
   to: LatLon;
+  /** Varsa koordinat yerine bu durağa (şehrin ana istasyonu) gidilir. */
+  toStopId?: string;
   /** Bu andan sonra kalkan yolculuklar (UTC ms). */
   earliestDepartMs: number;
   maxTravelMinutes: number;
@@ -95,6 +97,13 @@ export interface TransitStop extends LatLon {
  */
 export interface StopLocator {
   nearestStop(point: LatLon): Promise<TransitStop | null>;
+  /**
+   * Şehrin ana tren istasyonu (uzun mesafe ya da bölgesel tren duran,
+   * en önemli durak). Varışı şehir merkezinin koordinatı yerine buraya
+   * bağlamak, istasyondan merkeze ek bir yerel hat (ve aktarma)
+   * gerektirmesini önler (2 aktarma sınırı tren + yerel hatla aşılabiliyor).
+   */
+  cityStation(city: LatLon & { name: string }): Promise<TransitStop | null>;
 }
 
 export interface Geocoder {

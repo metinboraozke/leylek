@@ -13,7 +13,7 @@ const groundOk = () =>
     FMM: { waitMin: 15, durationMin: 210 },
   });
 
-const query = { from: 'İstanbul', to: 'Salzburg', date: DAY, radiusKm: 250, maxGroundHours: 5, currency: 'TRY' as const };
+const query = { from: 'İstanbul', to: 'Salzburg', date: DAY, radiusKm: 250, maxGroundHours: 5, currency: 'TRY' as const, stopoverDays: 0 };
 
 describe('/search hattı uçtan uca (dış servisler sahte)', () => {
   it('İstanbul → Salzburg: en az 3 kart, fiyata göre sıralı, doğrudan uçuş dahil, bir önerilen', async () => {
@@ -107,6 +107,25 @@ describe('/search hattı uçtan uca (dış servisler sahte)', () => {
   });
 });
 
+describe('konaklama ve 4 plan', () => {
+  it('1 gün konaklamalı aramada kartlar konaklamayı taşır, hedef 4 plan', async () => {
+    const res = await service(new FakeFlights(salzburgFlights()), groundOk()).search({ ...query, stopoverDays: 1 });
+    expect(res.query.stopoverDays).toBe(1);
+    expect(res.options.length).toBe(4);
+    const via = res.options.filter((o) => o.kind === 'VIA');
+    expect(via.length).toBeGreaterThan(0);
+    for (const o of via) {
+      expect(o.stopover?.days).toBe(1);
+      expect(o.flags).toContain('STOPOVER');
+      // Yolda geçen süre konaklamayı içermez
+      expect(o.total.travelMin).toBeLessThan(o.total.doorToDoorMin);
+    }
+    const muc = via.find((o) => o.via?.iata === 'MUC');
+    expect(muc?.stopover?.city).toBe('Münih');
+    expect(muc?.ground?.departAt.startsWith('2026-11-21T09:')).toBe(true);
+  });
+});
+
 describe('HTTP katmanı', () => {
   async function app(rateLimit = 20) {
     const config = loadConfig({ NODE_ENV: 'test', RATE_LIMIT_PER_MINUTE: String(rateLimit) });
@@ -119,6 +138,13 @@ describe('HTTP katmanı', () => {
       now: () => NOW,
     });
   }
+
+  it('stopoverDays 0–3 dışını reddeder', async () => {
+    const a = await app();
+    const bad = await a.inject({ method: 'GET', url: `/v1/search?from=Istanbul&to=Salzburg&date=${DAY}&stopoverDays=5` });
+    expect(bad.statusCode).toBe(400);
+    expect(bad.json().error.field).toBe('stopoverDays');
+  });
 
   it('GET /v1/search 200 ve güvenlik başlıkları', async () => {
     const a = await app();

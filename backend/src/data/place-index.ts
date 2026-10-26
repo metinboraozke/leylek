@@ -2,7 +2,7 @@ import { normalize } from '../core/text.js';
 import { haversineKm, type LatLon } from '../core/geo.js';
 import type { AirportIndex } from './airport-index.js';
 import { countryNameTr } from './regions.js';
-import type { City } from './types.js';
+import type { Airport, City } from './types.js';
 
 export interface Place extends LatLon {
   /** `city:<geonameid>` ya da `airport:<IATA>`. */
@@ -120,6 +120,32 @@ export class PlaceIndex {
    * şehir. MXP'nin belediyesi "Ferno"; kullanıcı "Milano" görmeli.
    */
   cityNameNear(point: LatLon, radiusKm = 60): string | null {
+    return this.cityNear(point, radiusKm)?.name ?? null;
+  }
+
+  /**
+   * Havalimanının hizmet ettiği şehir.
+   *
+   * Önce OurAirports'taki belediye adı (40 km içinde aynı adlı şehir varsa):
+   * Memmingen havalimanı "Memmingen", Ulm değil. Belediye küçük bir
+   * kasabaysa (MXP → "Ferno") yakındaki en kalabalık şehre düşülür: Milano.
+   */
+  cityForAirport(airport: Airport): Place | null {
+    const parts = airport.municipality
+      .split(',')
+      .map((p) => normalize(p.replace(/\(.*?\)/g, '')))
+      .filter((p) => p.length > 0);
+    let best: Place | null = null;
+    for (const { place, keys } of this.entries) {
+      if (place.kind !== 'CITY' || !parts.some((p) => keys.includes(p))) continue;
+      if (haversineKm(airport, place) > 40) continue;
+      if (!best || place.population > best.population) best = place;
+    }
+    return best ?? this.cityNear(airport);
+  }
+
+  /** Yakındaki en kalabalık şehir (havalimanının hizmet ettiği şehir). */
+  cityNear(point: LatLon, radiusKm = 60): Place | null {
     let best: Place | null = null;
     for (const { place } of this.entries) {
       if (place.kind !== 'CITY') continue;
@@ -127,7 +153,7 @@ export class PlaceIndex {
       if (haversineKm(point, place) > radiusKm) continue;
       if (!best || place.population > best.population) best = place;
     }
-    return best?.name ?? null;
+    return best;
   }
 
   static toSuggestion(place: Place): PlaceSuggestion {

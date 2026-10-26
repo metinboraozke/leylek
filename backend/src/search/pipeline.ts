@@ -5,7 +5,7 @@ import type { Indexes } from '../data/dataset.js';
 import { DESTINATION_COUNTRIES } from '../data/regions.js';
 import { findCandidates } from './candidates.js';
 import { fetchQuotes, groupByAirport, mapLimit } from './flights.js';
-import { bufferMinutes, computeGround, estimatedGround, ceilTo15 } from './ground.js';
+import { bufferMinutes, computeGround, earliestGroundDepart, estimatedGround } from './ground.js';
 import type { FlightPriceSource, FlightQuote, FxRates, Geocoder, GroundRouter, StopLocator } from './ports.js';
 import { prefilter } from './prefilter.js';
 import { alternateFlightCard, directCard, rankCards, scoreCards, viaCard } from './rank.js';
@@ -41,7 +41,7 @@ export class SearchService {
   }
 
   search(query: SearchQuery): Promise<SearchResponse> {
-    const key = `search:${query.from}|${query.to}|${query.date}|${query.radiusKm}|${query.maxGroundHours}|${query.currency}`;
+    const key = `search:${query.from}|${query.to}|${query.date}|${query.radiusKm}|${query.maxGroundHours}|${query.currency}|${query.stopoverDays}`;
     // Aynı arama 10 dakika içinde gelirse hazır yanıt; aynı anda
     // gelenler tek hesaplamayı bekler.
     return this.deps.cache.singleFlight(key, RESPONSE_TTL, () => this.run(query));
@@ -88,14 +88,29 @@ export class SearchService {
     const filtered = prefilter(viaFlights, to, bestDirect?.cheapest ?? null, query.maxGroundHours);
     dropped.push(...filtered.dropped);
 
-    // 05 · Kara bacağı (en fazla K istek, bütçeli)
+    // 05 · Kara bacağı (en fazla K istek, bütçeli). Varış, şehrin ana
+    // istasyonuna bağlanır (bulunamazsa şehir merkezinin koordinatına).
+    const destStation =
+      filtered.kept.length > 0 && this.deps.stops
+        ? await this.deps.stops.cityStation(to).catch(() => null)
+        : null;
     const outcomes = await mapLimit(filtered.kept, PARAMS.topK, (c) =>
-      computeGround(c, to, query.maxGroundHours, {
-        router: this.deps.ground,
-        fx: this.deps.fx,
-        airports,
-        stops: this.deps.stops,
-      }),
+      computeGround(
+        c,
+        to,
+        {
+          maxGroundHours: query.maxGroundHours,
+          stopoverDays: query.stopoverDays,
+          ...(destStation ? { destStopId: destStation.id } : {}),
+        },
+        {
+          router: this.deps.ground,
+          fx: this.deps.fx,
+          airports,
+          stops: this.deps.stops,
+          cityNear: (a) => places.cityForAirport(a),
+        },
+      ),
     );
 
     // 06 · Kartlar
@@ -109,27 +124,31 @@ export class SearchService {
         dropped.push({ iata: candidate.airport.iata, reason: outcome?.reason ?? 'NO_GROUND_CONNECTION' });
         return;
       }
-      const card = viaCard(candidate, candidate.cheapest, outcome.ground);
+      const card = viaCard(candidate, candidate.cheapest, outcome.ground, query.stopoverDays);
       if (outcome.status === 'unverified') {
         partial = true;
         unverified.push(card);
         return;
       }
       cards.push(card);
-      const alt = alternateFlightCard(card, candidate.earliest, this.bufferFor(candidate.earliest, candidate));
+      const alt = alternateFlightCard(
+        card,
+        candidate.earliest,
+        query.stopoverDays > 0 ? 0 : this.bufferFor(candidate.earliest, candidate),
+      );
       if (alt) alternates.push(alt);
     });
     if (bestDirect) cards.push(directCard(bestDirect.cheapest, bestDirect.airport, bestDirect.distanceKm));
 
-    // En az 3 kart: a) aynı havalimanının diğer uçuşu, b) doğrulanamayanlar,
+    // Hedef 4 plan: a) aynı havalimanının diğer uçuşu, b) doğrulanamayanlar,
     // c) ilk 5'e giremeyenler (tahminle).
     const fillers: Card[] = [
       ...alternates,
       ...unverified,
-      ...filtered.reserve.map((c) => this.reserveCard(c)),
+      ...filtered.reserve.map((c) => this.reserveCard(c, query.stopoverDays)),
     ];
     for (const filler of fillers) {
-      if (cards.length >= PARAMS.minCards) break;
+      if (cards.length >= PARAMS.maxCards) break;
       cards.push(filler);
     }
 
@@ -149,9 +168,10 @@ export class SearchService {
     return bufferMinutes(origin?.country ?? 'TR', candidate.airport.country, flight.transfers);
   }
 
-  private reserveCard(candidate: Candidate): Card {
+  private reserveCard(candidate: Candidate, stopoverDays: number): Card {
     const flight = candidate.cheapest;
-    const departMs = ceilTo15(flight.arriveMs + this.bufferFor(flight, candidate) * 60_000);
-    return viaCard(candidate, flight, estimatedGround(candidate, flight, departMs));
+    const origin = this.deps.indexes()?.airports.get(flight.originAirport);
+    const departMs = earliestGroundDepart(flight, candidate.airport, origin?.country ?? 'TR', stopoverDays);
+    return viaCard(candidate, flight, estimatedGround(candidate, flight, departMs), stopoverDays);
   }
 }

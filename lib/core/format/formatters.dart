@@ -34,6 +34,25 @@ abstract final class Formatters {
   static String shortDay(DateTime date) =>
       DateFormat('d MMM EEE', 'tr').format(date);
 
+  /// Türkçe bulunma eki: "Münih" → "Münih'te", "Salzburg" → "Salzburg'da",
+  /// "Linz" → "Linz'de". Son ünlüye göre -da/-de, sert ünsüzle bitiyorsa
+  /// -ta/-te.
+  static String locative(String name) {
+    final lower = name.toLowerCase();
+    const back = 'aıou';
+    const vowels = 'aeıioöuüâîû';
+    var vowel = 'e';
+    for (var i = lower.length - 1; i >= 0; i--) {
+      if (vowels.contains(lower[i])) {
+        vowel = back.contains(lower[i]) || lower[i] == 'â' ? 'a' : 'e';
+        break;
+      }
+    }
+    final last = lower.isEmpty ? '' : lower[lower.length - 1];
+    final hard = 'fstkçşhp'.contains(last) && last.isNotEmpty;
+    return "$name'${hard ? 't' : 'd'}$vowel";
+  }
+
   static String _two(int n) => n.toString().padLeft(2, '0');
 
   static const Map<String, String> _symbols = {'TRY': '₺', 'EUR': '€'};

@@ -28,5 +28,11 @@ void main() {
     final via = result.options.firstWhere((o) => o.kind == RouteKind.via);
     expect(via.ground!.legs, isNotEmpty);
     expect(via.flags, isNot(contains(RouteFlag.unknown)));
+    // Örnek 1 gün konaklamalı aramadan üretildi: hedef 4 plan.
+    expect(result.options, hasLength(4));
+    expect(via.stopover?.days, 1);
+    expect(via.stopover?.city, 'Münih');
+    expect(via.total.travelMin, lessThan(via.total.doorToDoorMin));
+    expect(via.flags, contains(RouteFlag.stopover));
   });
 }

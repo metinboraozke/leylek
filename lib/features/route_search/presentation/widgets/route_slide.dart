@@ -40,7 +40,10 @@ class RouteSlide extends StatelessWidget {
         Text(
           o.kind == RouteKind.direct
               ? 'DOĞRUDAN UÇUŞ'
-              : 'AKTARMALI · ${o.via!.name.toUpperCase()} ÜZERİNDEN',
+              : [
+                  'AKTARMALI · ${o.via!.name.toUpperCase()} ÜZERİNDEN',
+                  if (o.stopover != null) '${o.stopover!.days} GÜN KONAKLAMA',
+                ].join(' · '),
           style: const TextStyle(
             fontSize: 11.5,
             letterSpacing: 0.8,
@@ -119,8 +122,14 @@ class RouteSlide extends StatelessWidget {
       return widgets;
     }
 
+    final stay = o.stopover;
     widgets.add(
-      WaitStrip(minutes: ground.waitMin, note: 'pasaport, bagaj, istasyon'),
+      stay != null
+          ? StayStrip(days: stay.days, city: stay.city)
+          : WaitStrip(
+              minutes: ground.waitMin,
+              note: 'pasaport, bagaj, istasyon',
+            ),
     );
     if (ground.legs.isEmpty) {
       widgets.add(BoardingPass.estimated(ground, day, o.via?.iata ?? '', to));
@@ -234,7 +243,10 @@ class _SummaryCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   [
-                    'Kapıdan kapıya ${Formatters.duration(o.total.doorToDoorMin)}',
+                    o.stopover == null
+                        ? 'Kapıdan kapıya ${Formatters.duration(o.total.doorToDoorMin)}'
+                        : 'Yolda ${Formatters.duration(o.total.travelMin)} · '
+                              '${Formatters.locative(o.stopover!.city)} ${o.stopover!.days} gün',
                     if (o.total.extraMin > 0)
                       '+${Formatters.duration(o.total.extraMin)}',
                   ].join(' · '),

@@ -45,7 +45,7 @@ final class ValidationFailure extends Failure {
   List<Object?> get props => [message, field];
 }
 
-enum ValidationField { from, to, date, radius, maxGroundHours }
+enum ValidationField { from, to, date, radius, maxGroundHours, stopover }
 
 /// Beklenmeyen durum: bozuk yanıt biçimi gibi. Kullanıcıya genel mesaj.
 final class UnexpectedFailure extends Failure {

@@ -17,16 +17,18 @@ import { transferPrices, type FareTransfer } from './fares.js';
 
 /**
  * Transitous (MOTIS 2) istemcisi. Yalnızca herkese açık API:
- * `/api/v6/plan`, `/api/v1/geocode` ve `/api/v1/reverse-geocode`.
+ * `/api/v6/plan`, `/api/v1/geocode` ve `/api/v6/map/stops`.
  * Staging ya da iç uç nokta yok.
  *
  * Parametreler MOTIS 2.10.2 OpenAPI tanımından doğrulandı:
  *   • `RAIL` hızlı tren, şehirlerarası, gece treni, bölgesel, banliyö
  *     (S-Bahn) ve metroyu kapsar. Banliyö olmadan havalimanından şehre
  *     inen S-Bahn bulunamaz.
- *   • `timetableView=false`: verilen andan sonra en erken varan yolculuk;
- *     bekleme yolculuğa sayılır. Varsayılan arama penceresi yalnızca
- *     15 dakika olduğu için gece inişinde sabahki ilk sefer de böyle bulunur.
+ *   • `timetableView` varsayılanında (true) bırakılır, 1 saatlik pencere ve
+ *     en az 3 yolculuk istenir. Transitous ekibinin önerisi: `false` yalnızca
+ *     en erken varışı arar, en geç kalkışı gözetmez ve kafa karıştırıcı
+ *     sonuçlar verebilir. Pencere boşsa MOTIS en az 3 yolculuk bulana kadar
+ *     aramayı genişletir; gece inişinde sabahki ilk sefer de böyle bulunur.
  */
 export const TRANSIT_MODES = 'RAIL,COACH,BUS,FERRY,TRAM';
 const PLAN_TTL = 6 * HOUR;
@@ -39,6 +41,34 @@ const RAIL_MODES = new Set([
   'LONG_DISTANCE', 'HIGHSPEED_RAIL', 'NIGHT_RAIL', 'METRO', 'TRAM',
 ]);
 
+/** Şehrin ana istasyonunu ararken istenen ulaşım türleri. */
+const STATION_MODES = 'HIGHSPEED_RAIL,LONG_DISTANCE,REGIONAL_RAIL,RAIL';
+
+export interface StationMatch {
+  id?: string;
+  name?: string;
+  lat?: number;
+  lon?: number;
+  modes?: string[];
+  importance?: number;
+}
+
+/**
+ * Şehrin ana istasyonu: 15 km içindeki eşleşmelerden "önemi" en yüksek
+ * olan (MOTIS'in durak önem puanı; Hbf gibi büyük istasyonlar öne çıkar).
+ */
+export function pickCityStation(city: LatLon, matches: StationMatch[]): TransitStop | null {
+  let best: { stop: TransitStop; importance: number } | null = null;
+  for (const m of matches) {
+    if (typeof m.id !== 'string' || typeof m.lat !== 'number' || typeof m.lon !== 'number') continue;
+    const stop: TransitStop = { id: m.id, name: m.name ?? '', lat: m.lat, lon: m.lon, modes: m.modes ?? [] };
+    if (haversineKm(city, stop) > 15) continue;
+    const importance = m.importance ?? 0;
+    if (!best || importance > best.importance) best = { stop, importance };
+  }
+  return best?.stop ?? null;
+}
+
 /**
  * Havalimanı için kullanılacak durak: 3 km içinde raylı sistemi olan en
  * yakın durak; yoksa 1,5 km içindeki en yakın durak; o da yoksa `null`
@@ -47,6 +77,10 @@ const RAIL_MODES = new Set([
  */
 export function pickAirportStop(point: LatLon, stops: TransitStop[]): TransitStop | null {
   const withDistance = stops
+    // Yalnızca uçak türü olan "duraklar" elenir: bazı veri setleri
+    // havalimanının kendisini durak olarak yayımlıyor (ör. Sardinya uçuş
+    // verisindeki "Aeroporto di Nuernberg"). Ondan tren/otobüs kalkmaz.
+    .filter((stop) => !(stop.modes.length > 0 && stop.modes.every((m) => m === 'AIRPLANE')))
     .map((stop) => ({ stop, km: haversineKm(point, stop) }))
     .sort((a, b) => a.km - b.km);
   const rail = withDistance.find((s) => s.km <= 3 && s.stop.modes.some((m) => RAIL_MODES.has(m)));
@@ -140,9 +174,10 @@ export class TransitousClient implements GroundRouter, Geocoder, StopLocator {
   async plan(request: GroundRequest): Promise<GroundItinerary[]> {
     const params = new URLSearchParams({
       fromPlace: request.fromStopId ?? `${request.from.lat},${request.from.lon}`,
-      toPlace: `${request.to.lat},${request.to.lon}`,
+      toPlace: request.toStopId ?? `${request.to.lat},${request.to.lon}`,
       time: new Date(request.earliestDepartMs).toISOString(),
-      timetableView: 'false',
+      searchWindow: '3600',
+      numItineraries: '3',
       transitModes: TRANSIT_MODES,
       maxTransfers: '2',
       maxTravelTime: String(request.maxTravelMinutes),
@@ -157,16 +192,45 @@ export class TransitousClient implements GroundRouter, Geocoder, StopLocator {
     return (body.itineraries ?? []).map(mapItinerary).filter((x): x is GroundItinerary => x !== null);
   }
 
+  /**
+   * Havalimanının çevresindeki (~3 km) durakları `/api/v6/map/stops` ile
+   * listeler ve aralarından en yakın raylı durağı seçer.
+   *
+   * Ters yer araması burada işe yaramıyordu: havalimanı noktasına en yakın
+   * "duraklar" başka ülkelerin uçuş verilerindeki uçak durakları
+   * (ör. "Aeroporto di Nuernberg"); ilk 20 sonucun içine U2 metro durağı
+   * hiç girmiyordu. Bölge listesi tümünü getirir, seçim sonra yapılır.
+   */
   async nearestStop(point: LatLon): Promise<TransitStop | null> {
     return this.cache.singleFlight(`stop:${coordKey(point)}`, STOP_TTL, async () => {
-      const params = new URLSearchParams({ place: `${point.lat},${point.lon}`, type: 'STOP', numResults: '10' });
-      const matches = await this.http.getJson<
-        { id?: string; name?: string; lat?: number; lon?: number; modes?: string[] }[]
-      >(`${this.baseUrl}/api/v1/reverse-geocode?${params}`);
-      const stops: TransitStop[] = (Array.isArray(matches) ? matches : [])
-        .filter((m) => typeof m.id === 'string' && typeof m.lat === 'number' && typeof m.lon === 'number')
-        .map((m) => ({ id: m.id!, name: m.name ?? '', lat: m.lat!, lon: m.lon!, modes: m.modes ?? [] }));
+      const dLat = 0.03;
+      const dLon = 0.045;
+      const params = new URLSearchParams({
+        min: `${point.lat - dLat},${point.lon - dLon}`,
+        max: `${point.lat + dLat},${point.lon + dLon}`,
+      });
+      const places = await this.http.getJson<
+        { stopId?: string; name?: string; lat?: number; lon?: number; modes?: string[] }[]
+      >(`${this.baseUrl}/api/v6/map/stops?${params}`);
+      const stops: TransitStop[] = (Array.isArray(places) ? places : [])
+        .filter((m) => typeof m.stopId === 'string' && typeof m.lat === 'number' && typeof m.lon === 'number')
+        .map((m) => ({ id: m.stopId!, name: m.name ?? '', lat: m.lat!, lon: m.lon!, modes: m.modes ?? [] }));
       return pickAirportStop(point, stops);
+    });
+  }
+
+  async cityStation(city: LatLon & { name: string }): Promise<TransitStop | null> {
+    return this.cache.singleFlight(`station:${coordKey(city)}`, STOP_TTL, async () => {
+      const params = new URLSearchParams({
+        text: city.name,
+        type: 'STOP',
+        mode: STATION_MODES,
+        place: `${city.lat},${city.lon}`,
+        placeBias: '3',
+        numResults: '5',
+      });
+      const matches = await this.http.getJson<StationMatch[]>(`${this.baseUrl}/api/v1/geocode?${params}`);
+      return pickCityStation(city, Array.isArray(matches) ? matches : []);
     });
   }
 
@@ -202,7 +266,7 @@ export class BudgetedGroundRouter implements GroundRouter {
   ) {}
 
   plan(request: GroundRequest): Promise<GroundItinerary[]> {
-    const key = `plan:${request.fromStopId ?? coordKey(request.from)}:${coordKey(request.to)}:${request.earliestDepartMs}:${request.maxTravelMinutes}`;
+    const key = `plan:${request.fromStopId ?? coordKey(request.from)}:${request.toStopId ?? coordKey(request.to)}:${request.earliestDepartMs}:${request.maxTravelMinutes}`;
     return this.cache.singleFlight(
       key,
       PLAN_TTL,

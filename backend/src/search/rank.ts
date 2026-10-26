@@ -15,7 +15,12 @@ import {
 const MINUTE = 60_000;
 
 /** Kart için uyarı etiketleri. */
-export function flagsFor(flight: FlightQuote, ground: CardGround | null, airport: Airport): Set<Flag> {
+export function flagsFor(
+  flight: FlightQuote,
+  ground: CardGround | null,
+  airport: Airport,
+  stopoverDays = 0,
+): Set<Flag> {
   const flags = new Set<Flag>();
   if (flight.priceAgeDays !== null && flight.priceAgeDays * 24 > PARAMS.staleHours) flags.add('PRICE_STALE');
   if (!ground) return flags;
@@ -24,13 +29,28 @@ export function flagsFor(flight: FlightQuote, ground: CardGround | null, airport
   if (!ground.verified) flags.add('GROUND_NOT_VERIFIED');
   if (ground.fareSource === 'estimated') flags.add('GROUND_FARE_ESTIMATED');
   if (ground.fareSource === 'partial') flags.add('GROUND_FARE_PARTIAL');
-  if (ground.waitMin < PARAMS.tightConnectionMin) flags.add('TIGHT_CONNECTION');
-  if (overlapsNight(flight.arriveMs, ground.departMs, airport.tz)) flags.add('OVERNIGHT_WAIT');
+  if (stopoverDays > 0) {
+    // Bilerek kalınan gece "gece beklemesi" değil; aktarma da dar değil.
+    flags.add('STOPOVER');
+  } else {
+    if (ground.waitMin < PARAMS.tightConnectionMin) flags.add('TIGHT_CONNECTION');
+    if (overlapsNight(flight.arriveMs, ground.departMs, airport.tz)) flags.add('OVERNIGHT_WAIT');
+  }
   if (ground.legs.some((l) => l.mode === 'FERRY')) flags.add('FERRY');
   return flags;
 }
 
-export function viaCard(candidate: Candidate, flight: FlightQuote, ground: CardGround): Card {
+/** Konaklamalı rotada inişten kara kalkışına kadar geçen, bilerek kalınan süre. */
+function stayMinutes(flight: FlightQuote, ground: CardGround, stopoverDays: number): number {
+  return stopoverDays > 0 ? Math.max(0, Math.round((ground.departMs - flight.arriveMs) / MINUTE)) : 0;
+}
+
+export function viaCard(
+  candidate: Candidate,
+  flight: FlightQuote,
+  ground: CardGround,
+  stopoverDays = 0,
+): Card {
   return {
     kind: 'VIA',
     airport: candidate.airport,
@@ -41,7 +61,9 @@ export function viaCard(candidate: Candidate, flight: FlightQuote, ground: CardG
     doorToDoorMin: Math.round((ground.arriveMs - flight.departMs) / MINUTE),
     extraMin: 0,
     score: 0,
-    flags: flagsFor(flight, ground, candidate.airport),
+    flags: flagsFor(flight, ground, candidate.airport, stopoverDays),
+    stopoverDays,
+    stayMin: stayMinutes(flight, ground, stopoverDays),
   };
 }
 
@@ -57,6 +79,8 @@ export function directCard(flight: FlightQuote, airport: Airport, distanceKm: nu
     extraMin: 0,
     score: 0,
     flags: flagsFor(flight, null, airport),
+    stopoverDays: 0,
+    stayMin: 0,
   };
 }
 
@@ -76,15 +100,19 @@ export function alternateFlightCard(base: Card, other: FlightQuote, bufferMin: n
     ground: shifted,
     totalEur: other.priceEur + ground.fareEur,
     doorToDoorMin: Math.round((ground.arriveMs - other.departMs) / MINUTE),
-    flags: flagsFor(other, shifted, base.airport),
+    flags: flagsFor(other, shifted, base.airport, base.stopoverDays),
+    stayMin: stayMinutes(other, shifted, base.stopoverDays),
   };
 }
 
 /** Puan: fiyat + zaman değeri × fazla süre + cezalar (EUR). */
 export function scoreCards(cards: Card[], directDoorToDoorMin: number | null): void {
-  const reference = directDoorToDoorMin ?? Math.min(...cards.map((c) => c.doorToDoorMin));
+  // Konaklama süresi bilerek geçirildiği için yolda geçen süreden düşülür;
+  // aksi halde 1 günlük konaklama 24 saat "fazla süre" cezası alırdı.
+  const travel = (c: Card) => c.doorToDoorMin - c.stayMin;
+  const reference = directDoorToDoorMin ?? Math.min(...cards.map(travel));
   for (const card of cards) {
-    card.extraMin = Math.max(0, card.doorToDoorMin - reference);
+    card.extraMin = Math.max(0, travel(card) - reference);
     const g = card.ground;
     let penalty = 0;
     if (card.flags.has('OVERNIGHT_WAIT')) penalty += PARAMS.penalties.overnight;

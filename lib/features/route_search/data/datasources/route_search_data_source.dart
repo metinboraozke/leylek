@@ -20,6 +20,7 @@ class ApiRouteSearchDataSource implements RouteSearchDataSource {
       'to': query.to,
       'date': query.isoDate,
       'radiusKm': query.radiusKm,
+      'stopoverDays': query.stopoverDays,
       'maxGroundHours': query.maxGroundHours,
       'currency': query.currency,
       'lang': 'tr',

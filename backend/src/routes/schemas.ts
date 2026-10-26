@@ -23,6 +23,7 @@ export function searchQuerySchema(now: () => number = Date.now) {
     radiusKm: z.coerce.number().int().min(50).max(400).default(250),
     maxGroundHours: z.coerce.number().min(1).max(8).default(5),
     currency: z.enum(['TRY', 'EUR']).default('TRY'),
+    stopoverDays: z.coerce.number().int().min(0).max(3).default(0),
     lang: z.enum(['tr', 'en']).default('tr'),
   });
 }

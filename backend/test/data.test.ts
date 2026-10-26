@@ -79,6 +79,20 @@ describe('yer dizini', () => {
 
   it('havalimanı için kartta görünecek şehir adı', () => {
     expect(ix.places.cityNameNear(ix.airports.get('MUC')!)).toBe('Münih');
+    expect(ix.places.cityForAirport(ix.airports.get('MUC')!)?.name).toBe('Münih');
+  });
+
+  it('belediye adı şehir listesinde varsa onu, yoksa yakındaki en kalabalık şehri seçer', () => {
+    const memmingen = { ...ix.airports.get('FMM')!, municipality: 'Memmingen' };
+    // Test verisinde Memmingen şehri yok ve 60 km içinde başka şehir de yok:
+    // sonuç boş, yanıt havalimanının belediye adına düşer.
+    expect(ix.places.cityForAirport(memmingen)).toBeNull();
+    // Belediye adı listede varsa (Münih ~ 30 km) Ulm gibi daha uzak/kalabalık
+    // bir şehir yerine o seçilir.
+    const munich = { ...ix.airports.get('MUC')!, municipality: 'Munich' };
+    expect(ix.places.cityForAirport(munich)?.name).toBe('Münih');
+    const linz = ix.airports.get('LNZ')!;
+    expect(ix.places.cityForAirport(linz)?.name).toBe('Linz');
   });
 });
 

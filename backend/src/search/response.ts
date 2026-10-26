@@ -39,6 +39,7 @@ export function toResponse(ctx: ResponseContext) {
       to: ctx.to.name,
       date: ctx.query.date,
       radiusKm: ctx.query.radiusKm,
+      stopoverDays: ctx.query.stopoverDays,
       currency: ctx.query.currency,
     },
     recommendedRank: recommended?.rank ?? null,
@@ -51,7 +52,7 @@ export function toResponse(ctx: ResponseContext) {
         c.kind === 'VIA'
           ? {
               iata: c.airport.iata,
-              name: ctx.places.cityNameNear(c.airport) ?? c.airport.municipality,
+              name: ctx.places.cityForAirport(c.airport)?.name ?? c.airport.municipality,
               country: c.airport.country,
               distanceKm: Math.round(c.distanceKm),
             }
@@ -94,9 +95,15 @@ export function toResponse(ctx: ResponseContext) {
       total: {
         price: money(c.totalEur),
         doorToDoorMin: c.doorToDoorMin,
+        // Konaklama hariç yolda geçen süre.
+        travelMin: c.doorToDoorMin - c.stayMin,
         extraMin: c.extraMin,
         savings: c.savingsEur === null ? null : money(c.savingsEur),
       },
+      stopover:
+        c.stopoverDays > 0
+          ? { days: c.stopoverDays, city: ctx.places.cityForAirport(c.airport)?.name ?? c.airport.municipality }
+          : undefined,
       score: Math.round(c.score * 100) / 100,
       flags: [...c.flags],
       booking: bookingLinks(c, ctx.query.date),

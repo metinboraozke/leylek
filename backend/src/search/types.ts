@@ -9,6 +9,8 @@ export interface SearchQuery {
   radiusKm: number;
   maxGroundHours: number;
   currency: 'TRY' | 'EUR';
+  /** Aktarma şehrinde kaç gün kalınacak (0–3). */
+  stopoverDays: number;
 }
 
 /**
@@ -30,8 +32,11 @@ export const PARAMS = {
   /** Saat başı zaman değeri (EUR). */
   vot: 12,
   minCards: 3,
-  /** Sonuç ekranı en fazla 4 slayt gösterir. */
+  /** Sonuç ekranı en fazla 4 slayt gösterir; hedef her zaman 4 plan. */
   maxCards: 4,
+  /** Konaklamalı rotada kara bacağının en erken kalkış saati (yerel). */
+  stopoverDepartHour: 9,
+  maxStopoverDays: 3,
   /** Doğrudan uçuşta havalimanından şehre ulaşım tahmini. */
   directGroundMin: 45,
   tightConnectionMin: 120,
@@ -49,7 +54,8 @@ export type Flag =
   | 'GROUND_FARE_PARTIAL'
   | 'GROUND_NOT_VERIFIED'
   | 'FERRY'
-  | 'PRICE_STALE';
+  | 'PRICE_STALE'
+  | 'STOPOVER';
 
 export type DropReason =
   | 'NO_FLIGHT_DATA'
@@ -108,6 +114,10 @@ export interface Card {
   extraMin: number;
   score: number;
   flags: Set<Flag>;
+  /** Aktarma şehrinde kalınan gün; 0 ise konaklama yok. */
+  stopoverDays: number;
+  /** Bilerek geçirilen konaklama süresi (dk); süre karşılaştırmasından düşülür. */
+  stayMin: number;
 }
 
 export type Badge = 'CHEAPEST' | 'FASTEST' | 'RECOMMENDED';

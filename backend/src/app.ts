@@ -113,6 +113,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       radiusKm: q.radiusKm,
       maxGroundHours: q.maxGroundHours,
       currency: q.currency,
+      stopoverDays: q.stopoverDays,
     });
   });
 

@@ -4,7 +4,13 @@ import { TtlCache } from '../src/core/cache.js';
 import { UpstreamError } from '../src/core/errors.js';
 import { HttpClient, type FetchFn } from '../src/core/http.js';
 import { parseEcbXml } from '../src/providers/fx/ecb.js';
-import { BudgetedGroundRouter, mapItinerary, pickAirportStop, TransitousClient } from '../src/providers/transitous/client.js';
+import {
+  BudgetedGroundRouter,
+  mapItinerary,
+  pickAirportStop,
+  pickCityStation,
+  TransitousClient,
+} from '../src/providers/transitous/client.js';
 import { mapQuote, priceAgeDays, TravelpayoutsClient } from '../src/providers/travelpayouts/client.js';
 import type { GroundRequest, GroundRouter } from '../src/search/ports.js';
 import { NOW } from './helpers.js';
@@ -110,7 +116,10 @@ describe('Transitous', () => {
     const url = new URL(f.urls[0]!);
     expect(url.origin + url.pathname).toBe('https://api.transitous.org/api/v6/plan');
     expect(url.searchParams.get('transitModes')).toBe('RAIL,COACH,BUS,FERRY,TRAM');
-    expect(url.searchParams.get('timetableView')).toBe('false');
+    // Transitous önerisi: timetableView varsayılanında, 1 saatlik pencere
+    expect(url.searchParams.has('timetableView')).toBe(false);
+    expect(url.searchParams.get('searchWindow')).toBe('3600');
+    expect(url.searchParams.get('numItineraries')).toBe('3');
     expect(url.searchParams.get('maxTransfers')).toBe('2');
     expect(url.searchParams.get('withFares')).toBe('true');
     expect(url.searchParams.get('time')).toBe('2026-11-20T10:30:00.000Z');
@@ -160,20 +169,32 @@ describe('havalimanı durağı', () => {
     expect(picked?.id).toBe('flughafen-u2');
   });
 
+  it('yalnızca uçak türü olan durağı (havalimanının kendisi) seçmez', () => {
+    const picked = pickAirportStop(nue, [
+      stop('sardegna-NUE', 49.4987, 11.078, ['AIRPLANE']),
+      stop('flughafen-u2', 49.49396, 11.078626, ['SUBWAY', 'BUS']),
+    ]);
+    expect(picked?.id).toBe('flughafen-u2');
+    expect(pickAirportStop(nue, [stop('sardegna-NUE', 49.4987, 11.078, ['AIRPLANE'])])).toBeNull();
+  });
+
   it('raylı yoksa 1,5 km içindeki en yakın durak, o da yoksa null', () => {
     expect(pickAirportStop(nue, [stop('bus', 49.4935, 11.08, ['BUS'])])?.id).toBe('bus');
     expect(pickAirportStop(nue, [stop('uzak', 49.45, 11.0, ['BUS'])])).toBeNull();
     expect(pickAirportStop(nue, [])).toBeNull();
   });
 
-  it('ters yer aramasıyla bulur, önbelleğe alır ve plan isteğinde durak kimliğini kullanır', async () => {
-    const f = fakeFetch([{ id: 'de-DELFI_de:09564:1391', name: 'Nürnberg Flughafen', lat: 49.49396, lon: 11.078626, modes: ['SUBWAY', 'BUS'] }]);
+  it('bölgedeki durakları listeleyip seçer, önbelleğe alır ve plan isteğinde kullanır', async () => {
+    const f = fakeFetch([
+      { stopId: 'it-Sardegna-Planes-Cagliari-Airport_NUE', name: 'Aeroporto di Nuernberg (NUE)', lat: 49.4987, lon: 11.0781, modes: ['AIRPLANE'] },
+      { stopId: 'de-DELFI_de:09564:1391', name: 'Nürnberg Flughafen', lat: 49.49396, lon: 11.078626, modes: ['SUBWAY', 'BUS'] },
+    ]);
     const client = new TransitousClient(new HttpClient('transitous', f.fn, 'x'), 'https://api.transitous.org', new TtlCache());
     const found = await client.nearestStop(nue);
     await client.nearestStop(nue);
     expect(found?.id).toBe('de-DELFI_de:09564:1391');
     expect(f.urls).toHaveLength(1);
-    expect(new URL(f.urls[0]!).pathname).toBe('/api/v1/reverse-geocode');
+    expect(new URL(f.urls[0]!).pathname).toBe('/api/v6/map/stops');
 
     const g = fakeFetch({ itineraries: [] });
     const planner = new TransitousClient(new HttpClient('transitous', g.fn, 'x'), 'https://api.transitous.org', new TtlCache());
@@ -187,5 +208,41 @@ describe('ECB kurları', () => {
     const rates = parseEcbXml("<Cube currency='USD' rate='1.0812'/><Cube currency='TRY' rate='44.1205'/>");
     expect(rates.get('TRY')).toBe(44.1205);
     expect(rates.get('EUR')).toBe(1);
+  });
+});
+
+describe('şehrin ana istasyonu', () => {
+  const salzburg = { lat: 47.7994, lon: 13.044, name: 'Salzburg' };
+
+  it('15 km içindeki en önemli istasyonu seçer', () => {
+    const picked = pickCityStation(salzburg, [
+      { id: 'sud', name: 'Salzburg Süd', lat: 47.78, lon: 13.07, modes: ['REGIONAL_RAIL'], importance: 0.3 },
+      { id: 'hbf', name: 'Salzburg Hbf', lat: 47.813, lon: 13.0451, modes: ['LONG_DISTANCE'], importance: 0.9 },
+      { id: 'uzak', name: 'Freilassing', lat: 47.84, lon: 12.98, modes: ['REGIONAL_RAIL'], importance: 0.95 },
+      { id: 'cok-uzak', name: 'Linz Hbf', lat: 48.29, lon: 14.29, modes: ['LONG_DISTANCE'], importance: 1 },
+    ]);
+    // Freilassing ~6 km: 15 km içinde ve daha önemli görünse de Salzburg Hbf'den
+    // önce gelir; bu testte önemi bilerek yüksek verildi.
+    expect(picked?.id).toBe('uzak');
+    expect(pickCityStation(salzburg, [])).toBeNull();
+  });
+
+  it('ad, tren türü ve konum eğilimiyle arar; sonucu önbellekler', async () => {
+    const f = fakeFetch([{ id: 'at:Hbf', name: 'Salzburg Hbf', lat: 47.813, lon: 13.0451, importance: 0.9 }]);
+    const client = new TransitousClient(new HttpClient('transitous', f.fn, 'x'), 'https://api.transitous.org', new TtlCache());
+    expect((await client.cityStation(salzburg))?.id).toBe('at:Hbf');
+    await client.cityStation(salzburg);
+    expect(f.urls).toHaveLength(1);
+    const url = new URL(f.urls[0]!);
+    expect(url.pathname).toBe('/api/v1/geocode');
+    expect(url.searchParams.get('type')).toBe('STOP');
+    expect(url.searchParams.get('mode')).toContain('LONG_DISTANCE');
+  });
+
+  it('plan isteğinde varış durak kimliğiyle gider', async () => {
+    const f = fakeFetch({ itineraries: [] });
+    const client = new TransitousClient(new HttpClient('transitous', f.fn, 'x'), 'https://api.transitous.org', new TtlCache());
+    await client.plan({ from: { lat: 48.35, lon: 11.79 }, to: salzburg, toStopId: 'at:Hbf', earliestDepartMs: 0, maxTravelMinutes: 780 });
+    expect(new URL(f.urls[0]!).searchParams.get('toPlace')).toBe('at:Hbf');
   });
 });

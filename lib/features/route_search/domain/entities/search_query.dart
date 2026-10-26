@@ -9,6 +9,7 @@ class SearchQuery extends Equatable {
     this.radiusKm = defaultRadiusKm,
     this.maxGroundHours = defaultMaxGroundHours,
     this.currency = 'TRY',
+    this.stopoverDays = 0,
   });
 
   static const int defaultRadiusKm = 250;
@@ -19,6 +20,9 @@ class SearchQuery extends Equatable {
   static const double maxGroundHoursLimit = 8;
   static const int maxDaysAhead = 330;
 
+  /// Aktarma şehrinde en fazla kaç gün kalınabilir.
+  static const int maxStopoverDays = 3;
+
   /// Yer kimliği ya da serbest metin (backend ikisini de çözer).
   final String from;
   final String to;
@@ -28,6 +32,9 @@ class SearchQuery extends Equatable {
   final int radiusKm;
   final double maxGroundHours;
   final String currency;
+
+  /// Aktarma şehrinde kaç gün kalınacak; 0 ise aynı gün devam.
+  final int stopoverDays;
 
   /// API'nin beklediği `YYYY-MM-DD`.
   String get isoDate =>
@@ -43,5 +50,6 @@ class SearchQuery extends Equatable {
     radiusKm,
     maxGroundHours,
     currency,
+    stopoverDays,
   ];
 }

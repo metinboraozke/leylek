@@ -1,4 +1,5 @@
 import { TtlCache } from '../src/core/cache.js';
+import { haversineKm } from '../src/core/geo.js';
 import { buildIndexes } from '../src/data/dataset.js';
 import type { Airport, City, Dataset } from '../src/data/types.js';
 import { normalize } from '../src/core/text.js';
@@ -111,7 +112,12 @@ export class FakeGround implements GroundRouter {
   ) {}
   async plan(request: GroundRequest): Promise<GroundItinerary[]> {
     this.requests.push(request);
-    const iata = AIRPORTS.find((a) => a.lat === request.from.lat && a.lon === request.from.lon)?.iata ?? '?';
+    // Kalkış havalimanının kendisi ya da (konaklamalıda) hizmet ettiği şehir:
+    // 60 km içindeki en yakın havalimanı.
+    const iata =
+      AIRPORTS.map((a) => ({ a, d: haversineKm(a, request.from) }))
+        .filter((x) => x.d <= 60)
+        .sort((x, y) => x.d - y.d)[0]?.a.iata ?? '?';
     const r = this.routes[iata];
     if (!r || r.none) return [];
     if (r.fail) throw new Error('transitous 500');

@@ -26,6 +26,7 @@ abstract final class Labels {
     RouteFlag.groundNotVerified => 'Kara yolu doğrulanamadı',
     RouteFlag.ferry => 'Feribot',
     RouteFlag.priceStale => 'Fiyat eski olabilir',
+    RouteFlag.stopover => 'Konaklamalı',
     RouteFlag.unknown => null,
   };
 
