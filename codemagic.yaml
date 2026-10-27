@@ -1,0 +1,141 @@
+# Leylek · Codemagic iş akışları
+#
+#   kontrol          her push'ta: analiz + Flutter testleri + backend testleri + sahte uçtan uca
+#   android-release  elle: imzalı .aab (Play Store) ve .apk (cihazda deneme)
+#   ios-testflight   elle: imzalı .ipa, App Store Connect'e yükleme
+#
+# Sırlar bu dosyada YOK. Codemagic arayüzünde tanımlanır (adım adım
+# anlatım: docs/codemagic-rehberi.md):
+#   • ortam grubu "leylek"          → API_BASE_URL (backend adresi, https)
+#   • Android keystore "leylek_upload"
+#   • App Store Connect entegrasyonu "codemagic"
+
+workflows:
+  kontrol:
+    name: Kontrol (test)
+    max_build_duration: 30
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+      node: 22
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: main
+    scripts:
+      - name: Flutter paketleri
+        script: flutter pub get
+      - name: Statik analiz
+        script: flutter analyze
+      - name: Flutter testleri
+        script: flutter test
+      - name: Backend paketleri
+        working_directory: backend
+        script: npm ci
+      - name: Backend testleri
+        working_directory: backend
+        script: npm test
+      - name: Havalimanı ve şehir verisi (OurAirports, GeoNames)
+        working_directory: backend
+        script: npm run data:import
+      - name: Uçtan uca (sahte dış servisler, ağa çıkmaz)
+        working_directory: backend
+        script: npm run e2e
+    artifacts:
+      - backend/e2e-reports/*.json
+
+  android-release:
+    name: Android release
+    max_build_duration: 45
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+      java: 17
+      android_signing:
+        - leylek_upload
+      groups:
+        - leylek
+    scripts:
+      - name: Paketler
+        script: flutter pub get
+      - name: Backend adresi kontrolü
+        script: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "UYARI: API_BASE_URL boş. Uygulama ÖRNEK VERİYLE derlenecek."
+          else
+            echo "Backend: $API_BASE_URL"
+          fi
+      - name: Testler
+        script: flutter test
+      - name: App Bundle (Play Store)
+        script: |
+          flutter build appbundle --release \
+            --build-name=1.0.0 \
+            --build-number=$BUILD_NUMBER \
+            ${API_BASE_URL:+--dart-define=API_BASE_URL=$API_BASE_URL}
+      - name: APK (cihazda deneme)
+        script: |
+          flutter build apk --release \
+            --build-name=1.0.0 \
+            --build-number=$BUILD_NUMBER \
+            ${API_BASE_URL:+--dart-define=API_BASE_URL=$API_BASE_URL}
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/mapping/release/mapping.txt
+    publishing:
+      email:
+        recipients:
+          - metinbora61@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  ios-testflight:
+    name: iOS TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      # Codemagic > Team settings > Integrations > Developer Portal'daki anahtar adı
+      app_store_connect: codemagic
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: app.leylek.leylek
+      groups:
+        - leylek
+    scripts:
+      - name: Paketler
+        script: flutter pub get
+      - name: Backend adresi kontrolü
+        script: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "UYARI: API_BASE_URL boş. Uygulama ÖRNEK VERİYLE derlenecek."
+          else
+            echo "Backend: $API_BASE_URL"
+          fi
+      - name: İmzalama profillerini uygula
+        script: xcode-project use-profiles
+      - name: IPA derle
+        script: |
+          flutter build ipa --release \
+            --build-name=1.0.0 \
+            --build-number=$BUILD_NUMBER \
+            ${API_BASE_URL:+--dart-define=API_BASE_URL=$API_BASE_URL} \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - metinbora61@gmail.com
+      app_store_connect:
+        auth: integration
+        # true yapılırsa yükleme bitince TestFlight iç test grubuna da açılır.
+        submit_to_testflight: false
