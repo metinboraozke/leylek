@@ -54,7 +54,7 @@ class _IdleStorkState extends State<IdleStork>
           final radius = w * 0.78;
           final center = Offset(w / 2, h + radius * 0.22);
           final globeTop = center.dy - radius;
-          final storkHeight = math.min(w * 0.42, 190.0);
+          final storkHeight = math.min(w * 0.54, 250.0);
           final storkWidth = storkHeight * StandingStork.aspect;
           return Stack(
             clipBehavior: Clip.hardEdge,
