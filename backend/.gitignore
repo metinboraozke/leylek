@@ -4,3 +4,4 @@ dist/
 data/generated/
 data/raw/
 *.log
+e2e-reports/

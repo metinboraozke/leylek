@@ -18,7 +18,7 @@ import type { FlightPriceSource, FlightQuote } from '../../search/ports.js';
  * Leylek'e özel: `link` (ortaklık bağlantısı) yalnızca yaş için okunur,
  * hiçbir zaman istemciye gitmez. Marker gönderilmez.
  */
-const URL_BASE = 'https://api.travelpayouts.com/aviasales/v3/prices_for_dates';
+const PATH = '/aviasales/v3/prices_for_dates';
 const TTL = 6 * HOUR;
 
 interface RawQuote {
@@ -73,6 +73,7 @@ export class TravelpayoutsClient implements FlightPriceSource {
     private readonly token: string,
     private readonly cache: TtlCache,
     private readonly now: () => number = Date.now,
+    private readonly baseUrl = 'https://api.travelpayouts.com',
   ) {}
 
   async quotes(originCode: string, destCode: string, day: string): Promise<FlightQuote[]> {
@@ -91,7 +92,7 @@ export class TravelpayoutsClient implements FlightPriceSource {
         limit: '30',
         token: this.token,
       });
-      const body = await this.http.getJson<{ data?: RawQuote[] }>(`${URL_BASE}?${query}`);
+      const body = await this.http.getJson<{ data?: RawQuote[] }>(`${this.baseUrl}${PATH}?${query}`);
       const now = this.now();
       return (body.data ?? [])
         .map((raw) => mapQuote(raw, originCode, destCode, now))

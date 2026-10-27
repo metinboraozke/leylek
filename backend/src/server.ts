@@ -63,11 +63,17 @@ setInterval(() => void refreshData(true), 7 * DAY).unref();
 
 const search = new SearchService({
   indexes: () => indexes,
-  flights: new TravelpayoutsClient(http('travelpayouts', 20_000), config.travelpayoutsToken, cache),
+  flights: new TravelpayoutsClient(
+    http('travelpayouts', 20_000),
+    config.travelpayoutsToken,
+    cache,
+    Date.now,
+    config.travelpayoutsBaseUrl,
+  ),
   ground,
   geocoder: transitous,
   stops: transitous,
-  fx: new EcbRates(http('ecb'), cache),
+  fx: new EcbRates(http('ecb'), cache, config.ecbRatesUrl),
   cache,
 });
 

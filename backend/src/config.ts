@@ -17,6 +17,9 @@ const schema = z.object({
   LEYLEK_CONTACT_EMAIL: z.string().trim().default(''),
 
   TRANSITOUS_BASE_URL: z.string().url().default('https://api.transitous.org'),
+  // Uçtan uca testlerde sahte sunucuya yönlendirmek için; üretimde boş bırakılır.
+  TRAVELPAYOUTS_BASE_URL: z.string().url().default('https://api.travelpayouts.com'),
+  ECB_RATES_URL: z.string().url().default('https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml'),
   TRANSITOUS_PLAN_PER_MINUTE: z.coerce.number().int().positive().default(30),
   TRANSITOUS_PLAN_PER_DAY: z.coerce.number().int().positive().default(3000),
 
@@ -33,6 +36,8 @@ export interface Config {
   logLevel: string;
   travelpayoutsToken: string;
   transitousBaseUrl: string;
+  travelpayoutsBaseUrl: string;
+  ecbRatesUrl: string;
   transitousPlanPerMinute: number;
   transitousPlanPerDay: number;
   rateLimitPerMinute: number;
@@ -52,6 +57,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
     logLevel: e.LOG_LEVEL,
     travelpayoutsToken: e.TRAVELPAYOUTS_TOKEN,
     transitousBaseUrl: e.TRANSITOUS_BASE_URL.replace(/\/+$/, ''),
+    travelpayoutsBaseUrl: e.TRAVELPAYOUTS_BASE_URL.replace(/\/+$/, ''),
+    ecbRatesUrl: e.ECB_RATES_URL,
     transitousPlanPerMinute: e.TRANSITOUS_PLAN_PER_MINUTE,
     transitousPlanPerDay: e.TRANSITOUS_PLAN_PER_DAY,
     rateLimitPerMinute: e.RATE_LIMIT_PER_MINUTE,

@@ -1,0 +1,223 @@
+<title>Leylek Test Raporu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Düzen: tek sütun okuma metni, üstte sonuç şeridi; her test katmanı bir bölüm, mülakat notları yan kutularda. */
+:root{
+  --bg:#f5f8fb; --surface:#ffffff; --fg:#14283a; --muted:#5b6f80; --line:#d9e3ec;
+  --sky:#2f6e9e; --skysoft:#e3eef7; --beak:#e8833a;
+  --ok:#2e7d4f; --oksoft:#e2f3e8; --bad:#b3402f; --badsoft:#f8e4e0; --warn:#9a6a00; --warnsoft:#fbf0d4;
+  --display:"Plus Jakarta Sans",system-ui,sans-serif; --body:"Plus Jakarta Sans",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1924; --surface:#152433; --fg:#e4edf5; --muted:#93a7b8; --line:#26394b;
+  --sky:#7fb4dc; --skysoft:#1b3247; --beak:#f0a066;
+  --ok:#6fc994; --oksoft:#143424; --bad:#f08a78; --badsoft:#3a1e1a; --warn:#e7c060; --warnsoft:#33290f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1924; --surface:#152433; --fg:#e4edf5; --muted:#93a7b8; --line:#26394b;
+  --sky:#7fb4dc; --skysoft:#1b3247; --beak:#f0a066;
+  --ok:#6fc994; --oksoft:#143424; --bad:#f08a78; --badsoft:#3a1e1a; --warn:#e7c060; --warnsoft:#33290f; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.65 var(--body);margin:0}
+.wrap{max-width:860px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.25}
+h1{font-size:2.1rem;font-weight:800;margin:.2em 0 .3em}
+h2{font-size:1.45rem;font-weight:800;margin:2.4em 0 .6em;padding-top:1em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;font-weight:700;margin:1.6em 0 .4em}
+p,li{max-width:68ch}
+a{color:var(--sky)}
+.eyebrow{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--beak);font-weight:700}
+.lead{color:var(--muted);font-size:1.05rem}
+code,.mono{font-family:var(--mono);font-size:.86em}
+:not(pre)>code{background:var(--skysoft);padding:.1em .35em;border-radius:4px}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:.85rem;line-height:1.5}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:24px 0}
+.res{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.res b{font-size:1.35rem;font-variant-numeric:tabular-nums}
+.res span{font-size:.85rem;color:var(--muted)}
+.res.ok b{color:var(--ok)} .res.bad b{color:var(--bad)} .res.warn b{color:var(--warn)}
+.tbl{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font-size:.75rem;font-weight:700;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.pill.ok{background:var(--oksoft);color:var(--ok)} .pill.bad{background:var(--badsoft);color:var(--bad)} .pill.warn{background:var(--warnsoft);color:var(--warn)}
+.note{background:var(--skysoft);border-radius:10px;padding:14px 16px;margin:16px 0}
+.note h4{margin:0 0 6px;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--sky)}
+.note p,.note li{margin:.3em 0}
+.pyr{display:flex;flex-direction:column;align-items:center;gap:4px;margin:20px 0}
+.pyr div{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 10px;text-align:center;font-size:.9rem;max-width:100%}
+.pyr .l1{width:34%} .pyr .l2{width:52%} .pyr .l3{width:70%} .pyr .l4{width:88%;background:var(--skysoft)}
+.qa dt{font-weight:700;margin-top:14px}
+.qa dd{margin:4px 0 0 0;color:var(--fg)}
+.sev{display:grid;gap:10px}
+.item{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:10px 14px}
+.item.crit{border-left-color:var(--bad)} .item.imp{border-left-color:var(--warn)} .item.nice{border-left-color:var(--sky)}
+.item b{display:block}
+.item span{color:var(--muted);font-size:.92rem}
+footer{margin-top:48px;color:var(--muted);font-size:.85rem}
+@media (max-width:520px){h1{font-size:1.7rem}.pyr .l1,.pyr .l2,.pyr .l3,.pyr .l4{width:100%}}
+</style>
+
+<div class="wrap">
+<div class="eyebrow">Leylek · 27 Ekim 2026</div>
+<h1>Leylek Test Raporu</h1>
+<p class="lead">Leylek'in tüm testleri katman katman: her betik neyi, neden ve nasıl sınıyor, bugünkü çalıştırma sonuçları ve yayın öncesi eksikler. Test mühendisliği mülakatı için kavram notları ve örnek sorular da var.</p>
+
+<div class="results">
+  <div class="res ok"><b>82 / 82</b><span>Backend birim + entegrasyon (Vitest)</span></div>
+  <div class="res ok"><b>33 / 33</b><span>Flutter birim + widget</span></div>
+  <div class="res ok"><b>13 / 13</b><span>Uçtan uca, sahte dış servisler</span></div>
+  <div class="res ok"><b>12 / 12</b><span>Uçtan uca, canlı servisler</span></div>
+  <div class="res ok"><b>5 / 5</b><span>Dart sözleşme betiği</span></div>
+  <div class="res bad"><b>Koşmadı</b><span>Cihaz akış testi ve release APK (JDK yok)</span></div>
+</div>
+<p>Statik analiz (<code>flutter analyze</code>, <code>tsc --noEmit</code>): sorun yok.</p>
+
+<h2>1. Test piramidi</h2>
+<p>Testler, alttan üste doğru azalan sayıda ve artan maliyette dizildi. Alttakiler milisaniyede koşar ve hatanın yerini tam gösterir. Üsttekiler yavaştır ama parçaların birlikte çalıştığını kanıtlar.</p>
+<div class="pyr" aria-label="Test piramidi">
+  <div class="l1"><b>Cihazda akış</b> · integration_test · 1</div>
+  <div class="l2"><b>Uçtan uca</b> · e2e.ts sahte + canlı · 13 / 12</div>
+  <div class="l3"><b>Sözleşme ve entegrasyon</b> · Dart sözleşme, backend_contract, /search hattı</div>
+  <div class="l4"><b>Birim ve widget</b> · Vitest 82 · Flutter 33</div>
+</div>
+<div class="note"><h4>Mülakat notu</h4>
+<p><b>Neden piramit?</b> E2E testleri pahalıdır: yavaş koşar, dış servislere bağlıdır ve düştüğünde nedenini bulmak zordur (flaky). Mantığın çoğu birim testte sınanır. E2E testi yalnızca "parçalar birbirine doğru bağlanmış mı" sorusunu yanıtlar. Ters piramit (her şey E2E) bir anti-pattern olarak bilinir ve "dondurma külahı" diye anılır.</p></div>
+
+<h2>2. Backend birim ve entegrasyon testleri (Vitest)</h2>
+<p>Komut: <code>cd backend &amp;&amp; npm test</code>. Ağa hiç çıkmaz. Dış servisler <code>test/helpers.ts</code> içindeki <b>fake</b> sınıflarla değiştirilir (<code>FakeFlights</code>, <code>FakeGround</code>).</p>
+<div class="tbl"><table>
+<thead><tr><th>Dosya</th><th>Ne sınıyor</th><th>Teknik</th></tr></thead>
+<tbody>
+<tr><td><code>core.test.ts</code></td><td>Mesafe (haversine), saat dilimi, Türkçe metin sadeleştirme, TTL/LRU önbellek ve <code>singleFlight</code>, istek bütçesi ve devre kesici, logların gizliliği</td><td>Saf fonksiyon testleri. Sabit saat enjekte edilir (deterministik).</td></tr>
+<tr><td><code>data.test.ts</code></td><td>CSV içe aktarma, yer dizini araması, bir şehre yakın aday havalimanları</td><td>Küçük sabit veri (fixture)</td></tr>
+<tr><td><code>providers.test.ts</code></td><td>Travelpayouts yanıtını eşleme ve fiyat yaşı, Transitous durak seçimi (uçak durağı tuzağı), ECB XML ayrıştırma, şehrin ana istasyonu</td><td>HTTP istemcisi stub'lanır, gerçek yanıt örnekleriyle beslenir</td></tr>
+<tr><td><code>algorithm.test.ts</code></td><td>Tampon süreler, ağdan önce eleme, MOTIS ücret kuralları, kara bacağı, puanlama ve rozetler, rezervasyon bağlantıları, konaklama</td><td>Sınır değerleri ve denklik sınıfları</td></tr>
+<tr><td><code>search.test.ts</code></td><td>/search hattı baştan sona (dış servisler sahte), 4 plan ve konaklama, HTTP katmanı (doğrulama, hata kodları)</td><td>Fastify <code>inject</code> ile soket açmadan HTTP</td></tr>
+</tbody></table></div>
+<div class="note"><h4>Mülakat notu: test dublörleri</h4>
+<ul>
+<li><b>Stub:</b> Sabit cevap döner, çağrıyı doğrulamaz. Örnek: ECB XML'i döndüren sahte HTTP.</li>
+<li><b>Fake:</b> Çalışan ama basitleştirilmiş bir uygulamadır. <code>FakeGround</code>, 60 km içindeki en yakın havalimanından gerçekçi bir kara yolu üretir.</li>
+<li><b>Mock / spy:</b> Çağrıları kaydeder ve "şu parametreyle kaç kez çağrıldı?" diye doğrulanır. E2E'deki sahte sunucu istekleri kaydedip User-Agent'ı ve istek sayısını denetler. Bu bir spy davranışıdır.</li>
+<li><b>Deterministiklik:</b> "Şimdi" hep enjekte edilir (<code>now = Date.now</code> parametresi, Dart'ta <code>Clock</code>). Testler hangi gün koşarsa koşsun aynı sonucu verir.</li>
+</ul></div>
+
+<h2>3. Flutter birim ve widget testleri</h2>
+<p>Komut: <code>flutter test</code>. Toplam 33 test.</p>
+<div class="tbl"><table>
+<thead><tr><th>Dosya</th><th>Ne sınıyor</th></tr></thead>
+<tbody>
+<tr><td><code>core/formatters_test</code>, <code>zoned_time_test</code>, <code>normalize_test</code>, <code>guard_test</code></td><td>Para ve süre biçimi, Türkçe ekler ("Münih'te"), saat dilimli zaman, hata yakalama sarmalı</td></tr>
+<tr><td><code>search_routes_test</code></td><td>Girdi doğrulama: boş alan, aynı kalkış-varış, geçmiş tarih, 330 gün sınırı, konaklama 0–3, yarıçap. Sınır değer analizinin tipik örneği.</td></tr>
+<tr><td><code>search_cubit_test</code></td><td><code>bloc_test</code> ile durum geçişleri (Initial → InProgress → Success/Failure). Geçersiz girdide InProgress yayılmadığı da doğrulanır.</td></tr>
+<tr><td><code>search_result_mapper_test</code>, <code>backend_contract_test</code></td><td>Backend JSON'unun uygulama modellerine dönüşümü. Sözleşme testi, backend'in ürettiği gerçek bir yanıt dosyasıyla (fixture) koşar.</td></tr>
+<tr><td><code>widget/search_page_test</code></td><td>Ekran akışı: form → uçuş sahnesi → sonuç slaytları, geç gelen veri, forma dönüş, konaklama hapları, eksik girdide animasyonun başlamaması</td></tr>
+</tbody></table></div>
+<div class="note"><h4>Mülakat notu: animasyonlu ekranda kararsız test</h4>
+<p>Sahne sürekli döndüğü için <code>pumpAndSettle</code> hiç bitmez ve zaman aşımına düşer. Çözüm olarak zaman 50 ms'lik adımlarla elle ilerletilir (<code>advance</code>) ve süreler test için kısaltılır (<code>SearchTiming</code> enjeksiyonu). Böylece test hem hızlı hem deterministik olur. Bu, kararsız (flaky) testi önlemeye somut bir örnektir.</p></div>
+
+<h2>4. Uçtan uca test çalıştırıcısı: <code>backend/scripts/e2e.ts</code></h2>
+<pre>cd backend
+npm run e2e                      # sahte dış servisler, ağa çıkmaz
+LIVE=1 npm run e2e:live          # gerçek Travelpayouts + Transitous</pre>
+<h3>Nasıl çalışır</h3>
+<ol>
+<li>Sahte kipte <code>scripts/e2e/mock-upstreams.ts</code> tek bir yerel HTTP sunucusu açar. Bu sunucu Travelpayouts, Transitous ve ECB'nin yerine geçer.</li>
+<li>Boş bir port bulunur ve <b>gerçek backend</b> (<code>src/server.ts</code>) ayrı bir süreç olarak başlatılır. Dış servis adresleri ortam değişkenleriyle sahte sunucuya yönlendirilir (<code>TRAVELPAYOUTS_BASE_URL</code>, <code>TRANSITOUS_BASE_URL</code>, <code>ECB_RATES_URL</code>). Kodda test için özel bir dal yoktur. Üretimdeki kod yolu aynen koşar.</li>
+<li><code>/health</code> 60 saniyelik bir sınırla yoklanır (hazır olma beklemesi; sabit <code>sleep</code> kullanılmaz).</li>
+<li>Kontroller gerçek HTTP üzerinden yapılır. Sunucunun stdout'u yakalanır ve log gizliliği bu çıktı üzerinde denetlenir.</li>
+<li>Sonunda <code>e2e-reports/e2e-&lt;kip&gt;-&lt;zaman&gt;.json</code> yazılır. Bir kontrol bile düşerse çıkış kodu 1 olur, yani CI'da doğrudan kullanılabilir.</li>
+</ol>
+<h3>Kontroller ve bugünkü sonuç</h3>
+<div class="tbl"><table>
+<thead><tr><th>Kontrol</th><th>Sahte</th><th>Canlı</th></tr></thead>
+<tbody>
+<tr><td>Sunucu açılıyor, veri yükleniyor (518 havalimanı, 7955 yer)</td><td><span class="pill ok">geçti</span></td><td><span class="pill ok">geçti</span></td></tr>
+<tr><td>Yer önerisi: "salz" → Salzburg, "münih" → Münih, ülke adı Türkçe</td><td><span class="pill ok">geçti</span></td><td><span class="pill ok">geçti</span></td></tr>
+<tr><td>Arama İstanbul → Salzburg: 1–4 kart (sahtede tam 4), fiyat sırası, ilk kart EN UCUZ, en fazla 1 önerilen, atıf, saat ofseti, https bağlantı, ortaklık izi yok</td><td><span class="pill ok">geçti</span> 4 kart</td><td><span class="pill ok">geçti</span> 3 kart</td></tr>
+<tr><td>Aynı arama, 1 gün konaklamalı: STOPOVER etiketi, konaklama bilgisi, yolda geçen süre konaklamayı içermiyor</td><td><span class="pill ok">geçti</span></td><td><span class="pill ok">geçti</span></td></tr>
+<tr><td>İstanbul → Luzern (yalnız canlı)</td><td>–</td><td><span class="pill ok">geçti</span> ZRH, BSL, STR, GVA</td></tr>
+<tr><td>İkinci arama önbellekten gelir: dış servise sıfır istek, 1 sn altı (3 ms)</td><td><span class="pill ok">geçti</span></td><td><span class="pill ok">geçti</span></td></tr>
+<tr><td>Negatif: geçmiş tarih 400, konaklama 7 → 400, Türkçe mesaj</td><td><span class="pill ok">geçti</span></td><td><span class="pill ok">geçti</span></td></tr>
+<tr><td>Kapsam dışı (İstanbul → Ankara) 422 OUT_OF_COVERAGE</td><td><span class="pill ok">geçti</span></td><td><span class="pill ok">geçti</span></td></tr>
+<tr><td>Bilinmeyen yer 422 PLACE_NOT_FOUND</td><td><span class="pill ok">geçti</span></td><td><span class="pill ok">geçti</span></td></tr>
+<tr><td>Güvenlik başlıkları: CSP, Permissions-Policy, HSTS, X-Powered-By yok</td><td><span class="pill ok">geçti</span></td><td><span class="pill ok">geçti</span></td></tr>
+<tr><td>Loglarda IP, sorgu dizesi ve aranan yer adı yok</td><td><span class="pill ok">geçti</span></td><td><span class="pill ok">geçti</span></td></tr>
+<tr><td>Transitous kuralları: tanıtıcı User-Agent, arama başına ≤5 /plan, önerilen parametreler, uçak durağından plan istenmiyor</td><td><span class="pill ok">geçti</span> 10 /plan</td><td>–</td></tr>
+<tr><td>Travelpayouts: <code>one_way=true</code>, marker gönderilmiyor</td><td><span class="pill ok">geçti</span></td><td>–</td></tr>
+<tr><td>Uygulamanın Dart veri katmanı aynı sunucuya karşı</td><td><span class="pill ok">geçti</span></td><td><span class="pill ok">geçti</span></td></tr>
+</tbody></table></div>
+<div class="note"><h4>Mülakat notu: canlı testte "kesin değer" yerine değişmezler</h4>
+<p>Canlı fiyatlar her gün değişir, bu yüzden "MUC 5205 TL olmalı" diye bir assert yazılamaz. Bu, <b>test oracle problemi</b> olarak bilinir. Çözüm, <b>değişmezleri</b> (invariant) doğrulamaktır: kartlar fiyata göre sıralı, ilk kartta EN UCUZ rozeti var, en fazla bir önerilen var, bağlantılar https. Sahte kipte veri sabit olduğundan daha sıkı bir kontrol de konur: tam 4 kart.</p>
+<p><b>Neden iki kip?</b> Sahte kip <b>hermetiktir</b>: ağ yoktur, her koşuda aynı sonucu verir ve CI'da koşar. Canlı kip ise dış servisin sözleşmesini değiştirip değiştirmediğini yakalar. Dış servislere yük bindirmemek için az sayıda şehir çiftiyle ve elle (<code>LIVE=1</code>) koşar.</p></div>
+
+<h2>5. Sözleşme betiği: <code>tool/e2e_api_contract.dart</code></h2>
+<pre>dart run tool/e2e_api_contract.dart http://127.0.0.1:8080 2026-11-20</pre>
+<p>Uygulamanın kendi bileşim kökü (<code>AppDependencies.create</code>) çalışan bir backend'e bağlanır. Ardından yer önerisi, 0 ve 1 gün konaklamalı arama, kapsam dışı hatanın <code>ServerFailure(OUT_OF_COVERAGE)</code> olarak gelmesi ve ulaşılamayan sunucunun <code>NetworkFailure</code> vermesi denetlenir. Flutter gerekmez, çünkü domain ve veri katmanı saf Dart. <code>e2e.ts</code> bu betiği her koşuda otomatik çağırır.</p>
+<div class="note"><h4>Mülakat notu: tüketici odaklı sözleşme testi</h4>
+<p>Backend ile mobil uygulama ayrı ayrı geliştirilir. Backend bir alanın adını değiştirirse backend testleri yine geçer ama uygulama kırılır. Sözleşme testi, <b>tüketicinin</b> (uygulamanın) ayrıştırıcısını üreticinin gerçek yanıtına karşı koşturur. Pact gibi araçlar bu fikrin genelleştirilmiş hâlidir.</p></div>
+
+<h2>6. Cihazda akış testi: <code>integration_test/app_flow_test.dart</code></h2>
+<pre>flutter test integration_test -d emulator-5554
+flutter test integration_test -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:8080</pre>
+<p>Gerçek uygulamayı gerçek animasyon süreleriyle açar. İstanbul ve Salzburg seçilir ve arama başlatılır. Test uçuş sahnesinin, ardından sonuç slaytlarının gelmesini bekler. Tüm slaytları kaydırarak gezer, sonra "Yeni arama" ile forma döner. Bekleme, koşul sağlanana kadar kare kare ilerleyen bir döngüyle (<code>pumpUntil</code>, zaman aşımlı) yapılır.</p>
+<p><span class="pill bad">bugün koşmadı</span> Pixel 7 emülatörü açıldı ama Android derlemesi iki nedenle başlamadı: proje yolu ASCII dışı karakter içeriyor ("Masaüstü") ve makinede JDK yok (yalnızca JRE 17 kurulu). Ayrıntılar aşağıda, yayın eksiklerinde.</p>
+
+<h2>7. Diğer betikler</h2>
+<ul>
+<li><code>backend/scripts/live-smoke.ts</code> (<code>LIVE=1 npm run live -- İstanbul Salzburg 2026-11-20 1</code>): Tek bir canlı aramayı insan okunur biçimde döker. Duman testi (smoke test) olarak, hızlı bir "çalışıyor mu?" bakışı için.</li>
+<li><code>backend/scripts/import-data.ts</code>: OurAirports ve GeoNames verisini içe aktarır. Bir test değil, test verisinin kaynağıdır.</li>
+</ul>
+
+<h2>8. Mülakat için örnek sorular</h2>
+<dl class="qa">
+<dt>Dış API'ye bağlı bir sistemi nasıl test edersin?</dt>
+<dd>Adaptörün arkasına bir port (arayüz) koyarım. Birim testte fake kullanırım. E2E'de adres ortam değişkeniyle değiştirilebilir olur ve yerel bir sahte HTTP sunucusu kullanırım. Gerçek servise karşı da seyrek, elle tetiklenen ve değişmez kontrol eden bir canlı test koşarım. Leylek'te üçü de var.</dd>
+<dt>Flaky testi nasıl önlersin?</dt>
+<dd>Saati enjekte ederim. Sabit <code>sleep</code> yerine koşul ve süre sınırıyla beklerim (<code>/health</code> yoklaması, <code>pumpUntil</code>). Boş port rastgele seçilir. Ağ yalnızca açıkça işaretlenmiş testlerde kullanılır. Her test kendi durumunu kurar.</dd>
+<dt>Sınır değer analizine örnek?</dt>
+<dd>Konaklama günü 0–3: 0 ve 3 geçerli, −1 ve 4 geçersiz (E2E'de 7 denendi). Tarih: bugün geçerli, dün geçersiz, 330. gün geçerli, 331. gün geçersiz.</dd>
+<dt>Güvenlik ve gizliliği nasıl test ettin?</dt>
+<dd>Yanıt başlıkları doğrulandı. Sunucu logları yakalanıp IP, sorgu dizesi ve yer adı içermediği assert edildi. Ortaklık bağlantısındaki işaret sahte veriye bilerek konup yanıta sızmadığı kontrol edildi (<code>SHOULD_NOT_LEAK</code>, negatif kanarya).</dd>
+<dt>Önbelleğin çalıştığını nasıl kanıtladın?</dt>
+<dd>Sahte sunucu gelen her isteği kaydeder. Aynı arama ikinci kez yapıldığında kayıt sayısının değişmediği assert edilir. Yanıt süresine bakmak tek başına yetmez. Asıl kanıt, dış servise istek gitmemesidir.</dd>
+<dt>Raporlama ve CI?</dt>
+<dd>Çalıştırıcı her kontrol için ad, sonuç, ayrıntı ve süre içeren bir JSON yazar ve hata varsa 1 ile çıkar. CI bu çıkış koduyla kırmızıya döner, JSON da artefakt olarak saklanır.</dd>
+</dl>
+
+<h2>9. Yayın öncesi eksikler</h2>
+<h3>Engelleyici</h3>
+<div class="sev">
+<div class="item crit"><b>Android derlemesi bu makinede çıkmıyor</b><span>Proje yolu "Masaüstü" içerdiği için Gradle reddediyor. ASCII bir klasöre taşınmalı (ör. <code>C:\dev\leylek</code>). Ayrıca yalnızca JRE kurulu; Temurin JDK 17 veya Android Studio gerekiyor.</span></div>
+<div class="item crit"><b>Backend hiçbir yerde yayında değil</b><span>Barındırma, HTTPS alan adı, Dockerfile, CI ve izleme yok. Release derlemesi <code>API_BASE_URL</code> verilmezse sessizce örnek veri gösterir. Release'te boş adres derlemeyi düşürmeli.</span></div>
+<div class="item crit"><b>Release imzası debug anahtarıyla</b><span><code>android/app/build.gradle.kts</code> release için debug anahtarını kullanıyor. Bir yükleme anahtarı (keystore) ve <code>key.properties</code> gerekiyor.</span></div>
+<div class="item crit"><b>Depo hâlâ gizli</b><span>Transitous'un şartı projenin gerçekten açık kaynak olması. Açmadan önce Lottie lisansları (leylek, uçak, otobüs) ve Travelpayouts kullanım şartları okunmalı.</span></div>
+<div class="item crit"><b>Gizlilik politikası ve mağaza formları</b><span>Gizlilik politikası sayfası (KVKK/GDPR), Play "Veri güvenliği" formu ve App Store gizlilik etiketleri yok. Kişisel veri saklanmıyor ama aranan yerler sunucuya gidiyor; bunun yazılması gerekiyor.</span></div>
+<div class="item crit"><b>Uygulama simgesi ve açılış ekranı varsayılan</b><span>Flutter'ın mavi logosu duruyor. Leylek simgesi, uyarlanabilir (adaptive) ikon ve açılış ekranı gerekiyor.</span></div>
+<div class="item crit"><b>Gerçek cihazda hiç test edilmedi</b><span>Akış testi yazıldı ama koşmadı. iOS bu Windows makinede derlenemez; bunun için Mac ve Apple Developer hesabı gerekiyor.</span></div>
+</div>
+<h3>Önemli</h3>
+<div class="sev">
+<div class="item imp"><b>Canlıda her zaman 4 kart çıkmıyor</b><span>Canlı Salzburg aramasında 3 kart geldi (MUC, NUE, doğrudan). Uçuş önbelleği boşlukları ve kara yolu bulunamayan adaylar nedeniyle hedef her rotada tutmuyor.</span></div>
+<div class="item imp"><b>Kara yolu fiyatları çoğunlukla tahmini</b><span>Transitous ücret verisi az. Tahmin olduğu ekranda belirtiliyor ama kullanıcı beklentisi yönetilmeli.</span></div>
+<div class="item imp"><b>Rezervasyon bağlantıları ana sayfalara gidiyor</b><span>Havayolu sitesine ya da Google Flights'a, ve işletmecinin ana sayfasına gidiyor; derin bağlantı yok.</span></div>
+<div class="item imp"><b>Önbellek yalnızca bellekte</b><span>Sunucu yeniden başlayınca sıfırlanıyor. Birden fazla örnek çalışırsa önbellek paylaşılmıyor ve Transitous'a giden istek artıyor.</span></div>
+<div class="item imp"><b>Hakkında ve lisanslar ekranı yok</b><span>Veri atfı sonuç ekranında düz metin olarak var. OurAirports, GeoNames (CC BY), Natural Earth, Plus Jakarta Sans (OFL) ve açık kaynak lisansları için ayrı bir ekran gerekiyor.</span></div>
+<div class="item imp"><b>Mağaza materyalleri</b><span>Ekran görüntüleri, açıklama, kategori, yaş derecelendirmesi, destek e-postası ve URL eksik. Paket kimliği <code>app.leylek.leylek</code> yayından sonra değiştirilemez; şimdi kesinleştirilmeli.</span></div>
+<div class="item imp"><b>Yeni test betikleri commit edilmedi</b><span>E2E çalıştırıcısı, sahte sunucu, Dart betiği, akış testi ve yapılandırılabilir servis adresleri yalnızca yerelde.</span></div>
+</div>
+<h3>İyileştirme</h3>
+<div class="sev">
+<div class="item nice"><b>Arayüz yalnızca Türkçe</b><span>Avrupa odaklı bir uygulama için İngilizce desteği yararlı olur.</span></div>
+<div class="item nice"><b>Erişilebilirlik denenmedi</b><span>Ekran okuyucu, büyük yazı boyutu ve kontrast kontrolü yapılmadı.</span></div>
+<div class="item nice"><b>Animasyonda feribot yok; one-to-all sorgusu yapılmadı</b><span>Transitous'un önerdiği tek sorguda çok varış yöntemi istek sayısını düşürür.</span></div>
+<div class="item nice"><b>CI hattı</b><span>Her push'ta <code>npm test</code>, <code>npm run e2e</code>, <code>flutter analyze</code> ve <code>flutter test</code> koşan bir GitHub Actions iş akışı.</span></div>
+</div>
+
+<footer>Leylek · testler 27 Ekim 2026'da Windows 11'de koşturuldu. Rapor dosyaları: <code>backend/e2e-reports/</code>.</footer>
+</div>

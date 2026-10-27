@@ -23,6 +23,7 @@ export class EcbRates implements FxRates {
   constructor(
     private readonly http: HttpClient,
     private readonly cache: TtlCache,
+    private readonly url = URL_DAILY,
   ) {}
 
   async perEur(currency: string): Promise<number> {
@@ -36,7 +37,7 @@ export class EcbRates implements FxRates {
   private async rates(): Promise<Map<string, number>> {
     try {
       const rates = await this.cache.singleFlight('fx:ecb', DAY, async () =>
-        parseEcbXml(await this.http.getText(URL_DAILY)),
+        parseEcbXml(await this.http.getText(this.url)),
       );
       this.lastKnown = rates;
       return rates;

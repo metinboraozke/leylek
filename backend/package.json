@@ -16,7 +16,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "data:import": "tsx scripts/import-data.ts",
-    "live": "tsx scripts/live-smoke.ts"
+    "live": "tsx scripts/live-smoke.ts",
+    "e2e": "tsx scripts/e2e.ts",
+    "e2e:live": "tsx scripts/e2e.ts --live"
   },
   "dependencies": {
     "@fastify/helmet": "^12.0.1",
