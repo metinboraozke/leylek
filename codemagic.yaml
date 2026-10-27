@@ -22,18 +22,18 @@ workflows:
 
       - name: Uygulama ikonunu üret
         script: |
-          if [ -f assets/icon/icon.png ]; then
+          if [ -f assets/ikon.jpg ]; then
             flutter pub add --dev flutter_launcher_icons
             cat > flutter_launcher_icons.yaml <<EOF
           flutter_launcher_icons:
-            image_path: "assets/icon/icon.png"
+            image_path: "assets/ikon.jpg"
             ios: true
             android: true
             remove_alpha_ios: true
           EOF
             dart run flutter_launcher_icons
           else
-            echo "assets/icon/icon.png yok, varsayılan ikon kullanılacak"
+            echo "assets/ikon.jpg yok, varsayılan ikon kullanılacak"
           fi
 
       - name: Şifreleme beyanı (TestFlight her seferinde sormasın)
