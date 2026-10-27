@@ -7,8 +7,9 @@ import 'route_slide.dart';
 
 /// Sonuç ekranı: tam ekran slaytlar, sağa kaydırdıkça sonraki rota.
 ///
-/// Sol üstten başını uzatan leylek yeni aramaya döner; sağ üstte kaçıncı
-/// rotada olunduğu yazar. Slaytlar en ucuzdan en pahalıya sıralı.
+/// Sol üstteki geri düğmesi ve sağ alttan başını uzatan leylek forma
+/// döner; sağ üstte kaçıncı rotada olunduğu yazar. Slaytlar en ucuzdan en
+/// pahalıya sıralı.
 class ResultsCarousel extends StatefulWidget {
   const ResultsCarousel({
     required this.result,
@@ -57,9 +58,20 @@ class _ResultsCarouselState extends State<ResultsCarousel> {
           ),
         ),
         Positioned(
-          left: 0,
+          left: 12,
           top: 0,
           child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: _BackButton(onTap: widget.onNewSearch),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: SafeArea(
+            top: false,
             child: PeekStork(
               onTap: widget.onNewSearch,
               delay: widget.peekDelay,
@@ -71,7 +83,7 @@ class _ResultsCarouselState extends State<ResultsCarousel> {
           top: 0,
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.only(top: 14),
+              padding: const EdgeInsets.only(top: 12),
               child: _PageIndicator(count: options.length, index: _index),
             ),
           ),
@@ -79,7 +91,7 @@ class _ResultsCarouselState extends State<ResultsCarousel> {
         if (widget.result.warnings.contains(SearchWarning.fewerThanThree))
           const Positioned(
             left: 16,
-            right: 16,
+            right: 96,
             bottom: 12,
             child: SafeArea(
               top: false,
@@ -89,6 +101,34 @@ class _ResultsCarouselState extends State<ResultsCarousel> {
       ],
     );
   }
+}
+
+/// Sol üstte, her zaman görünen geri düğmesi. iPhone'da sistem geri tuşu
+/// yok; sonuçtan çıkmanın açık bir yolu olmalı.
+class _BackButton extends StatelessWidget {
+  const _BackButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: LeylekColors.feather,
+    shape: const CircleBorder(),
+    elevation: 0,
+    shadowColor: Colors.transparent,
+    child: DecoratedBox(
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: LeylekColors.cardShadow,
+      ),
+      child: IconButton(
+        key: const Key('back-to-search'),
+        tooltip: 'Aramaya dön',
+        onPressed: onTap,
+        icon: const Icon(Icons.arrow_back_rounded, color: LeylekColors.wingtip),
+      ),
+    ),
+  );
 }
 
 class _PageIndicator extends StatelessWidget {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/result/result.dart';
+import '../../../../core/theme/leylek_colors.dart';
 import '../../../places/domain/entities/place.dart';
 import '../../../places/domain/usecases/suggest_places.dart';
 import '../cubit/search_form_cubit.dart';
@@ -15,20 +16,22 @@ import '../cubit/search_form_cubit.dart';
 class PlaceField extends StatefulWidget {
   const PlaceField({
     required this.label,
-    required this.icon,
     required this.value,
     required this.onTyped,
     required this.onSelected,
-    this.errorText,
+    this.hasError = false,
     super.key,
   });
 
   final String label;
-  final IconData icon;
   final PlaceInput value;
   final ValueChanged<String> onTyped;
   final ValueChanged<Place> onSelected;
-  final String? errorText;
+
+  /// Hata metni kartın altında tek satır gösterilir; alan yalnızca
+  /// kırmızı çerçeveyle işaretlenir. Yarım genişlikte iki alanın altına
+  /// ayrı ayrı metin sığmıyor.
+  final bool hasError;
 
   @override
   State<PlaceField> createState() => _PlaceFieldState();
@@ -84,10 +87,21 @@ class _PlaceFieldState extends State<PlaceField> {
             onChanged: widget.onTyped,
             onSubmitted: (_) => onSubmitted(),
             textInputAction: TextInputAction.next,
+            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
+            // PAX'teki gibi ikon yok: alan yarım genişlikte, ikon şehir
+            // adını kırpıyordu. Yönü aradaki düğme, alanı etiket anlatıyor.
             decoration: InputDecoration(
               labelText: widget.label,
-              prefixIcon: Icon(widget.icon),
-              errorText: widget.errorText,
+              hintText: 'Şehir ara',
+              enabledBorder: widget.hasError
+                  ? OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: LeylekColors.beakText,
+                        width: 1.2,
+                      ),
+                    )
+                  : null,
             ),
           ),
       optionsViewBuilder: (context, onSelected, options) => _Options(

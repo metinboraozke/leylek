@@ -35,7 +35,14 @@ class RouteSlide extends StatelessWidget {
 
     return ListView(
       key: PageStorageKey('slide-${o.rank}'),
-      padding: const EdgeInsets.fromLTRB(16, 100, 16, 32),
+      // Üstte geri düğmesi ve sayfa göstergesi, sağ altta leylek var;
+      // içerik ikisinin altında kalmasın.
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.paddingOf(context).top + 60,
+        16,
+        MediaQuery.paddingOf(context).bottom + 110,
+      ),
       children: [
         Text(
           o.kind == RouteKind.direct

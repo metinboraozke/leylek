@@ -9,10 +9,11 @@ import '../cubit/search_cubit.dart';
 import '../cubit/search_form_cubit.dart';
 import 'place_field.dart';
 
-/// Ana arama kartı: nereden, nereye, ne zaman, yarıçap ve "Rotaları ara".
+/// Ana arama kartı: nereden, nereye, ne zaman, konaklama, yarıçap.
 ///
-/// PAX'in keşfet ekranındaki yüzen kart gibi: beyaz, yumuşak gölgeli,
-/// alanlar büyük ve ferah.
+/// Ölçüler PAX'in keşfet ekranındaki yüzen karttan: 12'lik iç boşluk,
+/// nereden/nereye yan yana, küçük etiketli dolgulu kutular, 44'lük buton.
+/// Kart ekranın üst yarısında kalmalı; altta küre ve leylek görünsün.
 class SearchCard extends StatelessWidget {
   const SearchCard({super.key});
 
@@ -25,81 +26,68 @@ class SearchCard extends StatelessWidget {
     final invalid = failure is ValidationFailure ? failure : null;
     String? errorFor(ValidationField field) =>
         invalid?.field == field ? invalid?.message : null;
+    final placeError =
+        errorFor(ValidationField.from) ?? errorFor(ValidationField.to);
+    final otherError = invalid == null
+        ? failure?.message
+        : errorFor(ValidationField.date) ??
+              errorFor(ValidationField.stopover) ??
+              errorFor(ValidationField.radius);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: LeylekColors.feather,
-        borderRadius: BorderRadius.circular(24),
+        color: LeylekColors.feather.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: LeylekColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Stack(
-            clipBehavior: Clip.none,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                children: [
-                  PlaceField(
-                    key: const Key('from-field'),
-                    label: 'Nereden',
-                    icon: Icons.flight_takeoff_rounded,
-                    value: state.from,
-                    onTyped: form.typeFrom,
-                    onSelected: form.selectFrom,
-                    errorText: errorFor(ValidationField.from),
-                  ),
-                  const SizedBox(height: 10),
-                  PlaceField(
-                    key: const Key('to-field'),
-                    label: 'Nereye',
-                    icon: Icons.place_rounded,
-                    value: state.to,
-                    onTyped: form.typeTo,
-                    onSelected: form.selectTo,
-                    errorText: errorFor(ValidationField.to),
-                  ),
-                ],
+              Expanded(
+                child: PlaceField(
+                  key: const Key('from-field'),
+                  label: 'Nereden',
+                  value: state.from,
+                  onTyped: form.typeFrom,
+                  onSelected: form.selectFrom,
+                  hasError: errorFor(ValidationField.from) != null,
+                ),
               ),
-              Positioned(
-                right: 10,
-                top: 42,
-                child: _SwapButton(onPressed: form.swap),
+              _SwapButton(onPressed: form.swap),
+              Expanded(
+                child: PlaceField(
+                  key: const Key('to-field'),
+                  label: 'Nereye',
+                  value: state.to,
+                  onTyped: form.typeTo,
+                  onSelected: form.selectTo,
+                  hasError: errorFor(ValidationField.to) != null,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          _DateTile(
-            date: state.date,
-            errorText: errorFor(ValidationField.date),
-            onPicked: form.setDate,
-          ),
-          const SizedBox(height: 12),
+          if (placeError != null) _ErrorText(placeError),
+          const SizedBox(height: 8),
+          _DateBox(date: state.date, onPicked: form.setDate),
+          const SizedBox(height: 8),
           _StopoverPicker(
             days: state.stopoverDays,
             onChanged: form.setStopover,
           ),
-          const SizedBox(height: 6),
           _RadiusSlider(radiusKm: state.radiusKm, onChanged: form.setRadius),
-          if (failure != null && invalid == null) ...[
-            Text(
-              failure.message,
-              style: const TextStyle(
-                color: LeylekColors.beakText,
-                fontSize: 13.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-          FilledButton.icon(
+          if (otherError != null) _ErrorText(otherError),
+          const SizedBox(height: 8),
+          FilledButton(
             key: const Key('search-button'),
             onPressed: search is SearchInProgress
                 ? null
                 : () => context.read<SearchCubit>().search(state.toQuery()),
-            icon: const Icon(Icons.travel_explore_rounded),
-            label: const Text('Rotaları ara'),
+            child: const Text('Rotaları ara'),
           ),
         ],
       ),
@@ -107,31 +95,54 @@ class SearchCard extends StatelessWidget {
   }
 }
 
+class _ErrorText extends StatelessWidget {
+  const _ErrorText(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 6, left: 4),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: LeylekColors.beakText,
+        fontSize: 12.5,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
+}
+
+/// Nereden ile nereye arasındaki küçük değiştir düğmesi.
 class _SwapButton extends StatelessWidget {
   const _SwapButton({required this.onPressed});
 
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: LeylekColors.skySoft,
-    shape: const CircleBorder(
-      side: BorderSide(color: LeylekColors.feather, width: 3),
-    ),
+  Widget build(BuildContext context) => SizedBox(
+    width: 32,
+    height: 46,
     child: IconButton(
       tooltip: 'Kalkış ve varışı değiştir',
+      padding: EdgeInsets.zero,
       onPressed: onPressed,
-      icon: const Icon(Icons.swap_vert_rounded, color: LeylekColors.skyDeep),
+      icon: const Icon(
+        Icons.swap_horiz_rounded,
+        size: 18,
+        color: LeylekColors.muted,
+      ),
     ),
   );
 }
 
-class _DateTile extends StatelessWidget {
-  const _DateTile({required this.date, required this.onPicked, this.errorText});
+/// PAX'in bütçe/tarih kutusu kalıbı: küçük etiket, altında kalın değer.
+class _DateBox extends StatelessWidget {
+  const _DateBox({required this.date, required this.onPicked});
 
   final DateTime date;
   final ValueChanged<DateTime> onPicked;
-  final String? errorText;
 
   Future<void> _pick(BuildContext context) async {
     final now = DateTime.now();
@@ -148,20 +159,55 @@ class _DateTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: BorderRadius.circular(14),
     onTap: () => _pick(context),
-    child: InputDecorator(
-      decoration: InputDecoration(
-        labelText: 'Gidiş tarihi',
-        prefixIcon: const Icon(Icons.calendar_month_rounded),
-        errorText: errorText,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: LeylekColors.skySoft,
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Text(Formatters.day(date), style: const TextStyle(fontSize: 16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Gidiş tarihi',
+            style: TextStyle(fontSize: 11, color: LeylekColors.muted),
+          ),
+          SizedBox(
+            height: 22,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.calendar_month_rounded,
+                  size: 15,
+                  color: LeylekColors.skyDeep,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    Formatters.day(date),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: LeylekColors.wingtip,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
 
-/// Aktarma şehrinde kaç gün kalınacağı: yatay kaydırılan seçenek hapları.
+/// Aktarma şehrinde kaç gün kalınacağı: yatay kaydırılan küçük haplar
+/// (PAX'in "Haftasonu / 3-5 gün" çipleriyle aynı ölçü).
 class _StopoverPicker extends StatelessWidget {
   const _StopoverPicker({required this.days, required this.onChanged});
 
@@ -180,45 +226,50 @@ class _StopoverPicker extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       const Padding(
-        padding: EdgeInsets.only(left: 4, bottom: 8),
+        padding: EdgeInsets.only(left: 4, bottom: 6),
         child: Text(
           'Aktarma şehrinde konaklama',
-          style: TextStyle(fontSize: 13.5, color: LeylekColors.muted),
+          style: TextStyle(fontSize: 11, color: LeylekColors.muted),
         ),
       ),
       SizedBox(
-        height: 38,
+        height: 34,
         child: ListView.separated(
           key: const Key('stopover-picker'),
           scrollDirection: Axis.horizontal,
           itemCount: _options.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 8),
+          separatorBuilder: (_, _) => const SizedBox(width: 4),
           itemBuilder: (context, i) {
             final (value, label) = _options[i];
             final selected = value == days;
-            return ChoiceChip(
-              key: Key('stopover-$value'),
-              label: Text(label),
+            return Semantics(
+              button: true,
               selected: selected,
-              onSelected: (_) => onChanged(value),
-              showCheckmark: false,
-              avatar: value == 0
-                  ? null
-                  : Icon(
-                      Icons.hotel_rounded,
-                      size: 16,
+              child: GestureDetector(
+                key: Key('stopover-$value'),
+                onTap: () => onChanged(value),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? LeylekColors.skyDeep
+                        : LeylekColors.skySoft,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                       color: selected
                           ? LeylekColors.feather
-                          : LeylekColors.skyDeep,
+                          : LeylekColors.muted,
                     ),
-              labelStyle: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: selected ? LeylekColors.feather : LeylekColors.wingtip,
+                  ),
+                ),
               ),
-              selectedColor: LeylekColors.skyDeep,
-              backgroundColor: LeylekColors.skySoft,
-              side: BorderSide.none,
-              shape: const StadiumBorder(),
             );
           },
         ),
@@ -238,20 +289,32 @@ class _RadiusSlider extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Padding(
-        padding: const EdgeInsets.only(left: 4, top: 4),
+        padding: const EdgeInsets.only(left: 4, top: 8),
         child: Text(
           'Varışa $radiusKm km içindeki havalimanları',
-          style: const TextStyle(fontSize: 13.5, color: LeylekColors.muted),
+          style: const TextStyle(fontSize: 11, color: LeylekColors.muted),
         ),
       ),
-      Slider(
-        value: radiusKm.toDouble(),
-        min: SearchQuery.minRadiusKm.toDouble(),
-        max: SearchQuery.maxRadiusKm.toDouble(),
-        divisions: (SearchQuery.maxRadiusKm - SearchQuery.minRadiusKm) ~/ 25,
-        label: '$radiusKm km',
-        activeColor: LeylekColors.skyDeep,
-        onChanged: (v) => onChanged(v.round()),
+      SliderTheme(
+        data: SliderTheme.of(context).copyWith(
+          trackHeight: 3,
+          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+          overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+        ),
+        child: SizedBox(
+          height: 28,
+          child: Slider(
+            value: radiusKm.toDouble(),
+            min: SearchQuery.minRadiusKm.toDouble(),
+            max: SearchQuery.maxRadiusKm.toDouble(),
+            divisions:
+                (SearchQuery.maxRadiusKm - SearchQuery.minRadiusKm) ~/ 25,
+            label: '$radiusKm km',
+            activeColor: LeylekColors.skyDeep,
+            inactiveColor: LeylekColors.skySoft,
+            onChanged: (v) => onChanged(v.round()),
+          ),
+        ),
       ),
     ],
   );

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/leylek_colors.dart';
-import '../../../../core/ui/leylek_mark.dart';
 import '../cubit/search_cubit.dart';
 import '../motion.dart';
 import '../widgets/flight_scene.dart';
@@ -17,7 +16,8 @@ enum _Stage { form, flying, results }
 ///   form     → üstte arama kartı, altta tepede bekleyen leylek
 ///   flying   → kart ve leylek kaybolur; leylek uçar, altta uçak, otobüs,
 ///              tren, feribot geçer (~8 sn). Bu sırada veri toplanır.
-///   results  → sol üstten başını uzatan leylek ve tam ekran slaytlar
+///   results  → tam ekran slaytlar; sol üstte geri düğmesi, sağ altta
+///              başını uzatan leylek (ikisi de forma döner)
 ///
 /// Sonuçlara geçmek için iki şart birlikte aranır: sahnenin bir turu
 /// bitmiş olmalı ve veri gelmiş olmalı. Veri geç gelirse sahne tekrar
@@ -93,6 +93,7 @@ class _SearchPageState extends State<SearchPage> {
           if (!didPop) _newSearch();
         },
         child: Scaffold(
+          resizeToAvoidBottomInset: false,
           backgroundColor: _stage == _Stage.results
               ? LeylekColors.mist
               : LeylekColors.skySoft,
@@ -124,74 +125,29 @@ class _FormScene extends StatelessWidget {
             colors: [LeylekColors.skySoft, LeylekColors.skyLight],
           ),
         ),
-        child: SafeArea(
-          bottom: false,
-          child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(20, 12, 20, 14),
-                        child: _Header(),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: SearchCard(),
-                      ),
-                      Expanded(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight:
-                                IdleStork.heightFor(context) +
-                                48 +
-                                MediaQuery.paddingOf(context).bottom,
-                          ),
-                          child: const IdleStork(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header();
-
-  @override
-  Widget build(BuildContext context) => const Row(
-    children: [
-      LeylekMark(size: 40),
-      SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        // Küre ve leylek tüm ekranın zemininde; kart üstte yüzer. Klavye
+        // açılınca kart kayar, zemin yerinde kalır.
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Text(
-              'Leylek',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                color: LeylekColors.wingtip,
+            const Positioned.fill(child: IdleStork()),
+            SafeArea(
+              bottom: false,
+              child: SingleChildScrollView(
+                // Scaffold klavyede küçülmüyor (zemin oynamasın diye);
+                // kartın altı klavyenin üstüne kaydırılabilsin.
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  12,
+                  16,
+                  24 + MediaQuery.viewInsetsOf(context).bottom,
+                ),
+                child: const SearchCard(),
               ),
-            ),
-            Text(
-              'Uç, sonra yürü: aktarmalı ucuz rotalar',
-              style: TextStyle(fontSize: 14, color: LeylekColors.muted),
             ),
           ],
         ),
       ),
-    ],
-  );
+    );
+  }
 }

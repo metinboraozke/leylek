@@ -180,6 +180,21 @@ void main() {
     },
   );
 
+  testWidgets('sol üstteki geri düğmesi sonuçtan forma döner', (tester) async {
+    phoneScreen(tester);
+    await tester.pumpWidget(
+      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+    );
+    await searchSalzburg(tester);
+    await advance(tester, const Duration(milliseconds: 2000));
+    expect(find.byType(ResultsCarousel), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('back-to-search')));
+    await advance(tester, const Duration(milliseconds: 400));
+    expect(find.byType(ResultsCarousel), findsNothing);
+    expect(find.byType(SearchCard), findsOneWidget);
+  });
+
   testWidgets('konaklama hapları formu günceller, seçilen tek olur', (
     tester,
   ) async {
@@ -205,8 +220,15 @@ void main() {
     await tester.pump();
     expect(form.state.stopoverDays, 2);
     expect(form.state.toQuery().stopoverDays, 2);
-    final chip = tester.widget<ChoiceChip>(find.byKey(const Key('stopover-2')));
-    expect(chip.selected, isTrue);
+    await tester.dragUntilVisible(
+      find.byKey(const Key('stopover-0')),
+      find.byKey(const Key('stopover-picker')),
+      const Offset(80, 0),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('stopover-0')));
+    await tester.pump();
+    expect(form.state.stopoverDays, 0);
   });
 
   testWidgets('eksik varışta animasyon başlamaz, hata alanın altında', (
