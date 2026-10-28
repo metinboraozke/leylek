@@ -8,10 +8,8 @@ import 'package:lottie/lottie.dart';
 ///
 /// [from]–[to] animasyonun döngüde oynatılacak bölümü (0–1):
 ///   • uçak ilk karelerde parça parça çiziliyor; tamamlanmış hâlinden başlar.
-/// Tren Lottie değil; çift burunlu olarak elle çiziliyor (bkz. DrawnTrain).
 enum Vehicle {
-  plane('assets/lottie/plane.json', from: 0.15, to: 1, groundAt: 0.62),
-  bus('assets/lottie/bus.json', from: 0, to: 1, groundAt: 0.8);
+  plane('assets/lottie/plane.json', from: 0.15, to: 1, groundAt: 0.62);
 
   const Vehicle(
     this.asset, {
@@ -29,8 +27,8 @@ enum Vehicle {
   final double groundAt;
 }
 
-/// Beyaz çizgi araç. Beyaz küre üzerinde kaybolmasın diye arkasına aynı
-/// animasyonun genişletilmiş, marka mavisinin derin tonunda bir kopyası
+/// Beyaz çizgi araç. Açık gök ve gri karalar üzerinde kaybolmasın diye
+/// arkasına aynı animasyonun genişletilmiş, göğün koyu tonunda bir kopyası
 /// kontur olarak çizilir; iki kopya aynı denetleyiciyle eş zamanlı oynar.
 class VehicleLottie extends StatefulWidget {
   const VehicleLottie({
@@ -53,7 +51,7 @@ class _VehicleLottieState extends State<VehicleLottie>
   late final AnimationController _controller = AnimationController(vsync: this);
   LottieComposition? _composition;
 
-  static const _outline = Color(0xE614456B);
+  static const _outline = Color(0xE62F6E9E);
 
   @override
   void initState() {
@@ -99,7 +97,7 @@ class _VehicleLottieState extends State<VehicleLottie>
         height: widget.height,
         child: Stack(
           children: [
-            // Beyaz çizginin çevresinde derin mavi ince kontur:
+            // Beyaz çizginin çevresinde göğün koyu tonunda ince kontur:
             // aynı çizim genişletilip (dilate) maviye boyanır.
             ImageFiltered(
               imageFilter: ui.ImageFilter.dilate(radiusX: 1.8, radiusY: 1.8),

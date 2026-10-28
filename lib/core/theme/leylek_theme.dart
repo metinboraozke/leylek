@@ -51,7 +51,7 @@ abstract final class LeylekTheme {
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
-          vertical: 14,
+          vertical: 18,
         ),
         labelStyle: const TextStyle(color: LeylekColors.muted, fontSize: 14),
         hintStyle: const TextStyle(color: LeylekColors.muted),

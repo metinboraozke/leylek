@@ -13,10 +13,8 @@ import 'package:leylek/features/route_search/domain/usecases/search_routes.dart'
 import 'package:leylek/features/route_search/presentation/cubit/search_form_cubit.dart';
 import 'package:leylek/features/route_search/presentation/motion.dart';
 import 'package:leylek/features/route_search/presentation/widgets/flight_scene.dart';
-import 'package:leylek/features/route_search/presentation/widgets/idle_stork.dart';
 import 'package:leylek/features/route_search/presentation/widgets/results_carousel.dart';
 import 'package:leylek/features/route_search/presentation/widgets/search_card.dart';
-import 'package:leylek/features/route_search/presentation/widgets/standing_stork.dart';
 
 /// Testte kısa süreler: kaybolma 100 ms, uçuş sahnesi 1 sn.
 const _fast = SearchTiming(
@@ -79,7 +77,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('form ekranında arama kartı ve altta bekleyen leylek var', (
+  testWidgets('form ekranında arama kartı ve sol altta leylek var', (
     tester,
   ) async {
     phoneScreen(tester);
@@ -89,9 +87,35 @@ void main() {
     await tester.pump();
 
     expect(find.byType(SearchCard), findsOneWidget);
-    expect(find.byType(IdleStork), findsOneWidget);
-    expect(find.byType(StandingStork), findsOneWidget);
+    expect(find.byKey(const Key('landing-stork')), findsOneWidget);
     expect(find.text('Rotaları ara'), findsOneWidget);
+    // Henüz arama yapılmadı.
+    expect(find.text('Son aramalar'), findsNothing);
+  });
+
+  testWidgets('yapılan arama son aramalara düşer, dokununca form dolar', (
+    tester,
+  ) async {
+    phoneScreen(tester);
+    await tester.pumpWidget(
+      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+    );
+    await searchSalzburg(tester);
+    await advance(tester, const Duration(milliseconds: 2000));
+    await tester.tap(find.byKey(const Key('back-to-search')));
+    await advance(tester, const Duration(milliseconds: 400));
+
+    expect(find.text('Son aramalar'), findsOneWidget);
+    expect(find.text('İstanbul → Salzburg'), findsOneWidget);
+
+    final form = BlocProvider.of<SearchFormCubit>(
+      tester.element(find.byType(SearchCard)),
+    );
+    form.typeTo('');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('recent-0')));
+    await tester.pump();
+    expect(form.state.to.place?.name, 'Salzburg');
   });
 
   testWidgets(

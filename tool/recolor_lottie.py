@@ -3,7 +3,7 @@
     python tool/recolor_lottie.py <kaynak_klasör>
 
 Kaynak klasörde LottieFiles'tan indirilen ham JSON'lar beklenir
-(stork.json, plane.json, bus.json). Çıktı assets/lottie/.
+(stork.json, plane.json). Çıktı assets/lottie/.
 Dolgu ve çizgi renkleri aşağıdaki tablolarla eşlenir; Flutter'ın Lottie
 oynatıcısı After Effects ifadelerini desteklemediği için ifadeler silinir
 (aksi halde web önizlemesinde de çizim bozuluyor).

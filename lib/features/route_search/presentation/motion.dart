@@ -33,17 +33,17 @@ class SearchTiming {
   /// Form ve duran leyleğin kaybolması.
   final Duration fadeOut;
 
-  /// Leyleğin uçtuğu, araçların geçtiği sahne. Veri bu sürede gelmezse
+  /// Leyleğin uçtuğu, altından uçağın geçtiği sahne. Veri bu sürede gelmezse
   /// sahne gelene kadar tekrar eder.
   final Duration flight;
 
   /// Sonuç slaytlarının ve başını uzatan leyleğin girişi.
   final Duration reveal;
 
-  /// Toplam ~8,6 sn: 0,6 sn kaybolma + 8 sn uçuş.
+  /// Toplam ~4,6 sn: 0,6 sn kaybolma + 4 sn uçuş (uçak bir kez geçer).
   static const standard = SearchTiming(
     fadeOut: Duration(milliseconds: 600),
-    flight: Duration(seconds: 8),
+    flight: Duration(seconds: 4),
     reveal: Duration(milliseconds: 700),
   );
 

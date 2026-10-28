@@ -4,6 +4,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../core/theme/leylek_theme.dart';
 import '../features/places/domain/usecases/suggest_places.dart';
+import '../features/route_search/data/repositories/recent_searches_repository_impl.dart';
+import '../features/route_search/domain/repositories/recent_searches_repository.dart';
+import '../features/route_search/presentation/cubit/recent_searches_cubit.dart';
 import '../features/route_search/presentation/cubit/search_cubit.dart';
 import '../features/route_search/presentation/cubit/search_form_cubit.dart';
 import '../features/route_search/presentation/motion.dart';
@@ -15,6 +18,7 @@ class LeylekApp extends StatelessWidget {
     required this.dependencies,
     this.today,
     this.timing,
+    this.recentSearches,
     super.key,
   });
 
@@ -25,6 +29,9 @@ class LeylekApp extends StatelessWidget {
 
   /// Animasyon süreleri; verilmezse standart (ya da "hareketi azalt").
   final SearchTiming? timing;
+
+  /// Son aramaların deposu; verilmezse yalnızca bellekte tutulur.
+  final RecentSearchesRepository? recentSearches;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +48,11 @@ class LeylekApp extends StatelessWidget {
             ),
           ),
           BlocProvider(create: (_) => SearchCubit(dependencies.searchRoutes)),
+          BlocProvider(
+            create: (_) => RecentSearchesCubit(
+              recentSearches ?? InMemoryRecentSearchesRepository(),
+            ),
+          ),
         ],
         child: MaterialApp(
           title: 'Leylek',

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../places/domain/entities/place.dart';
+import '../../domain/entities/recent_search.dart';
 import '../../domain/entities/search_query.dart';
 
 /// Bir yer alanının içeriği: yazılan metin ve varsa listeden seçilen yer.
@@ -55,6 +56,17 @@ class SearchFormState extends Equatable {
     stopoverDays: stopoverDays,
   );
 
+  /// "Son aramalar"a yazılacak kayıt.
+  RecentSearch toRecent() => RecentSearch(
+    fromText: from.text,
+    fromPlace: from.place,
+    toText: to.text,
+    toPlace: to.place,
+    date: date,
+    radiusKm: radiusKm,
+    stopoverDays: stopoverDays,
+  );
+
   @override
   List<Object?> get props => [from, to, date, radiusKm, stopoverDays];
 }
@@ -83,6 +95,18 @@ class SearchFormCubit extends Cubit<SearchFormState> {
   );
 
   void swap() => emit(state.copyWith(from: state.to, to: state.from));
+
+  /// Son aramalardan birine dokununca form onunla doldurulur. Tarihi
+  /// geçmişte kaldıysa formdaki tarih korunur.
+  void restore(RecentSearch recent, {required DateTime today}) => emit(
+    SearchFormState(
+      from: PlaceInput(text: recent.fromText, place: recent.fromPlace),
+      to: PlaceInput(text: recent.toText, place: recent.toPlace),
+      date: recent.date.isBefore(today) ? state.date : recent.date,
+      radiusKm: recent.radiusKm,
+      stopoverDays: recent.stopoverDays,
+    ),
+  );
 
   void setDate(DateTime date) => emit(state.copyWith(date: date));
 

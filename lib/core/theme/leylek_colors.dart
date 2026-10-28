@@ -15,25 +15,13 @@ abstract final class LeylekColors {
   /// Uçuş sahnesinin zemini: parlak beyaz leylek öne çıksın diye daha da açık.
   static const Color skyPale = Color(0xFFDDF0FC);
 
-  /// Logonun mavisi: açılış ve uçuş sahnesinin zemini, küredeki karalar.
-  /// Logodaki tondan (#2E7FB5) gözle ayırt edilmeyecek kadar koyu; üstündeki
-  /// beyaz küçük yazı da okunur kalsın (kontrast ≥ 4.5).
-  static const Color brand = Color(0xFF2A78AC);
-
-  /// Marka mavisinin derin tonu: mavi ve beyaz zeminde beyaz çizgili
-  /// araçların ince konturu.
-  static const Color brandDeep = Color(0xFF14456B);
-
-  /// Küredeki karalar: logodaki gibi zeminle aynı mavi, deniz beyaz.
-  static const Color land = brand;
+  /// Küredeki karalar: göğe yakın, soğuk bir gri.
+  static const Color land = Color(0xFFC9D2D9);
 
   /// Göğün koyu tonu: "önerilen" tiki ve vurgulu bağlantılar.
   /// Beyaz zeminde metin kontrastı ≥ 4.5.
   static const Color skyDeep = Color(0xFF2F6E9E);
   static const Color beak = Color(0xFFE8542F);
-
-  /// Logodaki leyleğin gaga ve bacak turuncusu (açılıştaki leylek).
-  static const Color logoBeak = Color(0xFFF2A33A);
   // Gaga turuncusu beyaz zemin üzerinde metin için yeterince koyu değil
   // (kontrast < 4.5). Metin ve ikonlarda bu koyu ton kullanılır.
   static const Color beakText = Color(0xFFB83E1E);

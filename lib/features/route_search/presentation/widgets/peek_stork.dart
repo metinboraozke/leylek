@@ -1,19 +1,37 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/leylek_colors.dart';
 
-/// Sonuç ekranında sağ alt köşeden başını uzatan leylek.
+/// Ekranın alt köşesinden başını uzatan leylek.
 ///
 /// Düz 2D: beyaz boyun ve baş, turuncu gaga, siyah göz; kontur yok.
-/// Boyun ekranın sağ alt dışından gelir, gaga sola bakar. Yazıların
-/// üstüne binmesin diye küçük ve köşede. Dokununca forma dönülür.
+/// Boyun köşenin dışından gelir, gaga ekranın içine bakar.
+///   • Sonuç ekranında sağ altta, küçük; dokununca forma dönülür.
+///   • Açılışta sol altta, daha büyük; yalnızca süs.
 class PeekStork extends StatefulWidget {
-  const PeekStork({required this.onTap, required this.delay, super.key});
+  const PeekStork({
+    required this.delay,
+    this.onTap,
+    this.size = 84,
+    this.fromLeft = false,
+    this.backdrop = LeylekColors.skyLight,
+    super.key,
+  });
 
-  final VoidCallback onTap;
+  /// Dokununca çalışır; verilmezse leylek süstür ve ekran okuyucuya
+  /// görünmez.
+  final VoidCallback? onTap;
   final Duration delay;
+  final double size;
+
+  /// true ise sol alt köşeden çıkar, gaga sağa bakar.
+  final bool fromLeft;
+
+  /// Köşedeki gök parçası: beyaz leylek açık zeminde kaybolmasın.
+  final Color backdrop;
 
   @override
   State<PeekStork> createState() => _PeekStorkState();
@@ -29,11 +47,13 @@ class _PeekStorkState extends State<PeekStork> with TickerProviderStateMixin {
     duration: const Duration(milliseconds: 3200),
   );
 
+  // Ekran bu süre dolmadan kapanırsa iptal edilir.
+  late final Timer _start;
+
   @override
   void initState() {
     super.initState();
-    Future<void>.delayed(widget.delay, () {
-      if (!mounted) return;
+    _start = Timer(widget.delay, () {
       _in.forward().whenComplete(() {
         if (mounted) _nod.repeat();
       });
@@ -42,6 +62,7 @@ class _PeekStorkState extends State<PeekStork> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _start.cancel();
     _in.dispose();
     _nod.dispose();
     super.dispose();
@@ -49,38 +70,46 @@ class _PeekStorkState extends State<PeekStork> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    const size = 84.0;
+    final size = widget.size;
+    final left = widget.fromLeft;
+    final head = AnimatedBuilder(
+      animation: Listenable.merge([_in, _nod]),
+      builder: (context, child) {
+        final p = Curves.easeOutBack.transform(_in.value);
+        final nod = math.sin(_nod.value * 2 * math.pi) * 0.04;
+        final out = size * (1 - p);
+        return Transform.translate(
+          offset: Offset(left ? -out : out, out),
+          child: Transform.rotate(
+            angle: left ? -nod : nod,
+            alignment: left ? Alignment.bottomLeft : Alignment.bottomRight,
+            child: child,
+          ),
+        );
+      },
+      child: Transform.flip(
+        flipX: left,
+        child: CustomPaint(
+          size: Size.square(size),
+          painter: _HeadPainter(widget.backdrop),
+        ),
+      ),
+    );
+    final onTap = widget.onTap;
+    if (onTap == null) return ExcludeSemantics(child: head);
     return Semantics(
       button: true,
       label: 'Yeni arama',
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_in, _nod]),
-          builder: (context, child) {
-            final p = Curves.easeOutBack.transform(_in.value);
-            final nod = math.sin(_nod.value * 2 * math.pi) * 0.04;
-            return Transform.translate(
-              offset: Offset(size * (1 - p), size * (1 - p)),
-              child: Transform.rotate(
-                angle: nod,
-                alignment: Alignment.bottomRight,
-                child: child,
-              ),
-            );
-          },
-          child: const CustomPaint(
-            size: Size.square(size),
-            painter: _HeadPainter(),
-          ),
-        ),
-      ),
+      child: GestureDetector(onTap: onTap, child: head),
     );
   }
 }
 
+/// Sağ alt köşeden çıkan baş; sol köşe için yatayda aynalanır.
 class _HeadPainter extends CustomPainter {
-  const _HeadPainter();
+  const _HeadPainter(this.backdrop);
+
+  final Color backdrop;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -88,12 +117,7 @@ class _HeadPainter extends CustomPainter {
     canvas.scale(s);
     final white = Paint()..color = LeylekColors.feather;
 
-    // Köşede düz bir gök parçası: beyaz leylek açık zeminde kaybolmasın.
-    canvas.drawCircle(
-      const Offset(104, 104),
-      92,
-      Paint()..color = LeylekColors.skyLight,
-    );
+    canvas.drawCircle(const Offset(104, 104), 92, Paint()..color = backdrop);
 
     // Boyun: sağ alt köşenin dışından başa uzanır.
     canvas.drawPath(
@@ -129,5 +153,5 @@ class _HeadPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _HeadPainter old) => old.backdrop != backdrop;
 }

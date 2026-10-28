@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/leylek_colors.dart';
+import '../cubit/recent_searches_cubit.dart';
 import '../cubit/search_cubit.dart';
+import '../cubit/search_form_cubit.dart';
 import '../motion.dart';
 import '../widgets/flight_scene.dart';
-import '../widgets/idle_stork.dart';
+import '../widgets/peek_stork.dart';
+import '../widgets/recent_searches.dart';
 import '../widgets/results_carousel.dart';
 import '../widgets/search_card.dart';
 
@@ -14,9 +16,10 @@ enum _Stage { form, flying, results }
 
 /// Uygulamanın tek ekranı. Üç sahne aynı yerde birbirine geçer:
 ///
-///   form     → üstte arama kartı, altta tepede bekleyen leylek
-///   flying   → kart ve leylek kaybolur; leylek uçar, altta uçak, otobüs,
-///              tren, feribot geçer (~8 sn). Bu sırada veri toplanır.
+///   form     → yüzen arama kartı ve altında son aramalar (kaydırılır);
+///              sol alt köşeden başını uzatan leylek
+///   flying   → kartlar kaybolur; leylek uçar, altından dünyanın üstünde
+///              uçak geçer (~4 sn). Bu sırada veri toplanır.
 ///   results  → tam ekran slaytlar; sol üstte geri düğmesi, sağ altta
 ///              başını uzatan leylek (ikisi de forma döner)
 ///
@@ -37,6 +40,10 @@ class _SearchPageState extends State<SearchPage> {
   void _onSearchState(BuildContext context, SearchState state) {
     switch (state) {
       case SearchInProgress():
+        // Geçerli bir arama başladı: formdaki hâli son aramalara yazılır.
+        context.read<RecentSearchesCubit>().add(
+          context.read<SearchFormCubit>().state.toRecent(),
+        );
         setState(() {
           _stage = _Stage.flying;
           _sceneCycled = false;
@@ -87,28 +94,22 @@ class _SearchPageState extends State<SearchPage> {
 
     return BlocListener<SearchCubit, SearchState>(
       listener: _onSearchState,
-      // Mavi zeminde (açılış, uçuş) durum çubuğu ikonları beyaz.
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: _stage == _Stage.results
-            ? SystemUiOverlayStyle.dark
-            : SystemUiOverlayStyle.light,
-        child: PopScope(
-          // Sonuç ekranında geri tuşu uygulamayı kapatmasın, forma dönsün.
-          canPop: _stage == _Stage.form,
-          onPopInvokedWithResult: (didPop, _) {
-            if (!didPop) _newSearch();
-          },
-          child: Scaffold(
-            resizeToAvoidBottomInset: false,
-            backgroundColor: _stage == _Stage.results
-                ? LeylekColors.mist
-                : LeylekColors.brand,
-            body: AnimatedSwitcher(
-              duration: timing.fadeOut,
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              child: scene,
-            ),
+      child: PopScope(
+        // Sonuç ekranında geri tuşu uygulamayı kapatmasın, forma dönsün.
+        canPop: _stage == _Stage.form,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _newSearch();
+        },
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          backgroundColor: _stage == _Stage.results
+              ? LeylekColors.mist
+              : LeylekColors.skySoft,
+          body: AnimatedSwitcher(
+            duration: timing.fadeOut,
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            child: scene,
           ),
         ),
       ),
@@ -119,31 +120,58 @@ class _SearchPageState extends State<SearchPage> {
 class _FormScene extends StatelessWidget {
   const _FormScene({super.key});
 
+  /// Sol alttaki leyleğin boyu; son kart onun üstüne kaydırılabilsin diye
+  /// listenin altında bu kadar boşluk bırakılır.
+  static const double _storkSize = 150;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       behavior: HitTestBehavior.translucent,
       child: DecoratedBox(
-        decoration: const BoxDecoration(color: LeylekColors.brand),
-        // Küre ve leylek tüm ekranın zemininde; kart üstte yüzer. Klavye
-        // açılınca kart kayar, zemin yerinde kalır.
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [LeylekColors.skySoft, LeylekColors.skyLight],
+          ),
+        ),
+        // Leylek zeminde, köşede; kartlar onun üstünde yüzer ve kayar.
+        // Klavye açılınca kartlar kayar, zemin yerinde kalır.
         child: Stack(
           fit: StackFit.expand,
           children: [
-            const Positioned.fill(child: IdleStork()),
+            const Positioned(
+              left: 0,
+              bottom: 0,
+              child: PeekStork(
+                key: Key('landing-stork'),
+                delay: Duration(milliseconds: 200),
+                size: _storkSize,
+                fromLeft: true,
+                backdrop: LeylekColors.sky,
+              ),
+            ),
             SafeArea(
               bottom: false,
               child: SingleChildScrollView(
+                // İçerik kısa olsa da sürüklenebilsin (PAX'teki gibi).
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
                 // Scaffold klavyede küçülmüyor (zemin oynamasın diye);
                 // kartın altı klavyenin üstüne kaydırılabilsin.
                 padding: EdgeInsets.fromLTRB(
                   16,
                   12,
                   16,
-                  24 + MediaQuery.viewInsetsOf(context).bottom,
+                  _storkSize * 0.7 + MediaQuery.viewInsetsOf(context).bottom,
                 ),
-                child: const SearchCard(),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [SearchCard(), RecentSearches()],
+                ),
               ),
             ),
           ],

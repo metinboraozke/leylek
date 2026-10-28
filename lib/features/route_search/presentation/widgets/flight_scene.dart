@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/leylek_colors.dart';
-import 'drawn_train.dart';
 import 'globe.dart';
 import 'stork_lottie.dart';
 import 'vehicle_lottie.dart';
@@ -14,10 +13,9 @@ import 'vehicle_lottie.dart';
 ///     durur: kanat çırpar, hafifçe aşağı yukarı süzülür, arkasında hız
 ///     çizgileri var.
 ///   • Altta dünya yavaşça döner; kıtalar soldan sağa akar.
-///   • Turun üçte birlerinde sırayla uçak (kürenin biraz üstünden), otobüs
-///     ve tren (yüzeyin üstünden) kavis boyunca soldan sağa geçer.
+///   • Uçak kürenin biraz üstünden, kavis boyunca soldan sağa bir kez geçer.
 ///
-/// Bir tur [duration] sürer (varsayılan 8 sn). [onCycle] her tur sonunda
+/// Bir tur [duration] sürer (varsayılan 4 sn). [onCycle] her tur sonunda
 /// çağrılır; veri gecikirse sahne baştan oynar.
 class FlightScene extends StatefulWidget {
   const FlightScene({required this.duration, required this.onCycle, super.key});
@@ -71,7 +69,7 @@ class _FlightSceneState extends State<FlightScene>
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: LeylekColors.brand,
+      color: LeylekColors.skyPale,
       child: Semantics(
         liveRegion: true,
         label: 'Rotalar aranıyor',
@@ -133,7 +131,7 @@ class _FlightSceneState extends State<FlightScene>
     );
   }
 
-  /// Turun üçte birleri: uçak, otobüs, tren; üçü de küre kavisi boyunca.
+  /// Uçak tur boyunca kürenin tepesindeki yayı soldan sağa bir kez geçer.
   List<Widget> _vehicles(
     double t,
     double w,
@@ -141,70 +139,34 @@ class _FlightSceneState extends State<FlightScene>
     Offset globeCenter,
     double radius,
   ) {
-    const phases = 3;
-    final out = <Widget>[];
-
-    // Üç araç da kürenin tepesindeki yay boyunca, küreyle aynı yönde
-    // (soldan sağa) ilerler ve yay üzerinde teğet döner. Uçak yüzeyin
-    // biraz üstünden, otobüs ve tren yüzeyin üstünde gider.
-    // (anahtar, genişlik, yükseklik, yaya oturan nokta, yerden yükseklik, araç)
-    const trainW = 200.0;
-    final lanes = <(String, double, double, double, double, Widget)>[
-      // Uçak tuvali 16:9 ve uçak ortadaki ~%30'luk alanda: ~70 px uçak.
-      (
-        'plane',
-        230,
-        230 * 9 / 16,
-        0.5,
-        92,
-        const VehicleLottie(
-          vehicle: Vehicle.plane,
-          width: 230,
-          height: 230 * 9 / 16,
-        ),
-      ),
-      (
-        'bus',
-        130,
-        130,
-        Vehicle.bus.groundAt,
-        0,
-        const VehicleLottie(vehicle: Vehicle.bus, width: 130, height: 130),
-      ),
-      (
-        'train',
-        trainW,
-        trainW * DrawnTrain.aspect,
-        DrawnTrain.groundAt,
-        0,
-        const DrawnTrain(width: trainW),
-      ),
-    ];
-    for (var i = 0; i < lanes.length; i++) {
-      final local = ((t - i / phases) * phases).clamp(0.0, 1.0);
-      if (local <= 0 || local >= 1) continue;
-      final (key, boxW, boxH, pivotY, altitude, child) = lanes[i];
-      // Görünen yay yaklaşık -40°..+40°; araç bunun biraz dışından girip çıkar.
-      final angle = (-48 + 96 * local) * math.pi / 180;
-      final r = radius + altitude;
-      final anchor = Offset(
-        globeCenter.dx + r * math.sin(angle),
-        globeCenter.dy - r * math.cos(angle),
-      );
-      out.add(
-        Positioned(
-          key: ValueKey(key),
-          left: anchor.dx - boxW / 2,
-          top: anchor.dy - boxH * pivotY,
-          child: Transform.rotate(
-            angle: angle,
-            alignment: Alignment(0, pivotY * 2 - 1),
-            child: child,
+    if (t <= 0 || t >= 1) return const [];
+    // Uçak tuvali 16:9 ve uçak ortadaki ~%30'luk alanda: ~70 px uçak.
+    const boxW = 230.0;
+    const boxH = boxW * 9 / 16;
+    // Yüzeyin biraz üstünden uçar.
+    const altitude = 92.0;
+    // Görünen yay yaklaşık -40°..+40°; uçak bunun biraz dışından girip çıkar.
+    final angle = (-48 + 96 * t) * math.pi / 180;
+    final r = radius + altitude;
+    final anchor = Offset(
+      globeCenter.dx + r * math.sin(angle),
+      globeCenter.dy - r * math.cos(angle),
+    );
+    return [
+      Positioned(
+        key: const ValueKey('plane'),
+        left: anchor.dx - boxW / 2,
+        top: anchor.dy - boxH / 2,
+        child: Transform.rotate(
+          angle: angle,
+          child: const VehicleLottie(
+            vehicle: Vehicle.plane,
+            width: boxW,
+            height: boxH,
           ),
         ),
-      );
-    }
-    return out;
+      ),
+    ];
   }
 }
 
@@ -227,7 +189,8 @@ class _SpeedLinesPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Üç çizgi; her biri kendi hızında kısalıp uzar. Mavi zeminde beyaz.
+    // Üç çizgi; her biri kendi hızında kısalıp uzar. Zemin açık olduğu için
+    // beyaz değil, göğün orta tonunda.
     const rows = [0.15, 0.5, 0.85];
     const speeds = [2.0, 3.0, 1.0];
     for (var i = 0; i < rows.length; i++) {
@@ -238,10 +201,7 @@ class _SpeedLinesPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round
         ..strokeWidth = i == 1 ? 3.5 : 2.5
         ..shader = LinearGradient(
-          colors: [
-            LeylekColors.feather.withValues(alpha: 0),
-            LeylekColors.feather.withValues(alpha: 0.85),
-          ],
+          colors: [LeylekColors.sky.withValues(alpha: 0), LeylekColors.sky],
         ).createShader(Rect.fromLTWH(size.width - len, y, len, 1));
       canvas.drawLine(
         Offset(size.width - len, y),

@@ -11,9 +11,9 @@ import 'place_field.dart';
 
 /// Ana arama kartı: nereden, nereye, ne zaman, konaklama, yarıçap.
 ///
-/// Ölçüler PAX'in keşfet ekranındaki yüzen karttan: 12'lik iç boşluk,
-/// nereden/nereye yan yana, küçük etiketli dolgulu kutular, 44'lük buton.
-/// Kart ekranın üst yarısında kalmalı; altta küre ve leylek görünsün.
+/// PAX'in keşfet ekranındaki yüzen kart kalıbı: nereden/nereye yan yana,
+/// küçük etiketli dolgulu kutular. Ölçüler ondan bir tık ferah: 16'lık iç
+/// boşluk, 12'lik aralıklar, 52'lik buton. Altında son aramalar yüzer.
 class SearchCard extends StatelessWidget {
   const SearchCard({super.key});
 
@@ -35,9 +35,9 @@ class SearchCard extends StatelessWidget {
               errorFor(ValidationField.radius);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: LeylekColors.feather,
+        color: LeylekColors.feather.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
         boxShadow: LeylekColors.cardShadow,
       ),
@@ -72,18 +72,21 @@ class SearchCard extends StatelessWidget {
             ],
           ),
           if (placeError != null) _ErrorText(placeError),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           _DateBox(date: state.date, onPicked: form.setDate),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
           _StopoverPicker(
             days: state.stopoverDays,
             onChanged: form.setStopover,
           ),
           _RadiusSlider(radiusKm: state.radiusKm, onChanged: form.setRadius),
           if (otherError != null) _ErrorText(otherError),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           FilledButton(
             key: const Key('search-button'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
             onPressed: search is SearchInProgress
                 ? null
                 : () => context.read<SearchCubit>().search(state.toQuery()),
@@ -123,7 +126,7 @@ class _SwapButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
     width: 32,
-    height: 46,
+    height: 54,
     child: IconButton(
       tooltip: 'Kalkış ve varışı değiştir',
       padding: EdgeInsets.zero,
@@ -162,7 +165,7 @@ class _DateBox extends StatelessWidget {
     borderRadius: BorderRadius.circular(14),
     onTap: () => _pick(context),
     child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
         color: LeylekColors.skySoft,
         borderRadius: BorderRadius.circular(14),
@@ -233,7 +236,7 @@ class _StopoverPicker extends StatelessWidget {
         ),
       ),
       SizedBox(
-        height: 34,
+        height: 38,
         child: ListView.separated(
           key: const Key('stopover-picker'),
           scrollDirection: Axis.horizontal,
@@ -289,7 +292,7 @@ class _RadiusSlider extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Padding(
-        padding: const EdgeInsets.only(left: 4, top: 8),
+        padding: const EdgeInsets.only(left: 4, top: 12),
         child: Text(
           'Varışa $radiusKm km içindeki havalimanları',
           style: const TextStyle(fontSize: 11, color: LeylekColors.muted),
@@ -302,7 +305,7 @@ class _RadiusSlider extends StatelessWidget {
           overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
         ),
         child: SizedBox(
-          height: 28,
+          height: 32,
           child: Slider(
             value: radiusKm.toDouble(),
             min: SearchQuery.minRadiusKm.toDouble(),
