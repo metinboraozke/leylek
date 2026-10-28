@@ -5,13 +5,14 @@ import '../../../../core/theme/leylek_colors.dart';
 import '../../domain/entities/route_option.dart';
 import '../../domain/entities/search_result.dart';
 import '../labels.dart';
+import 'itinerary_card.dart';
 import 'journey_cards.dart';
 
 /// Tüm ekranı kaplayan tek bir rota slaytı.
 ///
 /// Üstte etiket ve büyük "İstanbul → Salzburg"; ardından özet kartı (en
-/// ucuza yeşil para, önerilene mavi tik) ve rotanın her parçası için PAX
-/// tarzı biniş kartları. "Rezervasyona git" ilgili kartın içinde.
+/// ucuza yeşil para, önerilene mavi tik), adım adım yolculuk planı ve
+/// rotanın her parçası için PAX tarzı biniş kartları. "Rezervasyona git" ilgili kartın içinde.
 class RouteSlide extends StatelessWidget {
   const RouteSlide({
     required this.option,
@@ -85,6 +86,18 @@ class RouteSlide extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 12),
+        ItineraryCard(option: o, from: from, to: to),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(4, 20, 4, 10),
+          child: Text(
+            'Biletler ve ayrıntılar',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: LeylekColors.wingtip,
+            ),
+          ),
+        ),
         ..._journey(o, from, to),
         const SizedBox(height: 16),
         Text(
@@ -119,7 +132,13 @@ class RouteSlide extends StatelessWidget {
     }
 
     final widgets = <Widget>[
-      BoardingPass.flight(o.flight, day, linkFor(BookingKind.flight)),
+      BoardingPass.flight(
+        o.flight,
+        day,
+        linkFor(BookingKind.flight),
+        fromCity: from,
+        toCity: o.via?.name ?? to,
+      ),
     ];
     final ground = o.ground;
     if (ground == null) {

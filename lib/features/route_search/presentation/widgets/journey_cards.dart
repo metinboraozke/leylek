@@ -29,12 +29,22 @@ class BoardingPass extends StatelessWidget {
     this.booking,
     this.note,
     this.compactEndpoints = false,
+    this.fromCity,
+    this.toCity,
     super.key,
   });
 
   /// Uçuş kartı.
-  factory BoardingPass.flight(Flight f, String date, BookingLink? booking) {
+  factory BoardingPass.flight(
+    Flight f,
+    String date,
+    BookingLink? booking, {
+    String? fromCity,
+    String? toCity,
+  }) {
     return BoardingPass(
+      fromCity: fromCity,
+      toCity: toCity,
       label: 'UÇUŞ',
       date: date,
       from: f.fromIata ?? '—',
@@ -136,6 +146,10 @@ class BoardingPass extends StatelessWidget {
   /// Uzun istasyon adları için daha küçük uç yazısı.
   final bool compactEndpoints;
 
+  /// Havalimanı kodunun altındaki şehir adı, ör. "Münih".
+  final String? fromCity;
+  final String? toCity;
+
   static String _age(int hours) =>
       hours < 24 ? '$hours saat önce' : '${hours ~/ 24} gün önce';
 
@@ -176,6 +190,7 @@ class BoardingPass extends StatelessWidget {
                       flex: 4,
                       child: _Endpoint(
                         code: from,
+                        city: fromCity,
                         time: fromTime,
                         alignment: CrossAxisAlignment.start,
                         compact: compactEndpoints,
@@ -193,6 +208,7 @@ class BoardingPass extends StatelessWidget {
                       flex: 4,
                       child: _Endpoint(
                         code: to,
+                        city: toCity,
                         time: toTime,
                         alignment: CrossAxisAlignment.end,
                         compact: compactEndpoints,
@@ -317,9 +333,11 @@ class _Endpoint extends StatelessWidget {
     required this.time,
     required this.alignment,
     required this.compact,
+    this.city,
   });
 
   final String code;
+  final String? city;
   final String time;
   final CrossAxisAlignment alignment;
   final bool compact;
@@ -343,6 +361,17 @@ class _Endpoint extends StatelessWidget {
           height: 1.15,
         ),
       ),
+      if (city != null && city!.isNotEmpty)
+        Text(
+          city!,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: LeylekColors.wingtip,
+          ),
+        ),
       if (time.isNotEmpty)
         Text(
           time,

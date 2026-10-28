@@ -164,7 +164,7 @@ class _PageIndicator extends StatelessWidget {
             width: i == index ? 16 : 6,
             height: 6,
             decoration: BoxDecoration(
-              color: i == index ? LeylekColors.beak : LeylekColors.line,
+              color: i == index ? LeylekColors.skyDeep : LeylekColors.line,
               borderRadius: BorderRadius.circular(3),
             ),
           ),

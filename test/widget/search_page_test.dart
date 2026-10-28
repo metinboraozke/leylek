@@ -143,8 +143,21 @@ void main() {
       expect(find.text('1 / 4'), findsOneWidget);
       expect(find.byKey(const Key('badge-cheapest')), findsOneWidget);
       expect(find.byKey(const Key('badge-recommended')), findsNothing);
-      expect(find.text('IST'), findsOneWidget);
+      // Yolculuk planı: her adımda ne ile ve şehir düzeyinde nereden nereye.
+      expect(find.text('Yolculuk planı'), findsOneWidget);
+      expect(find.text('Uçak → Banliyö → Bölgesel tren'), findsOneWidget);
+      expect(find.text('İstanbul → Münih'), findsOneWidget);
+      expect(find.text('Münih havalimanı → München Hbf'), findsOneWidget);
+      expect(find.text('München Hbf → Salzburg'), findsOneWidget);
+
+      // Biniş kartında kodun altında şehir adı.
+      await tester.scrollUntilVisible(
+        find.text('IST'),
+        300,
+        scrollable: find.byType(Scrollable).at(1),
+      );
       expect(find.text('MUC'), findsOneWidget);
+      expect(find.text('Münih'), findsOneWidget);
 
       // Sağa kaydır: ikinci rota önerilen, mavi tik
       await tester.drag(
@@ -157,6 +170,11 @@ void main() {
 
       // Biniş kartları: uçuş ve iki kara bacağı; "Rezervasyona git" ilgili
       // kartın içinde (Pegasus uçuşu ve ÖBB treni, IVB otobüsünün bağlantısı yok).
+      await tester.scrollUntilVisible(
+        find.text('Pegasus'),
+        300,
+        scrollable: find.byType(Scrollable).at(1),
+      );
       expect(find.text('Pegasus'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('ÖBB'),
