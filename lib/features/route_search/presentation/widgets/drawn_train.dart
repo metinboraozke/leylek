@@ -60,7 +60,7 @@ class _TrainPainter extends CustomPainter {
   static const double _h = 80;
 
   static const _white = Color(0xFFFFFFFF);
-  static const _outline = Color(0xE62F6E9E);
+  static const _outline = Color(0xE614456B);
 
   final double t;
 

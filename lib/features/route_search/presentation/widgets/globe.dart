@@ -37,7 +37,7 @@ class LandShapes {
   }
 }
 
-/// Ekranın altında yükselen dünya. Yalnızca üst kısmı görünür; [rotation]
+/// Ekranın altında yükselen dünya: logodaki gibi beyaz deniz, mavi karalar. Yalnızca üst kısmı görünür; [rotation]
 /// 0→1 ilerledikçe kıtalar soldan sağa kayar.
 class GlobePainter extends CustomPainter {
   GlobePainter({
@@ -64,11 +64,7 @@ class GlobePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final disc = Rect.fromCircle(center: center, radius: radius);
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()..color = LeylekColors.feather.withValues(alpha: 0.35),
-    );
+    canvas.drawCircle(center, radius, Paint()..color = LeylekColors.feather);
 
     final land = shapes;
     if (land != null) {
@@ -112,15 +108,6 @@ class GlobePainter extends CustomPainter {
       }
       canvas.restore();
     }
-
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..color = LeylekColors.feather.withValues(alpha: 0.6),
-    );
   }
 
   @override

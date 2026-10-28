@@ -71,7 +71,7 @@ class _FlightSceneState extends State<FlightScene>
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: LeylekColors.skyPale,
+      color: LeylekColors.brand,
       child: Semantics(
         liveRegion: true,
         label: 'Rotalar aranıyor',
@@ -227,8 +227,7 @@ class _SpeedLinesPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Üç çizgi; her biri kendi hızında kısalıp uzar. Zemin açık olduğu için
-    // beyaz değil, göğün orta tonunda.
+    // Üç çizgi; her biri kendi hızında kısalıp uzar. Mavi zeminde beyaz.
     const rows = [0.15, 0.5, 0.85];
     const speeds = [2.0, 3.0, 1.0];
     for (var i = 0; i < rows.length; i++) {
@@ -239,7 +238,10 @@ class _SpeedLinesPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round
         ..strokeWidth = i == 1 ? 3.5 : 2.5
         ..shader = LinearGradient(
-          colors: [LeylekColors.sky.withValues(alpha: 0), LeylekColors.sky],
+          colors: [
+            LeylekColors.feather.withValues(alpha: 0),
+            LeylekColors.feather.withValues(alpha: 0.85),
+          ],
         ).createShader(Rect.fromLTWH(size.width - len, y, len, 1));
       canvas.drawLine(
         Offset(size.width - len, y),

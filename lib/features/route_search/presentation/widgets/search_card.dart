@@ -37,7 +37,7 @@ class SearchCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: LeylekColors.feather.withValues(alpha: 0.92),
+        color: LeylekColors.feather,
         borderRadius: BorderRadius.circular(20),
         boxShadow: LeylekColors.cardShadow,
       ),

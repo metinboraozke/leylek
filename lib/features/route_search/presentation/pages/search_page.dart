@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/leylek_colors.dart';
@@ -86,22 +87,28 @@ class _SearchPageState extends State<SearchPage> {
 
     return BlocListener<SearchCubit, SearchState>(
       listener: _onSearchState,
-      child: PopScope(
-        // Sonuç ekranında geri tuşu uygulamayı kapatmasın, forma dönsün.
-        canPop: _stage == _Stage.form,
-        onPopInvokedWithResult: (didPop, _) {
-          if (!didPop) _newSearch();
-        },
-        child: Scaffold(
-          resizeToAvoidBottomInset: false,
-          backgroundColor: _stage == _Stage.results
-              ? LeylekColors.mist
-              : LeylekColors.skySoft,
-          body: AnimatedSwitcher(
-            duration: timing.fadeOut,
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            child: scene,
+      // Mavi zeminde (açılış, uçuş) durum çubuğu ikonları beyaz.
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: _stage == _Stage.results
+            ? SystemUiOverlayStyle.dark
+            : SystemUiOverlayStyle.light,
+        child: PopScope(
+          // Sonuç ekranında geri tuşu uygulamayı kapatmasın, forma dönsün.
+          canPop: _stage == _Stage.form,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) _newSearch();
+          },
+          child: Scaffold(
+            resizeToAvoidBottomInset: false,
+            backgroundColor: _stage == _Stage.results
+                ? LeylekColors.mist
+                : LeylekColors.brand,
+            body: AnimatedSwitcher(
+              duration: timing.fadeOut,
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: scene,
+            ),
           ),
         ),
       ),
@@ -118,13 +125,7 @@ class _FormScene extends StatelessWidget {
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       behavior: HitTestBehavior.translucent,
       child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [LeylekColors.skySoft, LeylekColors.skyLight],
-          ),
-        ),
+        decoration: const BoxDecoration(color: LeylekColors.brand),
         // Küre ve leylek tüm ekranın zemininde; kart üstte yüzer. Klavye
         // açılınca kart kayar, zemin yerinde kalır.
         child: Stack(

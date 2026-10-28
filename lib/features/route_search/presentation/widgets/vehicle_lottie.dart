@@ -29,8 +29,8 @@ enum Vehicle {
   final double groundAt;
 }
 
-/// Beyaz çizgi araç. Açık gök ve gri karalar üzerinde kaybolmasın diye
-/// arkasına aynı animasyonun genişletilmiş, göğün koyu tonunda bir kopyası
+/// Beyaz çizgi araç. Beyaz küre üzerinde kaybolmasın diye arkasına aynı
+/// animasyonun genişletilmiş, marka mavisinin derin tonunda bir kopyası
 /// kontur olarak çizilir; iki kopya aynı denetleyiciyle eş zamanlı oynar.
 class VehicleLottie extends StatefulWidget {
   const VehicleLottie({
@@ -53,7 +53,7 @@ class _VehicleLottieState extends State<VehicleLottie>
   late final AnimationController _controller = AnimationController(vsync: this);
   LottieComposition? _composition;
 
-  static const _outline = Color(0xE62F6E9E);
+  static const _outline = Color(0xE614456B);
 
   @override
   void initState() {
@@ -99,7 +99,7 @@ class _VehicleLottieState extends State<VehicleLottie>
         height: widget.height,
         child: Stack(
           children: [
-            // Beyaz çizginin çevresinde göğün koyu tonunda ince kontur:
+            // Beyaz çizginin çevresinde derin mavi ince kontur:
             // aynı çizim genişletilip (dilate) maviye boyanır.
             ImageFiltered(
               imageFilter: ui.ImageFilter.dilate(radiusX: 1.8, radiusY: 1.8),

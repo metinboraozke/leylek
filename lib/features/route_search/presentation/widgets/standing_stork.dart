@@ -68,11 +68,11 @@ class _StorkPainter extends CustomPainter {
     canvas.scale(size.width / _w, size.height / _h);
 
     final white = Paint()..color = LeylekColors.feather;
-    final orange = Paint()..color = LeylekColors.beak;
+    final orange = Paint()..color = LeylekColors.logoBeak;
 
     // Bacaklar: iki düz çizgi, dizde hafif kırılma.
     final leg = Paint()
-      ..color = LeylekColors.beak
+      ..color = LeylekColors.logoBeak
       ..strokeWidth = 5
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
