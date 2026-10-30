@@ -109,10 +109,11 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-# Uygulama simgesi: assets/ikon.jpg (2048x2048).
+# Uygulama simgesi: assets/app_icon.png (1024x1024), assets/ikon.png
+# tasarımındaki büyük ikondan kesildi; köşeleri iOS kendisi yuvarlar.
 # Değişirse: dart run flutter_launcher_icons
 flutter_launcher_icons:
-  image_path: "assets/ikon.jpg"
+  image_path: "assets/app_icon.png"
   android: true
   ios: true
   remove_alpha_ios: true
