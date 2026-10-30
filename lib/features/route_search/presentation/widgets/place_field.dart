@@ -9,6 +9,10 @@ import '../cubit/search_form_cubit.dart';
 
 /// Otomatik tamamlamalı yer alanı.
 ///
+/// Açılış kartındaki satır biçimi: solda küçük işaret, üstte soluk etiket,
+/// altta büyük şehir adı ve yanında küçük alan kodu ("İstanbul IST").
+/// Çerçeve ve dolgu yok; satırları saran kutu kartta çizilir.
+///
 /// Metni dışarıdan gelen [value] belirler: "yer değiştir" düğmesine
 /// basılınca iki alanın içeriği formdan güncellenir. Kendi denetleyicisini
 /// tutar ama yalnızca formla farklılaştığında üzerine yazar; böylece
@@ -19,6 +23,7 @@ class PlaceField extends StatefulWidget {
     required this.value,
     required this.onTyped,
     required this.onSelected,
+    required this.marker,
     this.hasError = false,
     super.key,
   });
@@ -28,9 +33,10 @@ class PlaceField extends StatefulWidget {
   final ValueChanged<String> onTyped;
   final ValueChanged<Place> onSelected;
 
-  /// Hata metni kartın altında tek satır gösterilir; alan yalnızca
-  /// kırmızı çerçeveyle işaretlenir. Yarım genişlikte iki alanın altına
-  /// ayrı ayrı metin sığmıyor.
+  /// Etiketin solundaki işaret: kalkışta halka, varışta turuncu nokta.
+  final Widget marker;
+
+  /// Hata metni kartta ayrıca yazar; alanda yalnızca etiket kızarır.
   final bool hasError;
 
   @override
@@ -38,14 +44,15 @@ class PlaceField extends StatefulWidget {
 }
 
 class _PlaceFieldState extends State<PlaceField> {
-  late final TextEditingController _controller = TextEditingController(
+  late final _PlaceController _controller = _PlaceController(
     text: widget.value.text,
-  );
+  )..place = widget.value.place;
   final FocusNode _focusNode = FocusNode();
 
   @override
   void didUpdateWidget(covariant PlaceField oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _controller.place = widget.value.place;
     if (_controller.text != widget.value.text) {
       _controller.value = TextEditingValue(
         text: widget.value.text,
@@ -74,40 +81,125 @@ class _PlaceFieldState extends State<PlaceField> {
 
   @override
   Widget build(BuildContext context) {
-    return RawAutocomplete<Place>(
-      textEditingController: _controller,
-      focusNode: _focusNode,
-      displayStringForOption: (place) => place.label,
-      optionsBuilder: _suggest,
-      onSelected: widget.onSelected,
-      fieldViewBuilder: (context, controller, focusNode, onSubmitted) =>
-          TextField(
-            controller: controller,
-            focusNode: focusNode,
-            onChanged: widget.onTyped,
-            onSubmitted: (_) => onSubmitted(),
-            textInputAction: TextInputAction.next,
-            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
-            // PAX'teki gibi ikon yok: alan yarım genişlikte, ikon şehir
-            // adını kırpıyordu. Yönü aradaki düğme, alanı etiket anlatıyor.
-            decoration: InputDecoration(
-              labelText: widget.label,
-              hintText: 'Şehir ara',
-              enabledBorder: widget.hasError
-                  ? OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: LeylekColors.beakText,
-                        width: 1.2,
-                      ),
-                    )
-                  : null,
+    return GestureDetector(
+      // Satırın herhangi bir yerine dokunmak alanı açar.
+      behavior: HitTestBehavior.opaque,
+      onTap: _focusNode.requestFocus,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 36,
+              height: 22,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: widget.marker,
+              ),
             ),
-          ),
-      optionsViewBuilder: (context, onSelected, options) => _Options(
-        options: options.toList(growable: false),
-        onSelected: onSelected,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: widget.hasError
+                          ? LeylekColors.beakText
+                          : LeylekColors.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  _field(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _field() => RawAutocomplete<Place>(
+    textEditingController: _controller,
+    focusNode: _focusNode,
+    displayStringForOption: (place) => place.label,
+    optionsBuilder: _suggest,
+    onSelected: widget.onSelected,
+    fieldViewBuilder: (context, controller, focusNode, onSubmitted) =>
+        TextField(
+          controller: controller,
+          focusNode: focusNode,
+          onChanged: widget.onTyped,
+          onSubmitted: (_) => onSubmitted(),
+          textInputAction: TextInputAction.next,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color: LeylekColors.ink,
+          ),
+          decoration: const InputDecoration(
+            hintText: 'Şehir ara',
+            hintStyle: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+              color: LeylekColors.muted,
+            ),
+            isCollapsed: true,
+            filled: false,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+    optionsViewBuilder: (context, onSelected, options) => _Options(
+      options: options.toList(growable: false),
+      onSelected: onSelected,
+    ),
+  );
+}
+
+/// Seçili yerin metnini "İstanbul" büyük, " IST" küçük ve soluk çizer.
+/// Kullanıcı yazmaya başlayınca seçim düşer ve metin tek biçimde kalır.
+class _PlaceController extends TextEditingController {
+  _PlaceController({super.text});
+
+  Place? place;
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final p = place;
+    final code = p?.iata;
+    if (p == null || code == null || text != p.label) {
+      return super.buildTextSpan(
+        context: context,
+        style: style,
+        withComposing: withComposing,
+      );
+    }
+    return TextSpan(
+      style: style,
+      children: [
+        TextSpan(text: p.name),
+        TextSpan(
+          text: ' $code',
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.3,
+            color: LeylekColors.muted,
+          ),
+        ),
+      ],
     );
   }
 }

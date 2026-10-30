@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/recent_search.dart';
 import '../../domain/repositories/recent_searches_repository.dart';
 
-/// Formun altındaki "Son aramalar" listesi: en yeni başta, en fazla
+/// Formun altındaki "Son arama" kartının kaynağı: en yeni başta, en fazla
 /// [limit] kayıt.
 class RecentSearchesCubit extends Cubit<List<RecentSearch>> {
   RecentSearchesCubit(this._repository) : super(const []) {
@@ -15,7 +15,7 @@ class RecentSearchesCubit extends Cubit<List<RecentSearch>> {
 
   final RecentSearchesRepository _repository;
 
-  static const int limit = 2;
+  static const int limit = 1;
 
   Future<void> add(RecentSearch search) async {
     final next = _trim([search, ...state.where((s) => !s.sameRouteAs(search))]);

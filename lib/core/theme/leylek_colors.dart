@@ -27,6 +27,15 @@ abstract final class LeylekColors {
   static const Color beakText = Color(0xFFB83E1E);
   static const Color feather = Color(0xFFFFFFFF);
   static const Color wingtip = Color(0xFF1A1A1A);
+
+  /// Açılıştaki başlık ve alan değerleri: lacivert mürekkep.
+  static const Color ink = Color(0xFF14233B);
+
+  /// Açılış kartındaki dolgulu kutular: kart beyazından bir tık mavi.
+  static const Color field = Color(0xFFEEF4FB);
+
+  /// Kutulardaki ayırıcı çizgi ve kaydırıcının boş kısmı.
+  static const Color fieldLine = Color(0xFFD9E5F0);
   static const Color meadow = Color(0xFF7BAE5A);
   static const Color meadowDeep = Color(0xFF5E9442);
   static const Color meadowText = Color(0xFF3F7A2A);

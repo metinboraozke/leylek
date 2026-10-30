@@ -70,14 +70,22 @@ void main() {
     await advance(tester, const Duration(milliseconds: 300));
   }
 
+  /// Açılış kaydırılabilir; düğme ekranın altında kalabilir.
+  Future<void> tapSearch(WidgetTester tester) async {
+    final button = find.byKey(const Key('search-button'));
+    await tester.ensureVisible(button);
+    await tester.pump();
+    await tester.tap(button);
+  }
+
   Future<void> searchSalzburg(WidgetTester tester) async {
     await pickPlace(tester, 'from-field', 'İstan', 'İstanbul');
     await pickPlace(tester, 'to-field', 'salz', 'Salzburg');
-    await tester.tap(find.byKey(const Key('search-button')));
+    await tapSearch(tester);
     await tester.pump();
   }
 
-  testWidgets('form ekranında arama kartı ve sol altta leylek var', (
+  testWidgets('form ekranında başlık, arama kartı ve karta konmuş leylek var', (
     tester,
   ) async {
     phoneScreen(tester);
@@ -88,9 +96,12 @@ void main() {
 
     expect(find.byType(SearchCard), findsOneWidget);
     expect(find.byKey(const Key('landing-stork')), findsOneWidget);
+    expect(find.text('Bir uçuş yerine,\nbir yolculuk.'), findsOneWidget);
     expect(find.text('Rotaları ara'), findsOneWidget);
+    expect(find.text('Varışa yakın havalimanları'), findsOneWidget);
+    expect(find.text('Konaklamasız'), findsOneWidget);
     // Henüz arama yapılmadı.
-    expect(find.text('Son aramalar'), findsNothing);
+    expect(find.text('Son arama'), findsNothing);
   });
 
   testWidgets('yapılan arama son aramalara düşer, dokununca form dolar', (
@@ -105,13 +116,15 @@ void main() {
     await tester.tap(find.byKey(const Key('back-to-search')));
     await advance(tester, const Duration(milliseconds: 400));
 
-    expect(find.text('Son aramalar'), findsOneWidget);
+    expect(find.text('Son arama'), findsOneWidget);
     expect(find.text('İstanbul → Salzburg'), findsOneWidget);
 
     final form = BlocProvider.of<SearchFormCubit>(
       tester.element(find.byType(SearchCard)),
     );
     form.typeTo('');
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('recent-0')));
     await tester.pump();
     await tester.tap(find.byKey(const Key('recent-0')));
     await tester.pump();
@@ -218,7 +231,7 @@ void main() {
       await tester.tap(find.bySemanticsLabel('Yeni arama'));
       await advance(tester, const Duration(milliseconds: 400));
       expect(find.byType(SearchCard), findsOneWidget);
-      expect(find.text('Salzburg (SZG)'), findsOneWidget);
+      expect(find.text('Salzburg SZG'), findsOneWidget);
     },
   );
 
@@ -237,7 +250,7 @@ void main() {
     expect(find.byType(SearchCard), findsOneWidget);
   });
 
-  testWidgets('konaklama hapları formu günceller, seçilen tek olur', (
+  testWidgets('ara tatil kutusu seçenek listesi açar, formu günceller', (
     tester,
   ) async {
     phoneScreen(tester);
@@ -250,27 +263,22 @@ void main() {
     final form = BlocProvider.of<SearchFormCubit>(context);
     expect(form.state.stopoverDays, 0);
 
-    // Haplar yatay kaydırılan bir şeritte; ekran dışındakine kaydırılır.
-    await tester.dragUntilVisible(
-      find.byKey(const Key('stopover-2')),
-      find.byKey(const Key('stopover-picker')),
-      const Offset(-80, 0),
-    );
-    await tester.ensureVisible(find.byKey(const Key('stopover-2')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('stopover-2')));
-    await tester.pump();
+    Future<void> pick(int days) async {
+      await tester.tap(find.byKey(const Key('stopover-box')));
+      await advance(tester, const Duration(milliseconds: 500));
+      expect(find.byKey(const Key('stopover-picker')), findsOneWidget);
+      await tester.tap(find.byKey(Key('stopover-$days')));
+      await advance(tester, const Duration(milliseconds: 500));
+    }
+
+    await pick(2);
     expect(form.state.stopoverDays, 2);
     expect(form.state.toQuery().stopoverDays, 2);
-    await tester.dragUntilVisible(
-      find.byKey(const Key('stopover-0')),
-      find.byKey(const Key('stopover-picker')),
-      const Offset(80, 0),
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('stopover-0')));
-    await tester.pump();
+    expect(find.text('2 gün kal'), findsOneWidget);
+
+    await pick(0);
     expect(form.state.stopoverDays, 0);
+    expect(find.text('Konaklamasız'), findsOneWidget);
   });
 
   testWidgets('eksik varışta animasyon başlamaz, hata alanın altında', (
@@ -281,7 +289,7 @@ void main() {
       LeylekApp(dependencies: sampleDeps(), timing: _fast),
     );
     await pickPlace(tester, 'from-field', 'İstan', 'İstanbul');
-    await tester.tap(find.byKey(const Key('search-button')));
+    await tapSearch(tester);
     await advance(tester, const Duration(milliseconds: 300));
 
     expect(find.byType(FlightScene), findsNothing);

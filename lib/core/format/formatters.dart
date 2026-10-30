@@ -30,6 +30,14 @@ abstract final class Formatters {
   static String day(DateTime date) =>
       DateFormat('d MMMM EEEE', 'tr').format(date);
 
+  /// Arama kartındaki tarih: "4 Kas, Çar".
+  static String cardDay(DateTime date) =>
+      DateFormat('d MMM, EEE', 'tr').format(date);
+
+  /// Son aramadaki tarih: "12 Kas".
+  static String dayMonth(DateTime date) =>
+      DateFormat('d MMM', 'tr').format(date);
+
   /// Biniş kartındaki kısa tarih: "20 Kas Cum".
   static String shortDay(DateTime date) =>
       DateFormat('d MMM EEE', 'tr').format(date);

@@ -25,8 +25,9 @@ class Place extends Equatable {
   /// Havalimanı ya da şehir kodu, ör. `IST`, `MIL`.
   final String? iata;
 
-  /// Alan içinde görünen kısa ad: "İstanbul (IST)".
-  String get label => iata == null ? name : '$name ($iata)';
+  /// Alan içinde görünen kısa ad: "İstanbul IST". Alan kodu küçük ve
+  /// soluk yazar.
+  String get label => iata == null ? name : '$name $iata';
 
   @override
   List<Object?> get props => [id, name, countryCode, countryName, kind, iata];

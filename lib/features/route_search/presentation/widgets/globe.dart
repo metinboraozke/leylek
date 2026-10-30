@@ -45,6 +45,7 @@ class GlobePainter extends CustomPainter {
     required this.center,
     required this.radius,
     required this.rotation,
+    this.centerLat = 15,
   });
 
   final LandShapes? shapes;
@@ -52,8 +53,10 @@ class GlobePainter extends CustomPainter {
   final double radius;
   final double rotation;
 
-  /// Kamera enlemi: Avrupa ve Kuzey Afrika kürenin görünen tepesine düşer.
-  static const double _lat0 = 15;
+  /// Kamera enlemi. Varsayılan 15°: Avrupa ve Kuzey Afrika kürenin görünen
+  /// tepesine düşer. Açılıştaki gibi küre ekranın büyük kısmını
+  /// kapladığında daha küçük bir değer Avrupa'yı ortaya getirir.
+  final double centerLat;
 
   /// Dönüş: merkez boylamı 50°D'den 0°'ye iner, karalar sağa akar.
   static const double _lonStart = 50;
@@ -75,7 +78,7 @@ class GlobePainter extends CustomPainter {
       canvas.save();
       canvas.clipPath(Path()..addOval(disc));
       final lon0 = (_lonStart + (_lonEnd - _lonStart) * rotation) * _deg;
-      final lat0 = _lat0 * _deg;
+      final lat0 = centerLat * _deg;
       final sinLat0 = math.sin(lat0);
       final cosLat0 = math.cos(lat0);
       final paint = Paint()..color = LeylekColors.land;
@@ -126,6 +129,7 @@ class GlobePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant GlobePainter old) =>
       old.rotation != rotation ||
+      old.centerLat != centerLat ||
       old.shapes != shapes ||
       old.radius != radius ||
       old.center != center;

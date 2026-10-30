@@ -12,26 +12,23 @@ RecentSearch _search(String from, String to, {int day = 1}) => RecentSearch(
 );
 
 void main() {
-  test('en fazla iki kayıt tutar, en yeni başta', () async {
+  test('yalnızca en yeni kaydı tutar', () async {
     final repo = InMemoryRecentSearchesRepository();
     final cubit = RecentSearchesCubit(repo);
     await cubit.add(_search('İstanbul', 'Salzburg'));
     await cubit.add(_search('Ankara', 'Lyon'));
     await cubit.add(_search('İzmir', 'Bari'));
 
-    expect(cubit.state.map((s) => s.toName), ['Bari', 'Lyon']);
-    expect((await repo.load()).length, 2);
+    expect(cubit.state.map((s) => s.toName), ['Bari']);
+    expect((await repo.load()).length, 1);
   });
 
-  test('aynı rota tekrar aranınca eskisi silinir, yenisi başa geçer', () async {
+  test('aynı rota tekrar aranınca yeni tarihle yazılır', () async {
     final cubit = RecentSearchesCubit(InMemoryRecentSearchesRepository());
     await cubit.add(_search('İstanbul', 'Salzburg'));
-    await cubit.add(_search('Ankara', 'Lyon'));
     await cubit.add(_search('istanbul', 'salzburg', day: 9));
 
-    expect(cubit.state.length, 2);
-    expect(cubit.state.first.date, DateTime(2026, 12, 9));
-    expect(cubit.state.last.toName, 'Lyon');
+    expect(cubit.state.single.date, DateTime(2026, 12, 9));
   });
 
   test('açılışta depodaki kayıtları yükler', () async {

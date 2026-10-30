@@ -100,8 +100,15 @@ class SearchFormCubit extends Cubit<SearchFormState> {
   /// geçmişte kaldıysa formdaki tarih korunur.
   void restore(RecentSearch recent, {required DateTime today}) => emit(
     SearchFormState(
-      from: PlaceInput(text: recent.fromText, place: recent.fromPlace),
-      to: PlaceInput(text: recent.toText, place: recent.toPlace),
+      // Eski kayıtlar "İstanbul (IST)" biçiminde; seçili yer güncel adla yazılır.
+      from: PlaceInput(
+        text: recent.fromPlace?.label ?? recent.fromText,
+        place: recent.fromPlace,
+      ),
+      to: PlaceInput(
+        text: recent.toPlace?.label ?? recent.toText,
+        place: recent.toPlace,
+      ),
       date: recent.date.isBefore(today) ? state.date : recent.date,
       radiusKm: recent.radiusKm,
       stopoverDays: recent.stopoverDays,

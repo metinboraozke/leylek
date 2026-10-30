@@ -7,17 +7,18 @@ import '../cubit/search_cubit.dart';
 import '../cubit/search_form_cubit.dart';
 import '../motion.dart';
 import '../widgets/flight_scene.dart';
-import '../widgets/peek_stork.dart';
+import '../widgets/globe.dart';
 import '../widgets/recent_searches.dart';
 import '../widgets/results_carousel.dart';
 import '../widgets/search_card.dart';
+import '../widgets/standing_stork.dart';
 
 enum _Stage { form, flying, results }
 
 /// Uygulamanın tek ekranı. Üç sahne aynı yerde birbirine geçer:
 ///
-///   form     → yüzen arama kartı ve altında son aramalar (kaydırılır);
-///              sol alt köşeden başını uzatan leylek
+///   form     → soluk Avrupa haritası önünde başlık, üstüne leylek konmuş
+///              arama kartı ve altında tek satır son arama (kaydırılır)
 ///   flying   → kartlar kaybolur; leylek uçar, altından dünyanın üstünde
 ///              uçak geçer (~4 sn). Bu sırada veri toplanır.
 ///   results  → tam ekran slaytlar; sol üstte geri düğmesi, sağ altta
@@ -120,9 +121,10 @@ class _SearchPageState extends State<SearchPage> {
 class _FormScene extends StatelessWidget {
   const _FormScene({super.key});
 
-  /// Sol alttaki leyleğin boyu; son kart onun üstüne kaydırılabilsin diye
-  /// listenin altında bu kadar boşluk bırakılır.
-  static const double _storkSize = 150;
+  /// Kartın sağ üstüne konan leyleğin boyu; ayakları kartın içine
+  /// [_storkSink] kadar iner.
+  static const double _storkHeight = 118;
+  static const double _storkSink = 23;
 
   @override
   Widget build(BuildContext context) {
@@ -134,47 +136,153 @@ class _FormScene extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [LeylekColors.skySoft, LeylekColors.skyLight],
+            colors: [LeylekColors.skySoft, LeylekColors.field],
           ),
         ),
-        // Leylek zeminde, köşede; kartlar onun üstünde yüzer ve kayar.
+        // Harita zeminde sabit; başlık ve kartlar onun üstünde kayar.
         // Klavye açılınca kartlar kayar, zemin yerinde kalır.
         child: Stack(
           fit: StackFit.expand,
           children: [
-            const Positioned(
-              left: 0,
-              bottom: 0,
-              child: PeekStork(
-                key: Key('landing-stork'),
-                delay: Duration(milliseconds: 200),
-                size: _storkSize,
-                fromLeft: true,
-                backdrop: LeylekColors.sky,
-              ),
-            ),
+            const _MapBackdrop(),
             SafeArea(
               bottom: false,
               child: SingleChildScrollView(
-                // İçerik kısa olsa da sürüklenebilsin (PAX'teki gibi).
+                // İçerik kısa olsa da sürüklenebilsin.
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
                 // Scaffold klavyede küçülmüyor (zemin oynamasın diye);
                 // kartın altı klavyenin üstüne kaydırılabilsin.
                 padding: EdgeInsets.fromLTRB(
-                  16,
                   12,
-                  16,
-                  _storkSize * 0.7 + MediaQuery.viewInsetsOf(context).bottom,
+                  22,
+                  12,
+                  24 + MediaQuery.viewInsetsOf(context).bottom,
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [SearchCard(), RecentSearches()],
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: _Headline(),
+                    ),
+                    const SizedBox(height: 137),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const SearchCard(),
+                        Positioned(
+                          right: 7,
+                          top: _storkSink - _storkHeight,
+                          child: const IgnorePointer(
+                            child: StandingStork(
+                              key: Key('landing-stork'),
+                              height: _storkHeight,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const RecentSearches(),
+                  ],
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "leylek", büyük başlık ve kısa açıklama.
+class _Headline extends StatelessWidget {
+  const _Headline();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'leylek',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.2,
+            color: LeylekColors.skyDeep,
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Bir uçuş yerine,\nbir yolculuk.',
+          style: TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -1.4,
+            height: 1.08,
+            color: LeylekColors.ink,
+          ),
+        ),
+        SizedBox(height: 16),
+        Text(
+          'Aktarma şehirlerinde ara tatillerle\nrotanı birlikte kuralım.',
+          style: TextStyle(
+            fontSize: 16,
+            height: 1.45,
+            color: LeylekColors.muted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Başlığın arkasındaki soluk dünya: ekranı aşan büyük bir kürenin üst
+/// kenarı, ortasında Avrupa. Kara şekilleri yüklenene kadar yalnızca
+/// kürenin kendisi görünür.
+class _MapBackdrop extends StatefulWidget {
+  const _MapBackdrop();
+
+  @override
+  State<_MapBackdrop> createState() => _MapBackdropState();
+}
+
+class _MapBackdropState extends State<_MapBackdrop> {
+  LandShapes? _shapes;
+
+  @override
+  void initState() {
+    super.initState();
+    LandShapes.load().then((shapes) {
+      if (mounted) setState(() => _shapes = shapes);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.paddingOf(context).top;
+    return IgnorePointer(
+      child: Opacity(
+        opacity: 0.55,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final radius = w * 1.4;
+            return CustomPaint(
+              size: constraints.biggest,
+              painter: GlobePainter(
+                shapes: _shapes,
+                // Kürenin tepesi başlığın hemen üstünde; merkez boylamı
+                // ~21°D, Avrupa başlığın sağ altına düşer.
+                center: Offset(w * 0.62, top + 30 + radius),
+                radius: radius,
+                rotation: 0.6,
+                centerLat: -4,
+              ),
+            );
+          },
         ),
       ),
     );
