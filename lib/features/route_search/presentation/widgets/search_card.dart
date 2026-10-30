@@ -36,7 +36,7 @@ class SearchCard extends StatelessWidget {
               errorFor(ValidationField.radius);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
         color: LeylekColors.feather,
         borderRadius: BorderRadius.circular(32),
@@ -79,7 +79,7 @@ class SearchCard extends StatelessWidget {
             onSwap: form.swap,
           ),
           if (placeError != null) _ErrorText(placeError),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -94,14 +94,14 @@ class SearchCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           _RadiusSlider(radiusKm: state.radiusKm, onChanged: form.setRadius),
           if (otherError != null) _ErrorText(otherError),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           FilledButton(
             key: const Key('search-button'),
             style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(54),
+              minimumSize: const Size.fromHeight(52),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22),
               ),
@@ -144,7 +144,7 @@ class _PlacesBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(14, 6, 12, 6),
+    padding: const EdgeInsets.fromLTRB(14, 4, 12, 4),
     decoration: BoxDecoration(
       color: LeylekColors.field,
       borderRadius: BorderRadius.circular(22),
@@ -278,7 +278,7 @@ class _ValueBox extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+        padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -458,7 +458,7 @@ class _RadiusSlider extends StatelessWidget {
           ),
         ],
       ),
-      const SizedBox(height: 6),
+      const SizedBox(height: 2),
       SliderTheme(
         data: SliderTheme.of(context).copyWith(
           trackHeight: 6,
@@ -474,7 +474,7 @@ class _RadiusSlider extends StatelessWidget {
           padding: EdgeInsets.zero,
         ),
         child: SizedBox(
-          height: 36,
+          height: 32,
           child: Slider(
             value: radiusKm.toDouble(),
             min: SearchQuery.minRadiusKm.toDouble(),

@@ -86,7 +86,7 @@ class _PlaceFieldState extends State<PlaceField> {
       behavior: HitTestBehavior.opaque,
       onTap: _focusNode.requestFocus,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 9),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

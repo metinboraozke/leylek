@@ -18,7 +18,8 @@ enum _Stage { form, flying, results }
 /// Uygulamanın tek ekranı. Üç sahne aynı yerde birbirine geçer:
 ///
 ///   form     → soluk Avrupa haritası önünde başlık, üstüne leylek konmuş
-///              arama kartı ve altında tek satır son arama (kaydırılır)
+///              arama kartı ve altında tek satır son arama; tek ekrana
+///              sığar, kaydırılmaz
 ///   flying   → kartlar kaybolur; leylek uçar, altından dünyanın üstünde
 ///              uçak geçer (~4 sn). Bu sırada veri toplanır.
 ///   results  → tam ekran slaytlar; sol üstte geri düğmesi, sağ altta
@@ -128,6 +129,7 @@ class _FormScene extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       behavior: HitTestBehavior.translucent,
@@ -139,59 +141,97 @@ class _FormScene extends StatelessWidget {
             colors: [LeylekColors.skySoft, LeylekColors.field],
           ),
         ),
-        // Harita zeminde sabit; başlık ve kartlar onun üstünde kayar.
-        // Klavye açılınca kartlar kayar, zemin yerinde kalır.
+        // Harita zeminde sabit; başlık ve kartlar onun üstünde durur.
         child: Stack(
           fit: StackFit.expand,
           children: [
             const _MapBackdrop(),
             SafeArea(
-              bottom: false,
-              child: SingleChildScrollView(
-                // İçerik kısa olsa da sürüklenebilsin.
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                // Scaffold klavyede küçülmüyor (zemin oynamasın diye);
-                // kartın altı klavyenin üstüne kaydırılabilsin.
-                padding: EdgeInsets.fromLTRB(
-                  12,
-                  22,
-                  12,
-                  24 + MediaQuery.viewInsetsOf(context).bottom,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: _Headline(),
-                    ),
-                    const SizedBox(height: 137),
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        const SearchCard(),
-                        Positioned(
-                          right: 7,
-                          top: _storkSink - _storkHeight,
-                          child: const IgnorePointer(
-                            child: StandingStork(
-                              key: Key('landing-stork'),
-                              height: _storkHeight,
+              child: LayoutBuilder(
+                builder: (context, viewport) => SingleChildScrollView(
+                  // Açılış tek ekrana sığar, kaydırılmaz. Yalnızca klavye
+                  // açıkken (Scaffold klavyede küçülmüyor) yazılan alan
+                  // klavyenin üstüne kaydırılabilsin.
+                  physics: keyboard > 0
+                      ? const ClampingScrollPhysics()
+                      : const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.only(bottom: keyboard),
+                  child: SizedBox(
+                    height: viewport.maxHeight,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12),
+                            child: _Headline(),
+                          ),
+                          // Artan boşluk başlıkla kart arasına gider; kart
+                          // ekranın altında durur. Kısa ekranda kart
+                          // kaydırma yerine bir miktar küçülür.
+                          Expanded(
+                            child: LayoutBuilder(
+                              builder: (context, area) => FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.bottomCenter,
+                                child: SizedBox(
+                                  width: area.maxWidth,
+                                  child: const _CardStack(
+                                    storkHeight: _storkHeight,
+                                    storkSink: _storkSink,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const RecentSearches(),
-                  ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Üstüne leylek konmuş arama kartı ve altındaki son arama.
+class _CardStack extends StatelessWidget {
+  const _CardStack({required this.storkHeight, required this.storkSink});
+
+  final double storkHeight;
+  final double storkSink;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Leyleğin kartın üstünde kalan kısmı kadar yer.
+        SizedBox(height: storkHeight - storkSink + 6),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const SearchCard(),
+            Positioned(
+              right: 7,
+              top: storkSink - storkHeight,
+              child: IgnorePointer(
+                child: StandingStork(
+                  key: const Key('landing-stork'),
+                  height: storkHeight,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const RecentSearches(),
+      ],
     );
   }
 }
@@ -218,14 +258,14 @@ class _Headline extends StatelessWidget {
         Text(
           'Bir uçuş yerine,\nbir yolculuk.',
           style: TextStyle(
-            fontSize: 40,
+            fontSize: 38,
             fontWeight: FontWeight.w800,
             letterSpacing: -1.4,
             height: 1.08,
             color: LeylekColors.ink,
           ),
         ),
-        SizedBox(height: 16),
+        SizedBox(height: 12),
         Text(
           'Aktarma şehirlerinde ara tatillerle\nrotanı birlikte kuralım.',
           style: TextStyle(
@@ -275,10 +315,10 @@ class _MapBackdropState extends State<_MapBackdrop> {
               painter: GlobePainter(
                 shapes: _shapes,
                 // Kürenin tepesi başlığın hemen üstünde; merkez boylamı
-                // ~21°D, Avrupa başlığın sağ altına düşer.
-                center: Offset(w * 0.62, top + 30 + radius),
+                // 15°D: küre ekranda tam ortada, Avrupa tepesinin altında.
+                center: Offset(w / 2, top + 30 + radius),
                 radius: radius,
-                rotation: 0.6,
+                rotation: 0.7,
                 centerLat: -4,
               ),
             );

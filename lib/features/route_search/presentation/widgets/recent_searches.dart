@@ -18,7 +18,7 @@ class RecentSearches extends StatelessWidget {
     final items = context.watch<RecentSearchesCubit>().state;
     if (items.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.only(top: 8),
       child: _RecentTile(key: const Key('recent-0'), item: items.first),
     );
   }
@@ -46,7 +46,7 @@ class _RecentTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         onTap: () => _restore(context),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 13, 12, 13),
+          padding: const EdgeInsets.fromLTRB(16, 11, 12, 11),
           child: Row(
             children: [
               const Icon(
