@@ -114,13 +114,23 @@ abstract final class SearchResultMapper {
               operator: l.strOrNull('operator'),
               departAt: _timeOrNull(l.strOrNull('departAt')),
               arriveAt: _timeOrNull(l.strOrNull('arriveAt')),
+              walkBeforeMin: l.integerOrNull('walkBeforeMin'),
             ),
           )
           .toList(growable: false),
       fare: Money(fare.number('amount'), fare.str('currency')),
       fareSource: ApiCodes.fareSource(fare.str('source')),
+      access: _access(g.objOrNull('access')),
     );
   }
+
+  static StationAccess? _access(Json? a) => a == null
+      ? null
+      : StationAccess(
+          stop: a.str('stop'),
+          distanceKm: a.number('distanceKm'),
+          walkMin: a.integer('walkMin'),
+        );
 
   static ZonedTime? _timeOrNull(String? iso) =>
       iso == null ? null : ZonedTime.parse(iso);

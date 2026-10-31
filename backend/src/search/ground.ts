@@ -5,7 +5,7 @@ import type { Airport } from '../data/types.js';
 import { SCHENGEN } from '../data/regions.js';
 import type { FlightQuote, FxRates, GroundItinerary, GroundRouter, StopLocator } from './ports.js';
 import { groundCostRate } from './prefilter.js';
-import { PARAMS, type Candidate, type CardGround } from './types.js';
+import { PARAMS, type Candidate, type CardGround, type StationAccess } from './types.js';
 
 const MINUTE = 60_000;
 
@@ -118,6 +118,31 @@ export function estimatedGround(candidate: Candidate, flight: FlightQuote, depar
 }
 
 /**
+ * Bundan yakın duraklar havalimanında sayılır, ayrıca yazılmaz. Havalimanı
+ * koordinatı çoğu zaman pistlerin ortasıdır; terminaldeki istasyon bile
+ * bir kilometreye yakın uzakta görünebilir.
+ */
+const ACCESS_MIN_KM = 1;
+/** Adı havalimanı istasyonu olduğunu söyleyen duraklar terminaldedir. */
+const AIRPORT_STOP = /airport|flughafen|aeroport|aéroport|aeropuerto|aeroporto|luchthaven|lufthavn|flygplats|lotnisko|letiště|repülőtér|havaliman|terminal|schiphol/i;
+/** Yürüme hızı (km/sa); kuş uçuşu uzaklık yol katsayısıyla uzatılır. */
+const WALK_KMH = 4.5;
+
+/**
+ * Havalimanı ile ilk binilen durak arasındaki kısım. Yolcu bunu
+ * planda görmeli: "havalimanından Seriate istasyonuna ~2,6 km".
+ */
+export function stationAccess(airport: LatLon, stop: LatLon & { name: string }): StationAccess | undefined {
+  const km = haversineKm(airport, stop);
+  if (km < ACCESS_MIN_KM || !stop.name || AIRPORT_STOP.test(stop.name)) return undefined;
+  return {
+    stop: stop.name,
+    distanceKm: Math.round(km * 10) / 10,
+    walkMin: Math.round(((km * PARAMS.roadFactor) / WALK_KMH) * 60),
+  };
+}
+
+/**
  * 05 · Kara bacağını hesapla.
  *
  * Aday başına tek Transitous isteği (önbellekli ve bütçeli yönlendirici
@@ -152,6 +177,7 @@ export async function computeGround(
   // Bulunamazsa koordinatla denenir. İkisi de 30 gün önbellekli.
   let from: LatLon = candidate.airport;
   let fromStopId: string | undefined;
+  let access: StationAccess | undefined;
   if (stopoverDays > 0) {
     const city = deps.cityNear?.(candidate.airport) ?? null;
     if (city) from = city;
@@ -160,6 +186,7 @@ export async function computeGround(
   } else {
     const stop = deps.stops ? await deps.stops.nearestStop(candidate.airport).catch(() => null) : null;
     fromStopId = stop?.id;
+    if (stop) access = stationAccess(candidate.airport, stop);
   }
 
   let itineraries: GroundItinerary[];
@@ -199,6 +226,7 @@ export async function computeGround(
       estimatedEur: price.estimatedEur,
       fareSource: price.source,
       verified: true,
+      ...(access ? { access } : {}),
     };
     // Varışa kadar geçen süre (bekleme dahil) ve fiyat birlikte. Konaklamalı
     // rotada sayaç, bilerek kalınan sabahtan başlar.

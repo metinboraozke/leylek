@@ -101,6 +101,8 @@ describe('Transitous', () => {
       ['REGIONAL_RAIL', 'RE 5', false],
     ]);
     expect(itin.fares).toEqual([{ amount: 13.6, currency: 'EUR' }]);
+    // Atılan yürüyüş, ardından binilen bacağa dakika olarak yazılır.
+    expect(itin.legs.map((l) => l.walkBeforeMin)).toEqual([6, undefined]);
   });
 
   it('plan isteğini koşullara uygun parametre ve User-Agent ile atar', async () => {

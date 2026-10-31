@@ -124,6 +124,7 @@ class GroundLeg extends Equatable {
     this.operator,
     this.departAt,
     this.arriveAt,
+    this.walkBeforeMin,
   });
 
   final TransitMode mode;
@@ -136,6 +137,10 @@ class GroundLeg extends Equatable {
   final ZonedTime? departAt;
   final ZonedTime? arriveAt;
 
+  /// Bu bacağa binmeden hemen önce yürünen dakika (istasyon değişimi ya
+  /// da duraklar arası yürüyüş); kısaysa yok.
+  final int? walkBeforeMin;
+
   @override
   List<Object?> get props => [
     mode,
@@ -145,7 +150,25 @@ class GroundLeg extends Equatable {
     operator,
     departAt,
     arriveAt,
+    walkBeforeMin,
   ];
+}
+
+/// Kara yolculuğu havalimanından değil, uzaktaki bir duraktan başlıyorsa
+/// oraya kadar olan kısım: "Havalimanı → Seriate, ~1,9 km".
+class StationAccess extends Equatable {
+  const StationAccess({
+    required this.stop,
+    required this.distanceKm,
+    required this.walkMin,
+  });
+
+  final String stop;
+  final double distanceKm;
+  final int walkMin;
+
+  @override
+  List<Object?> get props => [stop, distanceKm, walkMin];
 }
 
 class GroundJourney extends Equatable {
@@ -158,6 +181,7 @@ class GroundJourney extends Equatable {
     required this.legs,
     required this.fare,
     required this.fareSource,
+    this.access,
   });
 
   final ZonedTime departAt;
@@ -171,6 +195,9 @@ class GroundJourney extends Equatable {
   final Money fare;
   final FareSource fareSource;
 
+  /// İlk durak havalimanından uzaksa oraya nasıl gidileceği.
+  final StationAccess? access;
+
   @override
   List<Object?> get props => [
     departAt,
@@ -181,6 +208,7 @@ class GroundJourney extends Equatable {
     legs,
     fare,
     fareSource,
+    access,
   ];
 }
 

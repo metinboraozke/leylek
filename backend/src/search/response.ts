@@ -84,7 +84,9 @@ export function toResponse(ctx: ResponseContext) {
               operator: l.operator,
               departAt: toOffsetIso(l.startMs, c.airport.tz),
               arriveAt: toOffsetIso(l.endMs, ctx.to.tz),
+              walkBeforeMin: l.walkBeforeMin,
             })),
+            access: c.ground.access,
             fare: {
               amount: money(c.ground.fareEur),
               currency: ctx.query.currency,

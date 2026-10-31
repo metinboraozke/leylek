@@ -100,6 +100,20 @@ export interface CardGround {
   /** Tahmine dayanan kısım (EUR). */
   estimatedEur: number;
   verified: boolean;
+  /**
+   * Kara yolculuğu havalimanından değil, uzaktaki bir istasyondan
+   * başlıyorsa oraya kadar olan kısım (Transitous'a sorulmaz).
+   */
+  access?: StationAccess;
+}
+
+export interface StationAccess {
+  /** İlk binilen durak, ör. "Seriate". */
+  stop: string;
+  /** Havalimanından kuş uçuşu uzaklık. */
+  distanceKm: number;
+  /** Yürüyerek tahmini süre. */
+  walkMin: number;
 }
 
 export interface Card {

@@ -64,6 +64,11 @@ export interface GroundLegData {
   operatorUrl: string | null;
   /** Bu bacağın fiyatı bir ücret grubunda var mı. */
   priced: boolean;
+  /**
+   * Bu bacaktan hemen önce yürünen dakika (peron/istasyon değişimi ya da
+   * duraklar arası yürüyüş). Kısa yürüyüşler (< 3 dk) yazılmaz.
+   */
+  walkBeforeMin?: number;
 }
 
 export interface GroundItinerary {

@@ -95,13 +95,17 @@ class ItineraryStep {
   /// İstasyonlar, saatler, işletmeci.
   final String? detail;
 
-  /// Yer değiştiren adım mı (konaklama ve bekleme değil).
+  /// Araçla yer değiştiren adım mı. Konaklama ve yürüyüş değil: soluk
+  /// işaretle çizilir, üstteki özete girmez.
   final bool travels;
 }
 
 /// Rotayı adımlara çevirir. Kara bacaklarında yalnızca istasyon adı
 /// geldiği için ilk bacağın başı aktarma havalimanı, son bacağın sonu
 /// varış şehri olarak yazılır; aradakiler istasyon adıyla kalır.
+///
+/// Yürüyüşler de ayrı adımdır: ilk durak havalimanından uzaksa oraya
+/// gidiş, bacaklar arasındaki istasyon değişimleri.
 List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
   final f = o.flight;
   final flightTo = o.via?.name ?? to;
@@ -161,10 +165,41 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
     return steps;
   }
 
+  final access = ground.access;
+  if (access != null) {
+    final km = access.distanceKm.toStringAsFixed(1).replaceAll('.', ',');
+    steps.add(
+      ItineraryStep(
+        icon: Icons.directions_walk_rounded,
+        mode: 'Havalimanından istasyona',
+        title: '$airport → ${access.stop}',
+        detail:
+            '~$km km · yürüyerek ~${Formatters.duration(access.walkMin)} '
+            'ya da taksi',
+        travels: false,
+      ),
+    );
+  }
+
   for (var i = 0; i < ground.legs.length; i++) {
     final leg = ground.legs[i];
     final first = i == 0;
     final last = i == ground.legs.length - 1;
+    final walk = leg.walkBeforeMin;
+    if (walk != null) {
+      final prev = first ? (access?.stop ?? airport) : ground.legs[i - 1].to;
+      steps.add(
+        ItineraryStep(
+          icon: Icons.directions_walk_rounded,
+          mode: 'Yürüyüş',
+          title: prev == leg.from
+              ? '${leg.from} içinde'
+              : '$prev → ${leg.from}',
+          detail: '~${Formatters.duration(walk)}',
+          travels: false,
+        ),
+      );
+    }
     final mode = Labels.mode(leg.mode);
     final times = leg.departAt != null && leg.arriveAt != null
         ? '${Formatters.clock(leg.departAt!.wallClock)} → '
@@ -177,7 +212,9 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
         icon: modeIcon(leg.mode),
         mode: leg.line == null ? mode : '$mode · ${leg.line}',
         kind: mode,
-        title: '${first ? airport : leg.from} → ${last ? to : leg.to}',
+        title:
+            '${first && access == null && walk == null ? airport : leg.from} → '
+            '${last ? to : leg.to}',
         detail: [?stations, ?times, ?leg.operator].join(' · '),
       ),
     );

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { transferPrices } from '../src/providers/transitous/fares.js';
-import { bufferMinutes, ceilTo15, computeGround } from '../src/search/ground.js';
+import { bufferMinutes, ceilTo15, computeGround, stationAccess } from '../src/search/ground.js';
 import { prefilter } from '../src/search/prefilter.js';
 import { alternateFlightCard, directCard, rankCards, scoreCards, viaCard } from '../src/search/rank.js';
 import type { AirportFlights, Candidate, Card, CardGround } from '../src/search/types.js';
@@ -300,5 +300,22 @@ describe('aktarma şehrinde konaklama', async () => {
     scoreCards([sameDay, nextDay, direct], direct.doorToDoorMin);
     expect(nextDay.extraMin).toBeLessThanOrEqual(sameDay.extraMin + 30);
     expect(nextDay.score).toBeLessThan(sameDay.score + 20);
+  });
+});
+
+describe('havalimanından istasyona erişim', () => {
+  const bgy = { lat: 45.6739, lon: 9.7042 };
+
+  it('uzaktaki durağı adı, uzaklığı ve yürüme süresiyle verir', () => {
+    const a = stationAccess(bgy, { name: 'Seriate', lat: 45.6853, lon: 9.7261 });
+    expect(a?.stop).toBe('Seriate');
+    expect(a!.distanceKm).toBeGreaterThan(1.5);
+    expect(a!.distanceKm).toBeLessThan(2.5);
+    expect(a!.walkMin).toBeGreaterThan(25);
+  });
+
+  it('yakındaki ya da adı havalimanı olan durağı yazmaz', () => {
+    expect(stationAccess(bgy, { name: 'Orio', lat: 45.676, lon: 9.706 })).toBeUndefined();
+    expect(stationAccess(bgy, { name: 'München Flughafen Terminal', lat: 45.69, lon: 9.73 })).toBeUndefined();
   });
 });

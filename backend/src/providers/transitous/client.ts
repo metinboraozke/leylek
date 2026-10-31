@@ -116,6 +116,9 @@ interface RawItinerary {
   fareTransfers?: FareTransfer[];
 }
 
+/** Bundan kısa yürüyüşler yolculuk planında gösterilmez. */
+const MIN_WALK_MIN = 3;
+
 const STREET_MODES = new Set(['WALK', 'BIKE', 'CAR', 'RENTAL', 'CAR_PARKING', 'CAR_DROPOFF']);
 
 export function mapItinerary(raw: RawItinerary): GroundItinerary | null {
@@ -124,11 +127,19 @@ export function mapItinerary(raw: RawItinerary): GroundItinerary | null {
   if (startMs === null || endMs === null) return null;
 
   const legs: GroundLegData[] = [];
+  // Toplu taşıma bacakları arasındaki yürüyüş, sonraki bacağa yazılır.
+  let walkMs = 0;
   for (const leg of raw.legs ?? []) {
-    if (!leg.mode || STREET_MODES.has(leg.mode)) continue;
+    if (!leg.mode) continue;
     const s = leg.startTime ? parseInstant(leg.startTime) : null;
     const e = leg.endTime ? parseInstant(leg.endTime) : null;
+    if (STREET_MODES.has(leg.mode)) {
+      if (leg.mode === 'WALK' && s !== null && e !== null) walkMs += e - s;
+      continue;
+    }
     if (s === null || e === null) continue;
+    const walkMin = Math.round(walkMs / 60_000);
+    walkMs = 0;
     legs.push({
       mode: leg.mode,
       fromName: leg.from?.name ?? '',
@@ -141,6 +152,7 @@ export function mapItinerary(raw: RawItinerary): GroundItinerary | null {
       operator: leg.agencyName || null,
       operatorUrl: leg.agencyUrl || null,
       priced: typeof leg.fareTransferIndex === 'number',
+      ...(walkMin >= MIN_WALK_MIN ? { walkBeforeMin: walkMin } : {}),
     });
   }
 
