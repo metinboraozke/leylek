@@ -28,10 +28,8 @@ class RouteSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final o = option;
-    final from = result.fromName.isEmpty
-        ? (o.flight.fromIata ?? '')
-        : result.fromName;
-    final to = result.toName.isEmpty ? (o.flight.toIata ?? '') : result.toName;
+    final from = result.fromFor(o);
+    final to = result.toFor(o);
     final flags = _flagTexts(o);
 
     return ListView(

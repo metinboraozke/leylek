@@ -31,6 +31,8 @@ abstract final class SearchResultMapper {
           .toList(growable: false),
       fromName: query.strOrNull('from') ?? '',
       toName: query.strOrNull('to') ?? '',
+      fromIsCountry: query.strOrNull('fromKind') == 'COUNTRY',
+      toIsCountry: query.strOrNull('toKind') == 'COUNTRY',
       isSample: json.objOrNull('meta')?.boolean('sample') ?? false,
     );
   }
@@ -53,6 +55,8 @@ abstract final class SearchResultMapper {
       ground: ground == null ? null : _ground(ground),
       total: _total(o.obj('total'), currency),
       stopover: _stopover(o.objOrNull('stopover')),
+      departureCity: o.strOrNull('departureCity'),
+      arrivalCity: o.strOrNull('arrivalCity'),
       booking: o
           .objList('booking')
           .map(_booking)

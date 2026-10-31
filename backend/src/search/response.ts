@@ -37,6 +37,9 @@ export function toResponse(ctx: ResponseContext) {
     query: {
       from: ctx.from.name,
       to: ctx.to.name,
+      // Ülke seçildiyse uygulama her kartta inilen şehri gösterir.
+      fromKind: ctx.from.kind,
+      toKind: ctx.to.kind,
       date: ctx.query.date,
       radiusKm: ctx.query.radiusKm,
       stopoverDays: ctx.query.stopoverDays,
@@ -56,6 +59,13 @@ export function toResponse(ctx: ResponseContext) {
               country: c.airport.country,
               distanceKm: Math.round(c.distanceKm),
             }
+          : undefined,
+      // Kalkılan şehir ("Ankara"); kalkış ülke olunca kartın kalkışı.
+      departureCity: ctx.places.cityNameForIata(c.flight.originAirport) ?? undefined,
+      // Doğrudan uçuşta inilen şehir ("Milano"); varış ülke olunca kartın varışı.
+      arrivalCity:
+        c.kind === 'DIRECT'
+          ? (ctx.places.cityForAirport(c.airport)?.name ?? c.airport.municipality)
           : undefined,
       flight: {
         airport: c.kind === 'DIRECT' ? c.airport.iata : undefined,

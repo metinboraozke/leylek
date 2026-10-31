@@ -226,13 +226,17 @@ class _Options extends StatelessWidget {
             itemBuilder: (context, index) {
               final place = options[index];
               return ListTile(
-                leading: Icon(
-                  place.kind == PlaceKind.airport
-                      ? Icons.local_airport_outlined
-                      : Icons.location_city_outlined,
-                ),
+                leading: Icon(switch (place.kind) {
+                  PlaceKind.airport => Icons.local_airport_outlined,
+                  PlaceKind.country => Icons.public_rounded,
+                  PlaceKind.city => Icons.location_city_outlined,
+                }),
                 title: Text(place.name),
-                subtitle: Text(place.countryName),
+                subtitle: Text(switch (place.kind) {
+                  PlaceKind.country => 'Ülke · tüm havalimanları',
+                  PlaceKind.airport => 'Havalimanı · ${place.countryName}',
+                  PlaceKind.city => place.countryName,
+                }),
                 trailing: place.iata == null ? null : Text(place.iata!),
                 onTap: () => onSelected(place),
               );

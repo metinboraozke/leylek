@@ -28,6 +28,11 @@ export class AirportIndex {
     return this.byIata.get(iata.toUpperCase());
   }
 
+  /** Ülkenin tarifeli havalimanları. */
+  inCountry(country: string): Airport[] {
+    return this.airports.filter((a) => a.country === country);
+  }
+
   inCity(cityCode: string): Airport[] {
     return this.byCity.get(cityCode.toUpperCase()) ?? [];
   }

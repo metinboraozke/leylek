@@ -293,6 +293,8 @@ class RouteOption extends Equatable {
     this.ground,
     this.booking = const [],
     this.stopover,
+    this.departureCity,
+    this.arrivalCity,
   });
 
   /// Fiyata göre sıra, 1'den başlar.
@@ -312,6 +314,12 @@ class RouteOption extends Equatable {
   /// Konaklamalı aramada aktarma şehrinde kalış; yoksa `null`.
   final Stopover? stopover;
 
+  /// Uçuşun kalktığı şehir ("Ankara").
+  final String? departureCity;
+
+  /// Doğrudan uçuşta inilen şehir ("Milano").
+  final String? arrivalCity;
+
   bool get isRecommended => badges.contains(RouteBadge.recommended);
   bool get isCheapest => badges.contains(RouteBadge.cheapest);
 
@@ -328,5 +336,7 @@ class RouteOption extends Equatable {
     ground,
     booking,
     stopover,
+    departureCity,
+    arrivalCity,
   ];
 }

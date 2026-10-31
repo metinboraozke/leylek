@@ -90,4 +90,25 @@ void main() {
     ((json['options'] as List<dynamic>).first as Json).remove('total');
     expect(() => SearchResultMapper.fromJson(json), throwsFormatException);
   });
+
+  test('ülke aranınca kartta kalkılan ve inilen şehir yazar', () {
+    final json = _sample();
+    (json['query'] as Json)
+      ..['from'] = 'Türkiye'
+      ..['fromKind'] = 'COUNTRY'
+      ..['to'] = 'Avusturya'
+      ..['toKind'] = 'COUNTRY';
+    ((json['options'] as List<dynamic>).first as Json)
+      ..['departureCity'] = 'Ankara'
+      ..['arrivalCity'] = 'Viyana';
+    final result = SearchResultMapper.fromJson(json);
+    final first = result.options.first;
+
+    expect(result.toIsCountry, isTrue);
+    expect(result.fromFor(first), 'Ankara');
+    expect(result.toFor(first), 'Viyana');
+    // Şehirle aranınca kartın şehri değil, aranan yer yazar.
+    final city = SearchResultMapper.fromJson(_sample());
+    expect(city.toFor(city.options.first), 'Salzburg');
+  });
 }

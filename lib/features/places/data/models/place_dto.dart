@@ -33,7 +33,7 @@ class PlaceDto {
     name: name,
     countryCode: countryCode,
     countryName: countryName,
-    kind: kind == 'AIRPORT' ? PlaceKind.airport : PlaceKind.city,
+    kind: PlaceKind.parse(kind),
     iata: iata,
   );
 }

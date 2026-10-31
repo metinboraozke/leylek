@@ -2,6 +2,7 @@ import { MINUTE, TtlCache } from '../core/cache.js';
 import { Errors } from '../core/errors.js';
 import { haversineKm } from '../core/geo.js';
 import type { Indexes } from '../data/dataset.js';
+import type { Place } from '../data/place-index.js';
 import { DESTINATION_COUNTRIES } from '../data/regions.js';
 import { findCandidates } from './candidates.js';
 import { fetchQuotes, groupByAirport, mapLimit } from './flights.js';
@@ -11,7 +12,7 @@ import { prefilter } from './prefilter.js';
 import { alternateFlightCard, directCard, rankCards, scoreCards, viaCard } from './rank.js';
 import { resolvePlace } from './resolve.js';
 import { toResponse, type SearchResponse } from './response.js';
-import { PARAMS, type Candidate, type Card, type Dropped, type SearchQuery } from './types.js';
+import { PARAMS, type AirportFlights, type Candidate, type Card, type Dropped, type SearchQuery } from './types.js';
 
 export interface SearchDeps {
   /** Veri henüz yüklenmediyse `null`. */
@@ -60,13 +61,21 @@ export class SearchService {
     if (!from) throw Errors.placeNotFound('from', query.from);
     if (!to) throw Errors.placeNotFound('to', query.to);
     if (from.id === to.id || haversineKm(from, to) < 20) throw Errors.samePlace();
+    // Ülke seçildiyse aynı ülkenin içi aranmaz: "Türkiye → İstanbul".
+    if ((from.kind === 'COUNTRY' || to.kind === 'COUNTRY') && from.country === to.country) {
+      throw Errors.samePlace();
+    }
     if (!DESTINATION_COUNTRIES.has(to.country)) throw Errors.outOfCoverage(to.country);
 
     const originCodes =
       from.kind === 'AIRPORT' && from.iata
         ? [airports.get(from.iata)?.cityCode ?? from.iata]
-        : airports.originCityCodes(from, PARAMS.originRadiusKm);
+        : from.kind === 'COUNTRY'
+          ? places.countryCityCodes(from.country, PARAMS.countryOriginCodes)
+          : airports.originCityCodes(from, PARAMS.originRadiusKm);
     if (originCodes.length === 0) throw Errors.noOriginAirport();
+
+    if (to.kind === 'COUNTRY') return this.countrySearch(query, from, to, originCodes, indexes);
 
     // 02 · Aday havalimanları
     const set = findCandidates(to, query.radiusKm, airports, originCodes);
@@ -159,6 +168,53 @@ export class SearchService {
     if (ranked.length < PARAMS.minCards) warnings.push('FEWER_THAN_THREE');
     if (partial) warnings.push('PARTIAL_RESULTS');
 
+    const rate = await this.deps.fx.perEur(query.currency);
+    return toResponse({ query, from, to, cards: ranked, dropped, warnings, rate, places, now: this.now() });
+  }
+
+  /**
+   * Varış bir ülke: kara bacağı yok. Ülkenin en büyük havalimanı
+   * şehirlerine uçuşlar sorulur, her şehir için en ucuz uçuş bir kart
+   * olur; kartlar fiyata göre sıralanır. Kullanıcı kartta indiği şehri
+   * görür ("Milano", "Roma").
+   */
+  private async countrySearch(
+    query: SearchQuery,
+    from: Place,
+    to: Place,
+    originCodes: string[],
+    indexes: Indexes,
+  ): Promise<SearchResponse> {
+    const { airports, places } = indexes;
+    const destCodes = places
+      .countryCityCodes(to.country, PARAMS.countryDestCodes + originCodes.length)
+      .filter((c) => !originCodes.includes(c))
+      .slice(0, PARAMS.countryDestCodes);
+    const hits = airports
+      .inCountry(to.country)
+      .filter((a) => destCodes.includes(a.cityCode))
+      .map((airport) => ({ airport, distanceKm: 0 }));
+
+    const quotes = await fetchQuotes(this.deps.flights, originCodes, destCodes, query.date);
+    // Şehir başına tek kart: MXP, LIN ve BGY'den en ucuzu Milano kartı olur.
+    const byCity = new Map<string, AirportFlights>();
+    for (const g of groupByAirport(quotes, hits)) {
+      const prev = byCity.get(g.airport.cityCode);
+      if (!prev || g.cheapest.priceEur < prev.cheapest.priceEur) byCity.set(g.airport.cityCode, g);
+    }
+    const dropped: Dropped[] = destCodes
+      .filter((c) => !byCity.has(c))
+      .map((c) => ({ iata: c, reason: 'NO_FLIGHT_DATA' as const }));
+
+    const cards = [...byCity.values()]
+      .sort((a, b) => a.cheapest.priceEur - b.cheapest.priceEur)
+      .slice(0, PARAMS.maxCards)
+      .map((g) => directCard(g.cheapest, g.airport, 0));
+    scoreCards(cards, null);
+    const ranked = cards.length > 0 ? rankCards(cards, null) : [];
+
+    const warnings: string[] = [];
+    if (ranked.length < PARAMS.minCards) warnings.push('FEWER_THAN_THREE');
     const rate = await this.deps.fx.perEur(query.currency);
     return toResponse({ query, from, to, cards: ranked, dropped, warnings, rate, places, now: this.now() });
   }

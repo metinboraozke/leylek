@@ -1,6 +1,19 @@
 import 'package:equatable/equatable.dart';
 
-enum PlaceKind { city, airport }
+/// Ülke seçilince kalkışta ülkenin büyük şehirlerinden, varışta ülkenin
+/// havalimanlarına uçuşlar aranır.
+enum PlaceKind {
+  city,
+  airport,
+  country;
+
+  /// Backend'in yazımı: `CITY`, `AIRPORT`, `COUNTRY`. Bilinmeyen şehir sayılır.
+  static PlaceKind parse(String code) => switch (code.toUpperCase()) {
+    'AIRPORT' => PlaceKind.airport,
+    'COUNTRY' => PlaceKind.country,
+    _ => PlaceKind.city,
+  };
+}
 
 /// Kullanıcının seçebileceği bir kalkış ya da varış yeri.
 class Place extends Equatable {

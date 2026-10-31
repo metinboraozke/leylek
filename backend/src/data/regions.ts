@@ -95,7 +95,28 @@ export const TURKISH_CITY_NAMES: Record<string, string> = {
   'Isparta|TR': 'Isparta',
 };
 
+/** Ülkelerin halk arasındaki Türkçe adları; resmî adın yanında aranır. */
+export const COUNTRY_ALIASES: Record<string, string[]> = {
+  GB: ['İngiltere', 'Britanya'],
+  NL: ['Holland'],
+  CZ: ['Çek Cumhuriyeti'],
+  BA: ['Bosna'],
+  MK: ['Makedonya'],
+  VA: ['Vatikan'],
+  XK: ['Kosova'],
+};
+
 const regionNames = new Intl.DisplayNames(['tr'], { type: 'region' });
+const regionNamesEn = new Intl.DisplayNames(['en'], { type: 'region' });
+
+/** ISO ülke kodunun İngilizce adı ("DE" → "Germany"); ülke aramasında da eşleşsin. */
+export function countryNameEn(code: string): string {
+  try {
+    return regionNamesEn.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
 
 /** ISO ülke kodunun Türkçe adı ("AT" → "Avusturya"). */
 export function countryNameTr(code: string): string {

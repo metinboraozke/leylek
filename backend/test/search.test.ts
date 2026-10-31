@@ -15,6 +15,35 @@ const groundOk = () =>
 
 const query = { from: 'İstanbul', to: 'Salzburg', date: DAY, radiusKm: 250, maxGroundHours: 5, currency: 'TRY' as const, stopoverDays: 0 };
 
+describe('ülke araması', () => {
+  it('İstanbul → Avusturya: ülkenin havalimanlarına doğrudan uçuşlar, fiyata göre, kara yolu yok', async () => {
+    const flights = new FakeFlights(salzburgFlights());
+    const res = await service(flights, groundOk()).search({ ...query, to: 'country:AT' });
+
+    expect(res.query).toMatchObject({ to: 'Avusturya', toKind: 'COUNTRY', fromKind: 'CITY' });
+    expect(res.options.length).toBeGreaterThan(0);
+    expect(res.options.every((o) => o.kind === 'DIRECT' && !o.ground)).toBe(true);
+    const prices = res.options.map((o) => o.total.price);
+    expect(prices).toEqual([...prices].sort((a, b) => a - b));
+    // Her kartta inilen şehir; Türkiye'deki ya da başka ülkedeki havalimanı sorulmaz.
+    expect(res.options.every((o) => o.arrivalCity)).toBe(true);
+    expect(flights.calls.every((c) => ['SZG', 'INN', 'LNZ', 'VIE'].includes(c.split('-')[1]!))).toBe(true);
+  });
+
+  it('Türkiye → Salzburg: ülkenin kalkış şehirlerinden sorar', async () => {
+    const flights = new FakeFlights(salzburgFlights());
+    const res = await service(flights, groundOk()).search({ ...query, from: 'Türkiye' });
+    expect(res.query.fromKind).toBe('COUNTRY');
+    expect(res.options.length).toBeGreaterThan(0);
+    expect(flights.calls.every((c) => c.startsWith('IST-'))).toBe(true);
+    expect(res.options[0]!.departureCity).toBe('İstanbul');
+  });
+
+  it('aynı ülkenin içi aranmaz', async () => {
+    await expect(service(new FakeFlights({}), groundOk()).search({ ...query, from: 'country:AT' })).rejects.toThrow();
+  });
+});
+
 describe('/search hattı uçtan uca (dış servisler sahte)', () => {
   it('İstanbul → Salzburg: en az 3 kart, fiyata göre sıralı, doğrudan uçuş dahil, bir önerilen', async () => {
     const ground = groundOk();

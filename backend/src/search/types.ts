@@ -23,6 +23,10 @@ export const PARAMS = {
   /** Kalkış şehrinin havalimanları bu yarıçapta aranır. */
   originRadiusKm: 80,
   maxCandidateCodes: 12,
+  /** Ülkeden kalkışta sorulan en fazla şehir kodu (İstanbul, Ankara, İzmir). */
+  countryOriginCodes: 3,
+  /** Ülkeye varışta sorulan en fazla şehir kodu. */
+  countryDestCodes: 8,
   /** Transitous'a gidecek en fazla aday (arama başına istek sınırı). */
   topK: 5,
   roadFactor: 1.3,

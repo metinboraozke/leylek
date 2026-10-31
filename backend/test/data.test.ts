@@ -61,6 +61,23 @@ describe('yer dizini', () => {
     expect(ix.places.search('istanbul')[0]?.name).toBe('İstanbul');
   });
 
+  it('ülkeyi Türkçe ve İngilizce adla, şehirlerin önünde önerir', () => {
+    expect(ix.places.search('avus')[0]).toMatchObject({ id: 'country:AT', name: 'Avusturya', kind: 'COUNTRY' });
+    expect(ix.places.search('austria')[0]?.id).toBe('country:AT');
+    expect(ix.places.search('almanya')[0]?.id).toBe('country:DE');
+    expect(ix.places.search('türkiye')[0]?.id).toBe('country:TR');
+    expect(ix.places.resolve('country:DE')?.kind).toBe('COUNTRY');
+    // Yazılıp seçilmeden gönderilen ülke adı da çözülür.
+    expect(ix.places.resolve('Almanya')?.id).toBe('country:DE');
+  });
+
+  it('ülkenin şehir kodları büyükten küçüğe', () => {
+    expect(ix.places.countryCityCodes('TR', 3)).toEqual(['IST']);
+    // Viyana en kalabalık; küçük (medium) Linz en sonda.
+    expect(ix.places.countryCityCodes('AT', 4)[0]).toBe('VIE');
+    expect(ix.places.countryCityCodes('AT', 4).at(-1)).toBe('LNZ');
+  });
+
   it('üç harfli kodda havalimanını öne alır', () => {
     expect(ix.places.search('muc')[0]?.id).toBe('airport:MUC');
     expect(ix.places.resolve('MUC')?.kind).toBe('AIRPORT');

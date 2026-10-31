@@ -84,9 +84,7 @@ class PrefsRecentSearchesRepository implements RecentSearchesRepository {
           name: json.str('name'),
           countryCode: json.str('countryCode'),
           countryName: json.str('countryName'),
-          kind: json.str('kind') == PlaceKind.airport.name
-              ? PlaceKind.airport
-              : PlaceKind.city,
+          kind: PlaceKind.parse(json.str('kind')),
           iata: json.strOrNull('iata'),
         );
 }
