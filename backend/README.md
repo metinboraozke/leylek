@@ -8,11 +8,27 @@ Node 22 + Fastify 5. Veritabanı yok; veri dosyaları açılışta belleğe yük
 ```bash
 npm install
 cp .env.example .env        # TRAVELPAYOUTS_TOKEN ve LEYLEK_CONTACT_EMAIL doldurulmalı
-npm run data:import         # OurAirports, Travelpayouts şehir kodları, GeoNames
+npm run data:import         # yalnızca veriyi yenilemek için; dataset.json depoda
 npm run dev                 # http://localhost:8080
 npm test                    # dış servisler sahte, ağa çıkmaz
 LIVE=1 npm run live -- "İstanbul" "Salzburg" 2026-11-20   # gerçek ağ, canlı deneme
 ```
+
+## Yayına alma (Railway)
+
+Tek kopya, sürekli çalışan Node süreci. Serverless ya da birden fazla kopya
+olmaz: önbellek, hız sınırı ve Transitous günlük bütçesi süreç belleğinde.
+Ayarlar `railway.json`'da (derleme, başlatma, `/health` kontrolü).
+
+1. Railway'de GitHub deposundan yeni servis; **Root Directory: `backend`**.
+2. Değişkenler: `NODE_ENV=production`, `TRAVELPAYOUTS_TOKEN`,
+   `LEYLEK_CONTACT_EMAIL`. Diğerleri varsayılanla çalışır; `PORT`u
+   Railway verir.
+3. Settings → Networking → Generate Domain. Bu adres uygulamanın
+   `API_BASE_URL`'i olur (Codemagic ortam değişkeni).
+
+Havalimanı ve yer verisi (`data/generated/dataset.json`) depoda; kurulum
+dış kaynaklara bağlı değildir.
 
 ## Uç noktalar
 

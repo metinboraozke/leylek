@@ -1,7 +1,8 @@
 node_modules/
 dist/
 .env
-data/generated/
+# data/generated/dataset.json depoda: sunucu dış kaynağa bağlı olmadan kurulur.
+# Güncellemek için: npm run data:import, sonra commit.
 data/raw/
 *.log
 e2e-reports/
