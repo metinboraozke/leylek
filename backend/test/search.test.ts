@@ -156,8 +156,12 @@ describe('konaklama ve 4 plan', () => {
 });
 
 describe('HTTP katmanı', () => {
-  async function app(rateLimit = 20) {
-    const config = loadConfig({ NODE_ENV: 'test', RATE_LIMIT_PER_MINUTE: String(rateLimit) });
+  async function app(rateLimit = 20, placesLimit = 120) {
+    const config = loadConfig({
+      NODE_ENV: 'test',
+      RATE_LIMIT_PER_MINUTE: String(rateLimit),
+      PLACES_RATE_LIMIT_PER_MINUTE: String(placesLimit),
+    });
     const ix = indexes();
     return buildApp({
       config,
@@ -212,7 +216,7 @@ describe('HTTP katmanı', () => {
   });
 
   it('hız sınırı aşılınca 429, sağlık uç noktası sınırsız', async () => {
-    const a = await app(2);
+    const a = await app(2, 2);
     const url = '/v1/places?q=salz';
     const codes = [];
     for (let i = 0; i < 3; i++) codes.push((await a.inject({ method: 'GET', url })).statusCode);
@@ -220,5 +224,18 @@ describe('HTTP katmanı', () => {
     const health = await a.inject({ method: 'GET', url: '/health' });
     expect(health.statusCode).toBe(200);
     expect(health.json().status).toBe('ok');
+  });
+
+  it('öneri istekleri arama hakkını yemez', async () => {
+    const a = await app(2, 50);
+    for (let i = 0; i < 10; i++) {
+      expect((await a.inject({ method: 'GET', url: '/v1/places?q=salz' })).statusCode).toBe(200);
+    }
+    const search = `/v1/search?from=city:745044&to=Salzburg&date=${DAY}`;
+    const codes = [];
+    for (let i = 0; i < 3; i++) codes.push((await a.inject({ method: 'GET', url: search })).statusCode);
+    expect(codes).toEqual([200, 200, 429]);
+    // Arama hakkı bitince öneriler sürer.
+    expect((await a.inject({ method: 'GET', url: '/v1/places?q=salz' })).statusCode).toBe(200);
   });
 });

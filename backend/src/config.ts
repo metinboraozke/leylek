@@ -24,6 +24,8 @@ const schema = z.object({
   TRANSITOUS_PLAN_PER_DAY: z.coerce.number().int().positive().default(3000),
 
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(20),
+  // Öneriler her harfte istenir ve bellekten döner; aramadan ayrı ve geniş sayılır.
+  PLACES_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(120),
   DATA_DIR: z.string().default('./data'),
 });
 
@@ -41,6 +43,7 @@ export interface Config {
   transitousPlanPerMinute: number;
   transitousPlanPerDay: number;
   rateLimitPerMinute: number;
+  placesRateLimitPerMinute: number;
   dataDir: string;
   /** Transitous koşulu: uygulama adı, sürüm ve iletişim bilgisi. */
   userAgent: string;
@@ -62,6 +65,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
     transitousPlanPerMinute: e.TRANSITOUS_PLAN_PER_MINUTE,
     transitousPlanPerDay: e.TRANSITOUS_PLAN_PER_DAY,
     rateLimitPerMinute: e.RATE_LIMIT_PER_MINUTE,
+    placesRateLimitPerMinute: e.PLACES_RATE_LIMIT_PER_MINUTE,
     dataDir: e.DATA_DIR,
     userAgent: `Leylek/${APP_VERSION} (+${e.LEYLEK_REPO_URL}; ${contact})`,
     contactConfigured: e.LEYLEK_CONTACT_EMAIL.length > 0,

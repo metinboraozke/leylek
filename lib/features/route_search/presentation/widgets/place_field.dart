@@ -68,8 +68,15 @@ class _PlaceFieldState extends State<PlaceField> {
     super.dispose();
   }
 
+  /// Hızlı yazarken her harf için istek atılmaz; yazma durunca sorulur.
+  static const Duration _debounce = Duration(milliseconds: 250);
+
   Future<Iterable<Place>> _suggest(TextEditingValue value) async {
-    final result = await context.read<SuggestPlaces>()(value.text);
+    final suggest = context.read<SuggestPlaces>();
+    await Future<void>.delayed(_debounce);
+    // Bu arada yeni harf yazıldıysa bu sonuç zaten kullanılmaz.
+    if (!mounted || _controller.text != value.text) return const <Place>[];
+    final result = await suggest(value.text);
     // Öneri gelmezse alan sessizce boş liste gösterir; asıl hata
     // aramada kullanıcıya söylenir. Yazarken her harfte hata kutusu
     // çıkması rahatsız ederdi.
@@ -128,7 +135,11 @@ class _PlaceFieldState extends State<PlaceField> {
     focusNode: _focusNode,
     displayStringForOption: (place) => place.label,
     optionsBuilder: _suggest,
-    onSelected: widget.onSelected,
+    onSelected: (place) {
+      // Seçimle iş biter: klavye beklemeden kapanır.
+      _focusNode.unfocus();
+      widget.onSelected(place);
+    },
     fieldViewBuilder: (context, controller, focusNode, onSubmitted) =>
         TextField(
           controller: controller,

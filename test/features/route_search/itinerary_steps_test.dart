@@ -9,10 +9,11 @@ import 'package:leylek/features/route_search/domain/entities/route_option.dart';
 import 'package:leylek/features/route_search/presentation/widgets/itinerary_card.dart';
 
 /// Örnek yanıttaki ilk aktarmalı rota; [edit] ile kara kısmı değiştirilir.
-RouteOption _via(void Function(Json ground) edit) {
+RouteOption _via(void Function(Json ground) edit, {Json? stopover}) {
   final json = jsonDecode(sampleSearchResponse) as Json;
   final options = (json['options'] as List<dynamic>).cast<Json>();
   final via = options.firstWhere((o) => o['kind'] == 'VIA');
+  if (stopover != null) via['stopover'] = stopover;
   edit(via['ground'] as Json);
   return SearchResultMapper.fromJson(
     json,
@@ -57,4 +58,26 @@ void main() {
       'Bölgesel tren',
     ]);
   });
+
+  test(
+    'ara tatilde kara yolu kendi gününde yazar, konaklama tarih aralığı',
+    () {
+      String later(String t) => t.replaceFirst('2026-11-20', '2026-11-22');
+      final option = _via((g) {
+        g['departAt'] = later(g['departAt'] as String);
+        g['arriveAt'] = later(g['arriveAt'] as String);
+        for (final leg in (g['legs'] as List<dynamic>).cast<Json>()) {
+          leg['departAt'] = later(leg['departAt'] as String);
+          leg['arriveAt'] = later(leg['arriveAt'] as String);
+        }
+      }, stopover: {'days': 2, 'city': 'Münih'});
+      final steps = itinerarySteps(option, 'İstanbul', 'Salzburg');
+
+      final stay = steps.firstWhere((s) => s.mode == 'Konaklama');
+      expect(stay.title, "Münih'te 2 gün");
+      expect(stay.detail, '20 Kas Cum → 22 Kas Paz');
+      // Tren uçuşun indiği gün değil, iki gün sonra kalkar.
+      expect(steps[2].detail, contains('22 Kas 11:46'));
+    },
+  );
 }

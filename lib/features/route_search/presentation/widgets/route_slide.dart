@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/format/formatters.dart';
 import '../../../../core/theme/leylek_colors.dart';
+import '../../../../core/time/zoned_time.dart';
 import '../../domain/entities/route_option.dart';
 import '../../domain/entities/search_result.dart';
 import '../labels.dart';
@@ -119,7 +120,9 @@ class RouteSlide extends StatelessWidget {
   }
 
   List<Widget> _journey(RouteOption o, String from, String to) {
-    final day = Formatters.shortDay(date);
+    // Her kart kendi gününü yazar: ara tatilde kara yolu günler sonra,
+    // gece uçuşunda iniş ertesi gün olabilir.
+    String dayOf(ZonedTime? t) => Formatters.shortDay(t?.wallClock ?? date);
     BookingLink? linkFor(BookingKind kind, [String? provider]) {
       for (final b in o.booking) {
         if (b.kind == kind && (provider == null || b.provider == provider)) {
@@ -132,7 +135,7 @@ class RouteSlide extends StatelessWidget {
     final widgets = <Widget>[
       BoardingPass.flight(
         o.flight,
-        day,
+        dayOf(o.flight.departAt),
         linkFor(BookingKind.flight),
         fromCity: from,
         toCity: o.via?.name ?? to,
@@ -149,14 +152,25 @@ class RouteSlide extends StatelessWidget {
     final stay = o.stopover;
     widgets.add(
       stay != null
-          ? StayStrip(days: stay.days, city: stay.city)
+          ? StayStrip(
+              days: stay.days,
+              city: stay.city,
+              dates: '${dayOf(o.flight.arriveAt)} → ${dayOf(ground.departAt)}',
+            )
           : WaitStrip(
               minutes: ground.waitMin,
               note: 'pasaport, bagaj, istasyon',
             ),
     );
     if (ground.legs.isEmpty) {
-      widgets.add(BoardingPass.estimated(ground, day, o.via?.iata ?? '', to));
+      widgets.add(
+        BoardingPass.estimated(
+          ground,
+          dayOf(ground.departAt),
+          o.via?.iata ?? '',
+          to,
+        ),
+      );
       return widgets;
     }
 
@@ -177,7 +191,7 @@ class RouteSlide extends StatelessWidget {
       widgets.add(
         BoardingPass.leg(
           leg,
-          day,
+          dayOf(leg.departAt ?? ground.departAt),
           booking: leg.operator == null
               ? null
               : linkFor(BookingKind.ground, leg.operator),

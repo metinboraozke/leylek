@@ -139,6 +139,13 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
     return steps;
   }
 
+  // Saatin yanına gün de yazılır, gün uçuşun indiği günden farklıysa:
+  // ara tatilde tren iki gün sonra kalkar.
+  final landed = f.arriveAt.wallClock;
+  String at(DateTime t) => DateUtils.isSameDay(t, landed)
+      ? Formatters.clock(t)
+      : '${Formatters.dayMonth(t)} ${Formatters.clock(t)}';
+
   final stay = o.stopover;
   if (stay != null) {
     steps.add(
@@ -146,6 +153,9 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
         icon: Icons.hotel_rounded,
         mode: 'Konaklama',
         title: '${Formatters.locative(stay.city)} ${stay.days} gün',
+        detail:
+            '${Formatters.shortDay(landed)} → '
+            '${Formatters.shortDay(ground.departAt.wallClock)}',
         travels: false,
       ),
     );
@@ -159,7 +169,8 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
         mode: 'Tren / otobüs (tahmini)',
         title: '$airport → $to',
         detail:
-            '~${Formatters.duration(ground.durationMin)} · sefer doğrulanamadı',
+            '~${Formatters.duration(ground.durationMin)} · '
+            '${at(ground.departAt.wallClock)} civarı · sefer doğrulanamadı',
       ),
     );
     return steps;
@@ -202,7 +213,7 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
     }
     final mode = Labels.mode(leg.mode);
     final times = leg.departAt != null && leg.arriveAt != null
-        ? '${Formatters.clock(leg.departAt!.wallClock)} → '
+        ? '${at(leg.departAt!.wallClock)} → '
               '${Formatters.clock(leg.arriveAt!.wallClock)}'
         : null;
     // Şehir adıyla yazılan uçta asıl istasyon ayrıntıda görünsün.

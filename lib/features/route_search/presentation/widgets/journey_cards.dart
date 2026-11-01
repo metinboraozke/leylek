@@ -535,10 +535,18 @@ class WaitStrip extends StatelessWidget {
 
 /// Uçuş ile kara yolu arasında aktarma şehrinde kalış.
 class StayStrip extends StatelessWidget {
-  const StayStrip({required this.days, required this.city, super.key});
+  const StayStrip({
+    required this.days,
+    required this.city,
+    this.dates,
+    super.key,
+  });
 
   final int days;
   final String city;
+
+  /// Varış ve yola devam günü: "15 Kas Pzt → 17 Kas Çar".
+  final String? dates;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -569,6 +577,15 @@ class StayStrip extends StatelessWidget {
                     color: LeylekColors.skyDeep,
                   ),
                 ),
+                if (dates != null)
+                  Text(
+                    dates!,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: LeylekColors.wingtip,
+                    ),
+                  ),
                 const Text(
                   'Havalimanından şehre ulaşım ve konaklama fiyata dahil değil.',
                   style: TextStyle(fontSize: 12, color: LeylekColors.muted),

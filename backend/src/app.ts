@@ -66,12 +66,15 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   // CORS kayıtlı değil: istemci mobil uygulama, tarayıcıdan çağrı beklenmiyor.
 
   const ipKey = makeIpKeyer(deps.now);
+  // Öneri ve arama ayrı sayılır: yazarken atılan öneri istekleri arama
+  // hakkını yemesin, aramadan sonra öneriler boş dönmesin.
+  const isPlaces = (url: string) => url.startsWith('/v1/places');
   await app.register(rateLimit, {
-    max: config.rateLimitPerMinute,
+    max: (request) => (isPlaces(request.url) ? config.placesRateLimitPerMinute : config.rateLimitPerMinute),
     timeWindow: '1 minute',
     skipOnError: true,
     allowList: (request) => request.url === '/health',
-    keyGenerator: (request) => ipKey(request.ip),
+    keyGenerator: (request) => `${isPlaces(request.url) ? 'p' : 's'}:${ipKey(request.ip)}`,
     errorResponseBuilder: (_request, context) => ({
       statusCode: 429,
       error: { code: 'RATE_LIMITED', message: `Çok fazla arama. ${context.after} sonra tekrar dene.` },

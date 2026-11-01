@@ -129,6 +129,8 @@ void main() {
     await tester.tap(find.byKey(const Key('recent-0')));
     await tester.pump();
     expect(form.state.to.place?.name, 'Salzburg');
+    // Öneri bekleme süresi dolsun.
+    await advance(tester, const Duration(milliseconds: 300));
   });
 
   testWidgets(
@@ -248,6 +250,28 @@ void main() {
     await advance(tester, const Duration(milliseconds: 400));
     expect(find.byType(ResultsCarousel), findsNothing);
     expect(find.byType(SearchCard), findsOneWidget);
+  });
+
+  testWidgets('sonuçtan dönünce alanlara yazılıp öneri seçilebilir', (
+    tester,
+  ) async {
+    phoneScreen(tester);
+    await tester.pumpWidget(
+      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+    );
+    await searchSalzburg(tester);
+    await advance(tester, const Duration(milliseconds: 2000));
+    await tester.tap(find.byKey(const Key('back-to-search')));
+    await advance(tester, const Duration(milliseconds: 400));
+
+    final form = BlocProvider.of<SearchFormCubit>(
+      tester.element(find.byType(SearchCard)),
+    );
+    await pickPlace(tester, 'to-field', 'salz', 'Salzburg');
+    expect(form.state.to.place?.name, 'Salzburg');
+    await pickPlace(tester, 'from-field', 'İstan', 'İstanbul');
+    expect(form.state.from.place?.name, 'İstanbul');
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('ara tatil kutusu seçenek listesi açar, formu günceller', (
