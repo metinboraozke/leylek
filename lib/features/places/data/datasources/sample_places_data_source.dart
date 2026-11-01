@@ -73,6 +73,7 @@ class SamplePlacesDataSource implements PlacesDataSource {
       countryName: 'Avusturya',
       kind: 'CITY',
       iata: 'SZG',
+      radiusKm: 250,
     ),
     PlaceDto(
       id: 'city:inn',

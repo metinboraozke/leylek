@@ -19,6 +19,30 @@ export const DESTINATION_COUNTRIES = new Set([
   'GB', 'IE', 'CY', 'RS', 'BA', 'ME', 'MK', 'AL', 'XK', 'MD', 'MC', 'SM', 'AD', 'VA',
 ]);
 
+/**
+ * Varış ülkesine göre "varışa yakın havalimanları" yarıçapı (km). Uygulama
+ * varış seçilince kaydırıcıyı buna getirir. Havalimanları seyrek, hızlı
+ * treni güçlü ülkelerde (İspanya, Fransa, İskandinavya) geniş; sık ve küçük
+ * ülkelerde dar. Komşu ülkelerin havalimanları da bu yarıçapa girer.
+ */
+export const RADIUS_BY_COUNTRY: Record<string, number> = {
+  ES: 450, FR: 400, IT: 350, PT: 350, DE: 300, GB: 350, IE: 250,
+  NO: 450, SE: 450, FI: 450, DK: 300, IS: 150,
+  PL: 350, CZ: 300, SK: 300, HU: 300, RO: 350, BG: 300, GR: 350,
+  AT: 250, CH: 250, SI: 250, HR: 350, LI: 200,
+  NL: 200, BE: 200, LU: 200, MC: 200, AD: 250, SM: 200, VA: 200,
+  EE: 300, LV: 300, LT: 300,
+  RS: 300, BA: 300, ME: 250, MK: 250, AL: 250, XK: 250, MD: 250,
+  MT: 100, CY: 150,
+};
+export const DEFAULT_RADIUS_KM = 300;
+export const MIN_RADIUS_KM = 50;
+export const MAX_RADIUS_KM = 600;
+
+export function radiusForCountry(country: string): number {
+  return RADIUS_BY_COUNTRY[country] ?? DEFAULT_RADIUS_KM;
+}
+
 /** Kalkış ve yer araması için veri alınan ülkeler. */
 export const DATA_COUNTRIES = new Set([...DESTINATION_COUNTRIES, 'TR', 'UA']);
 

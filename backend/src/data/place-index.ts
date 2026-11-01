@@ -1,7 +1,14 @@
 import { normalize } from '../core/text.js';
 import { haversineKm, type LatLon } from '../core/geo.js';
 import type { AirportIndex } from './airport-index.js';
-import { COUNTRY_ALIASES, countryNameEn, countryNameTr, DATA_COUNTRIES, TURKISH_CITY_NAMES } from './regions.js';
+import {
+  COUNTRY_ALIASES,
+  countryNameEn,
+  countryNameTr,
+  DATA_COUNTRIES,
+  radiusForCountry,
+  TURKISH_CITY_NAMES,
+} from './regions.js';
 import type { Airport, City } from './types.js';
 
 export interface Place extends LatLon {
@@ -25,6 +32,8 @@ export interface PlaceSuggestion {
   countryName: string;
   kind: PlaceKind;
   iata: string | null;
+  /** Varış seçilince önerilen yarıçap (km); ülke seçiminde yok. */
+  radiusKm?: number;
 }
 
 interface Entry {
@@ -226,6 +235,7 @@ export class PlaceIndex {
       countryName: countryNameTr(place.country),
       kind: place.kind,
       iata: place.iata,
+      ...(place.kind === 'COUNTRY' ? {} : { radiusKm: radiusForCountry(place.country) }),
     };
   }
 }

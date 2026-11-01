@@ -10,6 +10,7 @@ class PlaceDto {
     required this.countryName,
     required this.kind,
     this.iata,
+    this.radiusKm,
   });
 
   factory PlaceDto.fromJson(Json json) => PlaceDto(
@@ -19,6 +20,7 @@ class PlaceDto {
     countryName: json.str('countryName'),
     kind: json.str('kind'),
     iata: json.strOrNull('iata'),
+    radiusKm: json.integerOrNull('radiusKm'),
   );
 
   final String id;
@@ -27,6 +29,7 @@ class PlaceDto {
   final String countryName;
   final String kind;
   final String? iata;
+  final int? radiusKm;
 
   Place toEntity() => Place(
     id: id,
@@ -35,5 +38,6 @@ class PlaceDto {
     countryName: countryName,
     kind: PlaceKind.parse(kind),
     iata: iata,
+    radiusKm: radiusKm,
   );
 }

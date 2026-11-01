@@ -3,7 +3,7 @@ import { Errors } from '../core/errors.js';
 import { haversineKm } from '../core/geo.js';
 import type { Indexes } from '../data/dataset.js';
 import type { Place } from '../data/place-index.js';
-import { DESTINATION_COUNTRIES } from '../data/regions.js';
+import { DESTINATION_COUNTRIES, radiusForCountry } from '../data/regions.js';
 import { findCandidates } from './candidates.js';
 import { fetchQuotes, groupByAirport, mapLimit } from './flights.js';
 import { bufferMinutes, computeGround, earliestGroundDepart, estimatedGround } from './ground.js';
@@ -42,7 +42,7 @@ export class SearchService {
   }
 
   search(query: SearchQuery): Promise<SearchResponse> {
-    const key = `search:${query.from}|${query.to}|${query.date}|${query.radiusKm}|${query.maxGroundHours}|${query.currency}|${query.stopoverDays}`;
+    const key = `search:${query.from}|${query.to}|${query.date}|${query.radiusKm ?? '-'}|${query.maxGroundHours}|${query.currency}|${query.stopoverDays}`;
     // Aynı arama 10 dakika içinde gelirse hazır yanıt; aynı anda
     // gelenler tek hesaplamayı bekler.
     return this.deps.cache.singleFlight(key, RESPONSE_TTL, () => this.run(query));
@@ -76,9 +76,10 @@ export class SearchService {
     if (originCodes.length === 0) throw Errors.noOriginAirport();
 
     if (to.kind === 'COUNTRY') return this.countrySearch(query, from, to, originCodes, indexes);
+    query = { ...query, radiusKm: query.radiusKm ?? radiusForCountry(to.country) };
 
     // 02 · Aday havalimanları
-    const set = findCandidates(to, query.radiusKm, airports, originCodes);
+    const set = findCandidates(to, query.radiusKm!, airports, originCodes);
 
     // 03 · Uçuş fiyatları
     const quotes = await fetchQuotes(this.deps.flights, originCodes, set.destCodes, query.date);

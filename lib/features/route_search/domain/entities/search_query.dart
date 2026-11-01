@@ -12,9 +12,10 @@ class SearchQuery extends Equatable {
     this.stopoverDays = 0,
   });
 
-  static const int defaultRadiusKm = 250;
+  /// Varış seçilmeden önceki değer; varış seçilince ülkeninkine geçer.
+  static const int defaultRadiusKm = 300;
   static const int minRadiusKm = 50;
-  static const int maxRadiusKm = 400;
+  static const int maxRadiusKm = 600;
   static const double defaultMaxGroundHours = 5;
   static const double minGroundHours = 1;
   static const double maxGroundHoursLimit = 8;

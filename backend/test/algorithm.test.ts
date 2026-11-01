@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { transferPrices } from '../src/providers/transitous/fares.js';
 import { bufferMinutes, ceilTo15, computeGround, stationAccess } from '../src/search/ground.js';
-import { prefilter } from '../src/search/prefilter.js';
+import { estimateGround, prefilter } from '../src/search/prefilter.js';
 import { alternateFlightCard, directCard, rankCards, scoreCards, viaCard } from '../src/search/rank.js';
 import type { AirportFlights, Candidate, Card, CardGround } from '../src/search/types.js';
 import { AIRPORTS, FakeGround, fakeFx, indexes, quote } from './helpers.js';
@@ -39,6 +39,15 @@ describe('04 · ağdan önce eleme', () => {
     const r = prefilter([flights('NUE', 100)], salzburg, null, 2);
     expect(r.kept).toHaveLength(0);
     expect(r.dropped).toEqual([{ iata: 'NUE', reason: 'GROUND_TOO_LONG' }]);
+  });
+
+  it('uzun kara yolu hızlı trenle tahmin edilir, sınıra esnek bakılır', () => {
+    // ~300 km: eski düz 75 km/s hesapla ~6 sa sürerdi ve 5 sa sınırında elenirdi.
+    const far = { lat: salzburg.lat + 2.7, lon: salzburg.lon, country: 'AT' };
+    const e = estimateGround(far, salzburg, 'AT');
+    expect(e.hours).toBeLessThan(4.5);
+    // 5 sa sınırında bile ağa sorulmadan elenmez; asıl süreyi Transitous söyler.
+    expect(e.hours).toBeLessThan(5 * 1.4);
   });
 
   it('doğrudandan pahalı görünen adayı elemez', () => {

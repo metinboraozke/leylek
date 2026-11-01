@@ -25,6 +25,7 @@ class SearchFormState extends Equatable {
     this.from = const PlaceInput(),
     this.to = const PlaceInput(),
     this.radiusKm = SearchQuery.defaultRadiusKm,
+    this.radiusTouched = false,
     this.stopoverDays = 0,
   });
 
@@ -32,6 +33,10 @@ class SearchFormState extends Equatable {
   final PlaceInput to;
   final DateTime date;
   final int radiusKm;
+
+  /// Kullanıcı kaydırıcıyı elle oynattı mı. Oynatmadıysa yarıçap varış
+  /// ülkesine göre kendiliğinden ayarlanır.
+  final bool radiusTouched;
   final int stopoverDays;
 
   SearchFormState copyWith({
@@ -39,12 +44,14 @@ class SearchFormState extends Equatable {
     PlaceInput? to,
     DateTime? date,
     int? radiusKm,
+    bool? radiusTouched,
     int? stopoverDays,
   }) => SearchFormState(
     from: from ?? this.from,
     to: to ?? this.to,
     date: date ?? this.date,
     radiusKm: radiusKm ?? this.radiusKm,
+    radiusTouched: radiusTouched ?? this.radiusTouched,
     stopoverDays: stopoverDays ?? this.stopoverDays,
   );
 
@@ -68,7 +75,14 @@ class SearchFormState extends Equatable {
   );
 
   @override
-  List<Object?> get props => [from, to, date, radiusKm, stopoverDays];
+  List<Object?> get props => [
+    from,
+    to,
+    date,
+    radiusKm,
+    radiusTouched,
+    stopoverDays,
+  ];
 }
 
 /// Arama formunun durumu. Arama yapmaz; yalnızca formu tutar (SRP).
@@ -91,10 +105,24 @@ class SearchFormCubit extends Cubit<SearchFormState> {
   void selectTo(Place place) => emit(
     state.copyWith(
       to: PlaceInput(text: place.label, place: place),
+      radiusKm: _autoRadius(place),
     ),
   );
 
-  void swap() => emit(state.copyWith(from: state.to, to: state.from));
+  void swap() => emit(
+    state.copyWith(
+      from: state.to,
+      to: state.from,
+      radiusKm: _autoRadius(state.from.place),
+    ),
+  );
+
+  /// Varışın ülkesine göre yarıçap; kullanıcı elle seçtiyse dokunulmaz.
+  int? _autoRadius(Place? destination) {
+    final km = destination?.radiusKm;
+    if (state.radiusTouched || km == null) return null;
+    return km.clamp(SearchQuery.minRadiusKm, SearchQuery.maxRadiusKm);
+  }
 
   /// Son aramalardan birine dokununca form onunla doldurulur. Tarihi
   /// geçmişte kaldıysa formdaki tarih korunur.
@@ -124,6 +152,7 @@ class SearchFormCubit extends Cubit<SearchFormState> {
   void setRadius(int km) => emit(
     state.copyWith(
       radiusKm: km.clamp(SearchQuery.minRadiusKm, SearchQuery.maxRadiusKm),
+      radiusTouched: true,
     ),
   );
 }

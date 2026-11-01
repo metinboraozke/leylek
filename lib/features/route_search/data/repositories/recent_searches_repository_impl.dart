@@ -75,6 +75,7 @@ class PrefsRecentSearchesRepository implements RecentSearchesRepository {
           'countryName': p.countryName,
           'kind': p.kind.name,
           'iata': p.iata,
+          'radiusKm': p.radiusKm,
         };
 
   static Place? _placeFromJson(Json? json) => json == null
@@ -86,6 +87,7 @@ class PrefsRecentSearchesRepository implements RecentSearchesRepository {
           countryName: json.str('countryName'),
           kind: PlaceKind.parse(json.str('kind')),
           iata: json.strOrNull('iata'),
+          radiusKm: json.integerOrNull('radiusKm'),
         );
 }
 

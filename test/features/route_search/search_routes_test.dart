@@ -87,7 +87,7 @@ void main() {
 
   test('yarıçap ve kara süresi sınırlarını uygular', () async {
     expect(await invalidField(query(radiusKm: 49)), ValidationField.radius);
-    expect(await invalidField(query(radiusKm: 401)), ValidationField.radius);
+    expect(await invalidField(query(radiusKm: 601)), ValidationField.radius);
     expect(
       await invalidField(query(maxGroundHours: 0.5)),
       ValidationField.maxGroundHours,

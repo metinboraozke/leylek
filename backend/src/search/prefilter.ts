@@ -11,9 +11,10 @@ export function groundCostRate(country: string) {
 export function estimateGround(from: LatLon, to: LatLon, country: string): GroundEstimate {
   const roadKm = haversineKm(from, to) * PARAMS.roadFactor;
   const rate = groundCostRate(country);
+  const local = Math.min(roadKm, PARAMS.localKm);
   return {
     roadKm,
-    hours: PARAMS.egressHours + roadKm / PARAMS.avgSpeedKmh,
+    hours: PARAMS.egressHours + local / PARAMS.avgSpeedKmh + (roadKm - local) / PARAMS.longSpeedKmh,
     costEur: rate.base + rate.perKm * roadKm,
   };
 }
@@ -23,7 +24,7 @@ const durationHours = (f: FlightQuote) => (f.arriveMs - f.departMs) / 3_600_000;
 /**
  * 04 · Ağdan önce ele.
  *
- *   Kural 1: tahmini kara süresi > maxGroundHours → GROUND_TOO_LONG
+ *   Kural 1: tahmini kara süresi > maxGroundHours × esneklik → GROUND_TOO_LONG
  *   Kural 2: doğrudandan pahalı görünenler ELENMEZ (ekranda en az 3 rota
  *            olacak); yalnızca sırada geriye düşer.
  *   Kural 3: tahmini puana göre ilk K = 5 aday Transitous'a gider; diğerleri
@@ -41,7 +42,7 @@ export function prefilter(
   const scored: Candidate[] = [];
   for (const option of options) {
     const estimate = estimateGround(option.airport, destination, destination.country);
-    if (estimate.hours > maxGroundHours) {
+    if (estimate.hours > maxGroundHours * PARAMS.prefilterSlack) {
       dropped.push({ iata: option.airport.iata, reason: 'GROUND_TOO_LONG' });
       continue;
     }

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { MAX_RADIUS_KM, MIN_RADIUS_KM } from '../data/regions.js';
+
 const MAX_DAYS_AHEAD = 330;
 
 function dayOffset(day: string, now: number): number {
@@ -20,7 +22,8 @@ export function searchQuerySchema(now: () => number = Date.now) {
       // UTC'de henüz dün olabilir.
       .refine((d) => dayOffset(d, now()) >= -1, 'Geçmiş bir tarih seçilemez.')
       .refine((d) => dayOffset(d, now()) <= MAX_DAYS_AHEAD, `En fazla ${MAX_DAYS_AHEAD} gün sonrası aranabilir.`),
-    radiusKm: z.coerce.number().int().min(50).max(400).default(250),
+    // Verilmezse varış ülkesinin yarıçapı kullanılır.
+    radiusKm: z.coerce.number().int().min(MIN_RADIUS_KM).max(MAX_RADIUS_KM).optional(),
     maxGroundHours: z.coerce.number().min(1).max(8).default(5),
     currency: z.enum(['TRY', 'EUR']).default('TRY'),
     stopoverDays: z.coerce.number().int().min(0).max(3).default(0),

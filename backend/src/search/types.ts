@@ -6,7 +6,8 @@ export interface SearchQuery {
   to: string;
   /** `YYYY-MM-DD`, kalkış yerinin yerel günü. */
   date: string;
-  radiusKm: number;
+  /** Verilmezse varış ülkesinin yarıçapı ({@link radiusForCountry}). */
+  radiusKm?: number;
   maxGroundHours: number;
   currency: 'TRY' | 'EUR';
   /** Aktarma şehrinde kaç gün kalınacak (0–3). */
@@ -33,6 +34,18 @@ export const PARAMS = {
   avgSpeedKmh: 75,
   /** Havalimanından çıkış ve ilk sefere ulaşma payı. */
   egressHours: 0.75,
+  /**
+   * Ön tahminde ilk bu kadar yol km'si [avgSpeedKmh] ile, kalanı
+   * [longSpeedKmh] ile gidilir: uzun kara yolu çoğunlukla hızlı tren
+   * (Valencia → Madrid AVE ~1 sa 50 dk).
+   */
+  localKm: 100,
+  longSpeedKmh: 150,
+  /**
+   * Ön tahmin kaba; asıl süreyi Transitous doğrular. Aday ancak tahmin
+   * sınırın bu katını aşarsa ağa sorulmadan elenir.
+   */
+  prefilterSlack: 1.4,
   /** Saat başı zaman değeri (EUR). */
   vot: 12,
   minCards: 3,

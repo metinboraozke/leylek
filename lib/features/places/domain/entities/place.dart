@@ -24,6 +24,7 @@ class Place extends Equatable {
     required this.countryName,
     required this.kind,
     this.iata,
+    this.radiusKm,
   });
 
   /// Backend'in yer kimliği; aramada metin yerine bu gönderilir.
@@ -38,10 +39,22 @@ class Place extends Equatable {
   /// Havalimanı ya da şehir kodu, ör. `IST`, `MIL`.
   final String? iata;
 
+  /// Varış olarak seçilince önerilen "yakın havalimanları" yarıçapı (km):
+  /// ülkeye göre değişir (İspanya geniş, Hollanda dar). Ülkede yok.
+  final int? radiusKm;
+
   /// Alan içinde görünen kısa ad: "İstanbul IST". Alan kodu küçük ve
   /// soluk yazar.
   String get label => iata == null ? name : '$name $iata';
 
   @override
-  List<Object?> get props => [id, name, countryCode, countryName, kind, iata];
+  List<Object?> get props => [
+    id,
+    name,
+    countryCode,
+    countryName,
+    kind,
+    iata,
+    radiusKm,
+  ];
 }

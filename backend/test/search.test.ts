@@ -212,7 +212,18 @@ describe('HTTP katmanı', () => {
       countryName: 'Almanya',
       kind: 'CITY',
       iata: 'MUC',
+      radiusKm: 300,
     });
+  });
+
+  it('yarıçap verilmezse varış ülkesininki kullanılır, sınır 600 km', async () => {
+    const a = await app();
+    const res = await a.inject({ method: 'GET', url: `/v1/search?from=city:745044&to=Salzburg&date=${DAY}` });
+    expect(res.json().query.radiusKm).toBe(250);
+    const wide = await a.inject({ method: 'GET', url: `/v1/search?from=city:745044&to=Salzburg&date=${DAY}&radiusKm=600` });
+    expect(wide.statusCode).toBe(200);
+    const tooWide = await a.inject({ method: 'GET', url: `/v1/search?from=city:745044&to=Salzburg&date=${DAY}&radiusKm=650` });
+    expect(tooWide.statusCode).toBe(400);
   });
 
   it('hız sınırı aşılınca 429, sağlık uç noktası sınırsız', async () => {
