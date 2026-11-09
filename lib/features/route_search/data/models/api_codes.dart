@@ -34,6 +34,7 @@ abstract final class ApiCodes {
     'FERRY' => RouteFlag.ferry,
     'PRICE_STALE' => RouteFlag.priceStale,
     'STOPOVER' => RouteFlag.stopover,
+    'DATE_SHIFTED' => RouteFlag.dateShifted,
     _ => RouteFlag.unknown,
   };
 

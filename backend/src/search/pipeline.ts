@@ -29,6 +29,11 @@ export interface SearchDeps {
 
 const RESPONSE_TTL = 10 * MINUTE;
 
+/** Seçilen günde veri olmayıp yakın günden gelen uçuşu kartta işaretler. */
+function markShifted(cards: Card[], day: string): void {
+  for (const c of cards) if (!c.flight.departIso.startsWith(day)) c.flags.add('DATE_SHIFTED');
+}
+
 /**
  * Arama hattı: 01 yerleri çöz → 02 adaylar → 03 uçuşlar → 04 eleme →
  * 05 kara bacağı → 06 kartlar. Her adım ayrı bir saf fonksiyon; bu sınıf
@@ -162,6 +167,7 @@ export class SearchService {
       cards.push(filler);
     }
 
+    markShifted(cards, query.date);
     scoreCards(cards, cards.find((c) => c.kind === 'DIRECT')?.doorToDoorMin ?? null);
     const ranked = cards.length > 0 ? rankCards(cards, bestDirect?.cheapest.priceEur ?? null) : [];
 
@@ -211,6 +217,7 @@ export class SearchService {
       .sort((a, b) => a.cheapest.priceEur - b.cheapest.priceEur)
       .slice(0, PARAMS.maxCards)
       .map((g) => directCard(g.cheapest, g.airport, 0));
+    markShifted(cards, query.date);
     scoreCards(cards, null);
     const ranked = cards.length > 0 ? rankCards(cards, null) : [];
 

@@ -64,6 +64,16 @@ void main() {
     expect(result.warnings, hasLength(1));
   });
 
+  test('yakın günden gelen uçuş etiketi okunur', () {
+    final json = _sample();
+    ((json['options'] as List<dynamic>).first as Json)['flags'] = [
+      'DATE_SHIFTED',
+    ];
+    expect(SearchResultMapper.fromJson(json).options.first.flags, {
+      RouteFlag.dateShifted,
+    });
+  });
+
   test('https olmayan rezervasyon bağlantısı atlanır', () {
     final json = _sample();
     final option = (json['options'] as List<dynamic>).first as Json;

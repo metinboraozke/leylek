@@ -24,6 +24,9 @@ enum RouteFlag {
   ferry,
   priceStale,
   stopover,
+
+  /// Seçilen günde uçuş verisi yoktu; ±3 gün içindeki en yakın günün uçuşu.
+  dateShifted,
   unknown,
 }
 

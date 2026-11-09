@@ -72,7 +72,9 @@ export type Flag =
   | 'GROUND_NOT_VERIFIED'
   | 'FERRY'
   | 'PRICE_STALE'
-  | 'STOPOVER';
+  | 'STOPOVER'
+  /** Seçilen günde uçuş verisi yoktu; en yakın günün uçuşu. */
+  | 'DATE_SHIFTED';
 
 export type DropReason =
   | 'NO_FLIGHT_DATA'

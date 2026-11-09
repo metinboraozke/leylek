@@ -27,6 +27,7 @@ abstract final class Labels {
     RouteFlag.ferry => 'Feribot',
     RouteFlag.priceStale => 'Fiyat eski olabilir',
     RouteFlag.stopover => 'Konaklamalı',
+    RouteFlag.dateShifted => 'Yakın günün uçuşu',
     RouteFlag.unknown => null,
   };
 

@@ -17,9 +17,26 @@ import type { FlightPriceSource, FlightQuote } from '../../search/ports.js';
  *
  * Leylek'e özel: `link` (ortaklık bağlantısı) yalnızca yaş için okunur,
  * hiçbir zaman istemciye gitmez. Marker gönderilmez.
+ *
+ * Veri, Aviasales kullanıcılarının son 48 saatte yaptığı aramaların
+ * önbelleği; ülke kısıtı yok ama kimsenin aramadığı gün boş döner
+ * (İstanbul → Sevilla 24 Kasım: 0 uçuş, Kasım ayı: 16 gün). Seçilen gün
+ * boşsa aynı yol ay olarak sorulur (ayın her günü için en ucuz uçuş, tek
+ * istek) ve ±[FLEX_DAYS] gün içindeki en yakın günün uçuşu alınır.
  */
 const PATH = '/aviasales/v3/prices_for_dates';
 const TTL = 6 * HOUR;
+export const FLEX_DAYS = 3;
+const DAY_MS = 86_400_000;
+
+/** `2026-11-24` ± n gün → `2026-11-27`. */
+function shiftDay(day: string, n: number): string {
+  return new Date(Date.parse(`${day}T00:00:00Z`) + n * DAY_MS).toISOString().slice(0, 10);
+}
+
+function dayDiff(a: string, b: string): number {
+  return Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / DAY_MS);
+}
 
 interface RawQuote {
   price?: number;
@@ -76,27 +93,47 @@ export class TravelpayoutsClient implements FlightPriceSource {
     private readonly baseUrl = 'https://api.travelpayouts.com',
   ) {}
 
+  /**
+   * O günün uçuşları; o gün boşsa ±[FLEX_DAYS] gün içinde seçilen güne en
+   * yakın günün uçuşları (önce ve sonra eşit uzaksa ikisi de).
+   */
   async quotes(originCode: string, destCode: string, day: string): Promise<FlightQuote[]> {
     if (!this.token) {
       throw new UpstreamError('travelpayouts', 'status', 'TRAVELPAYOUTS_TOKEN tanımlı değil', 503);
     }
-    const key = `tp:${originCode}:${destCode}:${day}:EUR`;
+    const exact = await this.fetch(originCode, destCode, day);
+    if (exact.length > 0) return exact;
+
+    const months = [...new Set([shiftDay(day, -FLEX_DAYS), shiftDay(day, FLEX_DAYS)].map((d) => d.slice(0, 7)))];
+    const now = this.now();
+    const near = (await Promise.all(months.map((m) => this.fetch(originCode, destCode, m))))
+      .flat()
+      .filter((q) => q.departMs > now && Math.abs(dayDiff(q.departIso.slice(0, 10), day)) <= FLEX_DAYS);
+    if (near.length === 0) return [];
+    const closest = Math.min(...near.map((q) => Math.abs(dayDiff(q.departIso.slice(0, 10), day))));
+    return near.filter((q) => Math.abs(dayDiff(q.departIso.slice(0, 10), day)) === closest);
+  }
+
+  /** `departure_at` gün (`2026-11-24`) ya da ay (`2026-11`); önbellekli. */
+  private fetch(originCode: string, destCode: string, departure: string): Promise<FlightQuote[]> {
+    const key = `tp:${originCode}:${destCode}:${departure}:EUR`;
     return this.cache.singleFlight(key, TTL, async () => {
       const query = new URLSearchParams({
         origin: originCode,
         destination: destCode,
-        departure_at: day,
+        departure_at: departure,
         one_way: 'true',
         currency: 'eur',
         sorting: 'price',
-        limit: '30',
+        // Ay sorgusunda günde bir uçuş döner; 31 gün sığsın.
+        limit: departure.length === 7 ? '31' : '30',
         token: this.token,
       });
       const body = await this.http.getJson<{ data?: RawQuote[] }>(`${this.baseUrl}${PATH}?${query}`);
       const now = this.now();
       return (body.data ?? [])
         .map((raw) => mapQuote(raw, originCode, destCode, now))
-        .filter((q): q is FlightQuote => q !== null && q.departIso.startsWith(day));
+        .filter((q): q is FlightQuote => q !== null && q.departIso.startsWith(departure));
     });
   }
 }

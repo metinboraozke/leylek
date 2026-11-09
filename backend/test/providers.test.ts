@@ -65,6 +65,33 @@ describe('Travelpayouts', () => {
     expect(url.searchParams.has('marker')).toBe(false);
   });
 
+  it('seçilen gün boşsa ay sorulur, ±3 gün içindeki en yakın gün alınır', async () => {
+    const day = (d: string, price: number) => ({
+      price,
+      airline: 'VY',
+      departure_at: `${d}T10:00:00+03:00`,
+      destination_airport: 'SVQ',
+      duration_to: 300,
+    });
+    const urls: string[] = [];
+    const fn = (async (input: string | URL | Request) => {
+      urls.push(String(input));
+      const at = new URL(String(input)).searchParams.get('departure_at');
+      // Gün sorgusu boş; ay sorgusunda 18'i (2 gün önce, ucuz), 22'si
+      // (2 gün sonra) ve 29'u (pencere dışı) var.
+      const data = at === '2026-11-20' ? [] : [day('2026-11-18', 80), day('2026-11-22', 95), day('2026-11-29', 10)];
+      return new Response(JSON.stringify({ data }), { status: 200 });
+    }) as FetchFn;
+    const client = new TravelpayoutsClient(new HttpClient('tp', fn, 'Leylek/test'), 'tok', new TtlCache(), () => NOW);
+    const quotes = await client.quotes('IST', 'SVQ', '2026-11-20');
+
+    expect(quotes.map((q) => q.departIso.slice(0, 10)).sort()).toEqual(['2026-11-18', '2026-11-22']);
+    expect(urls.map((u) => new URL(u).searchParams.get('departure_at'))).toEqual(['2026-11-20', '2026-11']);
+    // Ay sorgusu önbellekte: aynı ay içindeki başka bir gün yeni ay isteği atmaz.
+    await client.quotes('IST', 'SVQ', '2026-11-21');
+    expect(urls.filter((u) => new URL(u).searchParams.get('departure_at') === '2026-11')).toHaveLength(1);
+  });
+
   it('token yoksa istek atmadan hata verir', async () => {
     const f = fakeFetch({});
     const client = new TravelpayoutsClient(new HttpClient('tp', f.fn, 'x'), '', new TtlCache());
