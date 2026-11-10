@@ -96,6 +96,9 @@ export class FakeFlights implements FlightPriceSource {
     if (this.fail) throw new Error('token yok');
     return this.byDest[dest] ?? [];
   }
+  async monthQuotes(origin: string, dest: string): Promise<FlightQuote[]> {
+    return this.quotes(origin, dest);
+  }
 }
 
 /**

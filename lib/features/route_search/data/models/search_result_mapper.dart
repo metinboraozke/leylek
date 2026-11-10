@@ -70,9 +70,11 @@ abstract final class SearchResultMapper {
     final url = Uri.tryParse(b.strOrNull('url') ?? '');
     if (url == null || url.scheme != 'https' || url.host.isEmpty) return null;
     return BookingLink(
-      kind: b.strOrNull('kind') == 'GROUND'
-          ? BookingKind.ground
-          : BookingKind.flight,
+      kind: switch (b.strOrNull('kind')) {
+        'GROUND' => BookingKind.ground,
+        'ROUTE' => BookingKind.route,
+        _ => BookingKind.flight,
+      },
       provider: b.strOrNull('provider') ?? url.host,
       url: url,
       lines: b.strList('lines'),

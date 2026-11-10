@@ -4,9 +4,12 @@ import '../features/places/data/datasources/places_data_source.dart';
 import '../features/places/data/datasources/sample_places_data_source.dart';
 import '../features/places/data/repositories/places_repository_impl.dart';
 import '../features/places/domain/usecases/suggest_places.dart';
+import '../features/route_search/data/datasources/fare_calendar_data_source.dart';
 import '../features/route_search/data/datasources/route_search_data_source.dart';
 import '../features/route_search/data/datasources/sample_route_search_data_source.dart';
+import '../features/route_search/data/repositories/fare_calendar_repository_impl.dart';
 import '../features/route_search/data/repositories/route_search_repository_impl.dart';
+import '../features/route_search/domain/repositories/fare_calendar_repository.dart';
 import '../features/route_search/domain/usecases/search_routes.dart';
 
 /// Bileşim kökü: somut sınıfların birbirine bağlandığı tek yer.
@@ -18,26 +21,36 @@ class AppDependencies {
   const AppDependencies({
     required this.suggestPlaces,
     required this.searchRoutes,
+    this.fareCalendar = const FareCalendarRepositoryImpl(
+      SampleFareCalendarDataSource(),
+    ),
   });
 
   factory AppDependencies.create(AppConfig config) {
     final PlacesDataSource places;
     final RouteSearchDataSource routes;
+    final FareCalendarDataSource calendar;
     if (config.useSampleData) {
       places = const SamplePlacesDataSource();
       routes = const SampleRouteSearchDataSource();
+      calendar = const SampleFareCalendarDataSource();
     } else {
       final api = DioJsonApi(baseUrl: config.apiBaseUrl);
       places = ApiPlacesDataSource(api);
       routes = ApiRouteSearchDataSource(api);
+      calendar = ApiFareCalendarDataSource(api);
     }
 
     return AppDependencies(
       suggestPlaces: SuggestPlaces(PlacesRepositoryImpl(places)),
       searchRoutes: SearchRoutes(RouteSearchRepositoryImpl(routes)),
+      fareCalendar: FareCalendarRepositoryImpl(calendar),
     );
   }
 
   final SuggestPlaces suggestPlaces;
   final SearchRoutes searchRoutes;
+
+  /// Tarih şeridindeki günlük fiyatlar.
+  final FareCalendarRepository fareCalendar;
 }

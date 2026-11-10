@@ -28,6 +28,28 @@ export interface SearchDeps {
 }
 
 const RESPONSE_TTL = 10 * MINUTE;
+const CALENDAR_TTL = 60 * MINUTE;
+
+export interface CalendarQuery {
+  from: string;
+  to: string;
+  /** `2026-11` */
+  month: string;
+  currency: string;
+}
+
+export interface CalendarResponse {
+  query: { from: string; to: string; month: string; currency: string };
+  /** Uçuş verisi olan günler; fiyat doğrudan varışa en ucuz tek yön uçuş. */
+  days: { date: string; price: number }[];
+}
+
+/** Kalkış yerinin uçuş sorulacak şehir kodları ("İstanbul" → IST, SAW). */
+function originCodesFor(from: Place, { airports, places }: Indexes): string[] {
+  if (from.kind === 'AIRPORT' && from.iata) return [airports.get(from.iata)?.cityCode ?? from.iata];
+  if (from.kind === 'COUNTRY') return places.countryCityCodes(from.country, PARAMS.countryOriginCodes);
+  return airports.originCityCodes(from, PARAMS.originRadiusKm);
+}
 
 /** Seçilen günde veri olmayıp yakın günden gelen uçuşu kartta işaretler. */
 function markShifted(cards: Card[], day: string): void {
@@ -72,12 +94,7 @@ export class SearchService {
     }
     if (!DESTINATION_COUNTRIES.has(to.country)) throw Errors.outOfCoverage(to.country);
 
-    const originCodes =
-      from.kind === 'AIRPORT' && from.iata
-        ? [airports.get(from.iata)?.cityCode ?? from.iata]
-        : from.kind === 'COUNTRY'
-          ? places.countryCityCodes(from.country, PARAMS.countryOriginCodes)
-          : airports.originCityCodes(from, PARAMS.originRadiusKm);
+    const originCodes = originCodesFor(from, indexes);
     if (originCodes.length === 0) throw Errors.noOriginAirport();
 
     if (to.kind === 'COUNTRY') return this.countrySearch(query, from, to, originCodes, indexes);
@@ -225,6 +242,59 @@ export class SearchService {
     if (ranked.length < PARAMS.minCards) warnings.push('FEWER_THAN_THREE');
     const rate = await this.deps.fx.perEur(query.currency);
     return toResponse({ query, from, to, cards: ranked, dropped, warnings, rate, places, now: this.now() });
+  }
+
+  /**
+   * Tarih şeridi için ayın her gününde varışa (ya da yakınına, 40 km)
+   * en ucuz doğrudan uçuş fiyatı. Kara yolu sorulmaz; Travelpayouts'a
+   * kalkış × varış kodu başına ayda bir istek, 6 saat önbellekli.
+   */
+  calendar(query: CalendarQuery): Promise<CalendarResponse> {
+    const key = `calendar:${query.from}|${query.to}|${query.month}|${query.currency}`;
+    return this.deps.cache.singleFlight(key, CALENDAR_TTL, () => this.runCalendar(query));
+  }
+
+  private async runCalendar(query: CalendarQuery): Promise<CalendarResponse> {
+    const indexes = this.deps.indexes();
+    if (!indexes) throw Errors.dataNotReady();
+    const { airports, places } = indexes;
+    const [from, to] = await Promise.all([
+      resolvePlace(query.from, places, airports, this.deps.geocoder),
+      resolvePlace(query.to, places, airports, this.deps.geocoder),
+    ]);
+    if (!from) throw Errors.placeNotFound('from', query.from);
+    if (!to) throw Errors.placeNotFound('to', query.to);
+    const answer = (days: CalendarResponse['days']): CalendarResponse => ({
+      query: { from: from.name, to: to.name, month: query.month, currency: query.currency },
+      days,
+    });
+    const monthQuotes = this.deps.flights.monthQuotes?.bind(this.deps.flights);
+    if (!monthQuotes) return answer([]);
+
+    const originCodes = originCodesFor(from, indexes);
+    const destCodes = (
+      to.kind === 'COUNTRY'
+        ? places.countryCityCodes(to.country, PARAMS.countryDestCodes)
+        : findCandidates(to, PARAMS.directRadiusKm, airports, originCodes).destCodes
+    ).filter((c) => !originCodes.includes(c));
+    const pairs = originCodes.flatMap((o) => destCodes.map((d) => [o, d] as const));
+    const lists = await mapLimit(pairs, 4, ([o, d]) => monthQuotes(o, d, query.month).catch(() => []));
+
+    const now = this.now();
+    const best = new Map<string, number>();
+    for (const q of lists.flat()) {
+      if (q.departMs <= now) continue;
+      const day = q.departIso.slice(0, 10);
+      if (!day.startsWith(query.month)) continue;
+      const prev = best.get(day);
+      if (prev === undefined || q.priceEur < prev) best.set(day, q.priceEur);
+    }
+    const rate = await this.deps.fx.perEur(query.currency);
+    return answer(
+      [...best.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, eur]) => ({ date, price: Math.round(eur * rate) })),
+    );
   }
 
   private bufferFor(flight: FlightQuote, candidate: Candidate): number {

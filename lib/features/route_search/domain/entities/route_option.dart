@@ -258,7 +258,9 @@ class Stopover extends Equatable {
   List<Object?> get props => [days, city];
 }
 
-enum BookingKind { flight, ground }
+/// [route]: kara yolunun tamamı için Haritalar yol tarifi (sefer saatleri
+/// ve işletmecilerin bilet bağlantıları orada).
+enum BookingKind { flight, ground, route }
 
 /// "Rezervasyona git" kartı: sağlayıcının kendi sitesi, ortaklık işaretsiz.
 class BookingLink extends Equatable {

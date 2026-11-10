@@ -1,3 +1,4 @@
+import type { LatLon } from '../core/geo.js';
 import type { GroundLegData } from './ports.js';
 import type { Card } from './types.js';
 
@@ -8,13 +9,21 @@ import type { Card } from './types.js';
  * Leylek'in gelir kapısı yok. Travelpayouts'un `link` alanı (ortaklık
  * bağlantısı) burada da kullanılmaz.
  *
- *   • Uçuş: havayolunun kendi sitesi; tanınmayan havayolunda Google
- *     Flights araması (o gün, o iki havalimanı).
- *   • Kara bacağı: Transitous'un verdiği işletmeci adresi (ÖBB, FlixBus…).
- *     Adresi olmayan işletmeci için bağlantı üretilmez.
+ *   • Uçuş: Google Flights araması, o gün ve o iki havalimanı önceden
+ *     dolu; havayolunun kendi bileti de orada listelenir. Havayolu ana
+ *     sayfası rota ve tarih almadığı için kullanıcıyı boş forma atıyordu.
+ *   • Kara yolu (ROUTE): bütün kara yolculuğu Google Haritalar toplu
+ *     taşıma yol tarifi olarak; ilk duraktan son durağa. Haritalar sefer
+ *     saatlerini ve işletmecilerin bilet bağlantılarını gösterir.
+ *     İşletmecilerin rezervasyon siteleri (bahn.de, ÖBB…) rota ve tarihi
+ *     yalnızca kendi istasyon kimlikleriyle kabul ediyor; Transitous'ta o
+ *     kimlikler yok.
+ *   • Kara bacağı (GROUND): Transitous'un verdiği işletmeci adresi (ÖBB,
+ *     FlixBus…), işletmecinin sitesi olarak. Adresi olmayan işletmeci için
+ *     bağlantı üretilmez.
  */
 export interface BookingLink {
-  kind: 'FLIGHT' | 'GROUND';
+  kind: 'FLIGHT' | 'GROUND' | 'ROUTE';
   provider: string;
   url: string;
   /** Bu bağlantıyla alınacak hatlar, ör. ["TK 1629"] ya da ["S8", "RJX 69"]. */
@@ -68,14 +77,42 @@ export function safeHttps(raw: string | null | undefined): string | null {
 export function flightLink(card: Card, day: string): BookingLink {
   const f = card.flight;
   const line = [f.airline, f.flightNumber].filter(Boolean).join(' ');
-  const airline = AIRLINES[f.airline];
-  if (airline) return { kind: 'FLIGHT', provider: airline.name, url: airline.url, lines: line ? [line] : [] };
-  const q = `Flights from ${f.originAirport} to ${f.destAirport} on ${day} one way`;
+  // Uçuşun kendi günü: yakın günden gelen uçuşta aranan gün değil.
+  const date = f.departIso.slice(0, 10) || day;
+  const q = `Flights from ${f.originAirport} to ${f.destAirport} on ${date} one way`;
   return {
     kind: 'FLIGHT',
-    provider: 'Google Flights',
-    url: `https://www.google.com/travel/flights?hl=tr&q=${encodeURIComponent(q)}`,
+    provider: AIRLINES[f.airline]?.name ?? 'Google Flights',
+    url: `https://www.google.com/travel/flights?hl=tr&curr=TRY&q=${encodeURIComponent(q)}`,
     lines: line ? [line] : [],
+  };
+}
+
+const coord = (p: LatLon) => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`;
+
+/**
+ * Kara yolunun tamamı için Haritalar yol tarifi. Bacak yoksa (sefer
+ * doğrulanamadı) havalimanından varış şehrine.
+ */
+export function routeLink(card: Card, destination: LatLon): BookingLink | null {
+  const ground = card.ground;
+  if (!ground) return null;
+  const legs = ground.legs;
+  // Durak adı ("München Hbf") Haritalar'da istasyonun kendisine çıkar;
+  // koordinat ise yakındaki bir dükkâna. Ad yoksa koordinat.
+  const first = legs[0];
+  const last = legs.at(-1);
+  const params = new URLSearchParams({
+    api: '1',
+    origin: first?.fromName || coord(first?.from ?? card.airport),
+    destination: last?.toName || coord(last?.to ?? destination),
+    travelmode: 'transit',
+  });
+  return {
+    kind: 'ROUTE',
+    provider: 'Google Haritalar',
+    url: `https://www.google.com/maps/dir/?${params}`,
+    lines: legs.map((l) => l.line).filter((l): l is string => !!l),
   };
 }
 
@@ -95,6 +132,7 @@ export function groundLinks(legs: GroundLegData[]): BookingLink[] {
   return [...byProvider.values()];
 }
 
-export function bookingLinks(card: Card, day: string): BookingLink[] {
-  return [flightLink(card, day), ...(card.ground ? groundLinks(card.ground.legs) : [])];
+export function bookingLinks(card: Card, day: string, destination: LatLon): BookingLink[] {
+  const route = routeLink(card, destination);
+  return [flightLink(card, day), ...(card.ground ? groundLinks(card.ground.legs) : []), ...(route ? [route] : [])];
 }

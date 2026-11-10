@@ -118,7 +118,7 @@ export function toResponse(ctx: ResponseContext) {
           : undefined,
       score: Math.round(c.score * 100) / 100,
       flags: [...c.flags],
-      booking: bookingLinks(c, ctx.query.date),
+      booking: bookingLinks(c, ctx.query.date, ctx.to),
     })),
     dropped: ctx.dropped,
     warnings: ctx.warnings,

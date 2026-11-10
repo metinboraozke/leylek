@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -121,6 +122,12 @@ class _FlightSceneState extends State<FlightScene>
                       child: StorkLottie(size: storkSize),
                     ),
                     ..._vehicles(t, w, h, globeCenter, radius),
+                    Positioned(
+                      left: 24,
+                      right: 24,
+                      top: h * 0.3 + storkSize * 0.42,
+                      child: const SearchProgressText(),
+                    ),
                   ],
                 );
               },
@@ -167,6 +174,63 @@ class _FlightSceneState extends State<FlightScene>
         ),
       ),
     ];
+  }
+}
+
+/// Leyleğin altında küçük ilerleme yazısı. Aramanın adımları backend'deki
+/// sırayla ve yaklaşık sürelerine göre değişir: önce uçuş fiyatları
+/// (~1–2 sn), sonra havalimanlarının elenmesi, en uzun süren kısım tren
+/// ve otobüs seferlerinin sorulması. Sayı uydurulmaz; yalnızca adım adı.
+class SearchProgressText extends StatefulWidget {
+  const SearchProgressText({super.key});
+
+  /// Adım ve başladığı saniye.
+  static const List<(int, String)> steps = [
+    (0, 'Uçuş fiyatları toplanıyor'),
+    (2, 'Yakın havalimanları karşılaştırılıyor'),
+    (4, 'Tren ve otobüs seferleri kontrol ediliyor'),
+    (12, 'Neredeyse hazır'),
+  ];
+
+  @override
+  State<SearchProgressText> createState() => _SearchProgressTextState();
+}
+
+class _SearchProgressTextState extends State<SearchProgressText> {
+  int _seconds = 0;
+  late final Timer _timer = Timer.periodic(
+    const Duration(seconds: 1),
+    (_) => setState(() => _seconds++),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _timer;
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final step = SearchProgressText.steps.lastWhere((s) => _seconds >= s.$1);
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: Text(
+        '${step.$2}…',
+        key: ValueKey(step.$2),
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 12,
+          letterSpacing: 0.1,
+          color: LeylekColors.muted,
+        ),
+      ),
+    );
   }
 }
 

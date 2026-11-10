@@ -76,8 +76,13 @@ void main() {
       final stay = steps.firstWhere((s) => s.mode == 'Konaklama');
       expect(stay.title, "Münih'te 2 gün");
       expect(stay.detail, '20 Kas Cum → 22 Kas Paz');
-      // Tren uçuşun indiği gün değil, iki gün sonra kalkar.
-      expect(steps[2].detail, contains('22 Kas 11:46'));
+      // Konaklamada önce şehre geçilir; tren şehrin istasyonundan, uçuşun
+      // indiği gün değil iki gün sonra kalkar.
+      expect(steps[1].mode, 'Havalimanından şehre');
+      expect(steps[1].title, 'Münih havalimanı → Münih merkez');
+      final train = steps.firstWhere((s) => s.mode.startsWith('Banliyö'));
+      expect(train.title, startsWith('München Flughafen Terminal →'));
+      expect(train.detail, contains('22 Kas 11:46'));
     },
   );
 }

@@ -6,6 +6,7 @@ import '../core/theme/leylek_theme.dart';
 import '../features/places/domain/usecases/suggest_places.dart';
 import '../features/route_search/data/repositories/recent_searches_repository_impl.dart';
 import '../features/route_search/domain/repositories/recent_searches_repository.dart';
+import '../features/route_search/presentation/cubit/fare_calendar_cubit.dart';
 import '../features/route_search/presentation/cubit/recent_searches_cubit.dart';
 import '../features/route_search/presentation/cubit/search_cubit.dart';
 import '../features/route_search/presentation/cubit/search_form_cubit.dart';
@@ -48,6 +49,9 @@ class LeylekApp extends StatelessWidget {
             ),
           ),
           BlocProvider(create: (_) => SearchCubit(dependencies.searchRoutes)),
+          BlocProvider(
+            create: (_) => FareCalendarCubit(dependencies.fareCalendar),
+          ),
           BlocProvider(
             create: (_) => RecentSearchesCubit(
               recentSearches ?? InMemoryRecentSearchesRepository(),

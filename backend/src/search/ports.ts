@@ -27,6 +27,8 @@ export interface FlightQuote {
 export interface FlightPriceSource {
   /** `originCode` → `destCode` için o günün en ucuz tek yön uçuşları. */
   quotes(originCode: string, destCode: string, day: string): Promise<FlightQuote[]>;
+  /** Ayın (`2026-11`) her günü için en ucuz tek yön uçuş; fiyat takvimi için. */
+  monthQuotes?(originCode: string, destCode: string, month: string): Promise<FlightQuote[]>;
 }
 
 export interface GroundRequest {

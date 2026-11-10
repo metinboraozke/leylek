@@ -171,6 +171,8 @@ class RouteSlide extends StatelessWidget {
           to,
         ),
       );
+      final route = linkFor(BookingKind.route);
+      if (route != null) widgets.add(RouteLinkButton(link: route));
       return widgets;
     }
 
@@ -199,6 +201,8 @@ class RouteSlide extends StatelessWidget {
         ),
       );
     }
+    final route = linkFor(BookingKind.route);
+    if (route != null) widgets.add(RouteLinkButton(link: route));
     return widgets;
   }
 

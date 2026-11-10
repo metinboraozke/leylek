@@ -148,6 +148,16 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
 
   final stay = o.stopover;
   if (stay != null) {
+    // Konaklamada kara yolu havalimanından değil, şehirden başlar.
+    steps.add(
+      ItineraryStep(
+        icon: Icons.directions_transit_rounded,
+        mode: 'Havalimanından şehre',
+        title: '${via.name} havalimanı → ${stay.city} merkez',
+        detail: 'Ulaşımı kendin seçersin',
+        travels: false,
+      ),
+    );
     steps.add(
       ItineraryStep(
         icon: Icons.hotel_rounded,
@@ -224,7 +234,7 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
         mode: leg.line == null ? mode : '$mode · ${leg.line}',
         kind: mode,
         title:
-            '${first && access == null && walk == null ? airport : leg.from} → '
+            '${first && stay == null && access == null && walk == null ? airport : leg.from} → '
             '${last ? to : leg.to}',
         detail: [?stations, ?times, ?leg.operator].join(' · '),
       ),

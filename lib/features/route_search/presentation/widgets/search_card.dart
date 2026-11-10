@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/failure.dart';
-import '../../../../core/format/formatters.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import '../../domain/entities/search_query.dart';
 import '../cubit/search_cubit.dart';
 import '../cubit/search_form_cubit.dart';
+import 'date_strip.dart';
 import 'place_field.dart';
 
 /// Ana arama kartı: nereden, nereye, gidiş, ara tatil, yarıçap.
 ///
-/// Açılış tasarımı: büyük yuvarlak beyaz kart; nereden/nereye tek açık
-/// mavi kutuda alt alta, sağda yuvarlak değiştir düğmesi; altında gidiş
-/// ve ara tatil yan yana; sonra yarıçap kaydırıcısı ve büyük arama
-/// düğmesi.
+/// Kademeli açılır: ilk bakışta yalnızca nereden/nereye kutusu ve arama
+/// düğmesi var. Varış seçilince kart yumuşakça uzar; fiyatlı gün şeridi,
+/// ara tatil ve "yakın havalimanları" kutuları görünür. Yarıçap ülkeye
+/// göre kendiliğinden ayarlı; değiştirmek isteyen kutuya dokunur.
 class SearchCard extends StatelessWidget {
   const SearchCard({super.key});
 
@@ -29,6 +29,8 @@ class SearchCard extends StatelessWidget {
         invalid?.field == field ? invalid?.message : null;
     final placeError =
         errorFor(ValidationField.from) ?? errorFor(ValidationField.to);
+    // Varış seçilmeden (ya da son aramadan gelmeden) ayrıntılar gizli.
+    final expanded = state.to.place != null || state.to.text.isNotEmpty;
     final otherError = invalid == null
         ? failure?.message
         : errorFor(ValidationField.date) ??
@@ -63,7 +65,6 @@ class SearchCard extends StatelessWidget {
               label: 'Nereden',
               marker: const _OriginMarker(),
               value: state.from,
-              onTyped: form.typeFrom,
               onSelected: form.selectFrom,
               hasError: errorFor(ValidationField.from) != null,
             ),
@@ -72,32 +73,52 @@ class SearchCard extends StatelessWidget {
               label: 'Nereye',
               marker: const _DestinationMarker(),
               value: state.to,
-              onTyped: form.typeTo,
               onSelected: form.selectTo,
               hasError: errorFor(ValidationField.to) != null,
             ),
             onSwap: form.swap,
           ),
           if (placeError != null) _ErrorText(placeError),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _DateBox(date: state.date, onPicked: form.setDate),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StopoverBox(
-                  days: state.stopoverDays,
-                  onChanged: form.setStopover,
-                ),
-              ),
-            ],
+          AnimatedSize(
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: !expanded
+                ? const SizedBox(width: double.infinity)
+                : Column(
+                    key: const Key('card-details'),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 12),
+                      DateStrip(
+                        date: state.date,
+                        onPicked: form.setDate,
+                        from: state.from.value,
+                        to: state.to.value,
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _StopoverBox(
+                              days: state.stopoverDays,
+                              onChanged: form.setStopover,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _RadiusBox(
+                              radiusKm: state.radiusKm,
+                              onChanged: form.setRadius,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
           ),
-          const SizedBox(height: 14),
-          _RadiusSlider(radiusKm: state.radiusKm, onChanged: form.setRadius),
           if (otherError != null) _ErrorText(otherError),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           FilledButton(
             key: const Key('search-button'),
             style: FilledButton.styleFrom(
@@ -310,34 +331,6 @@ class _ValueBox extends StatelessWidget {
   );
 }
 
-class _DateBox extends StatelessWidget {
-  const _DateBox({required this.date, required this.onPicked});
-
-  final DateTime date;
-  final ValueChanged<DateTime> onPicked;
-
-  Future<void> _pick(BuildContext context) async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: date.isBefore(today) ? today : date,
-      firstDate: today,
-      lastDate: today.add(const Duration(days: SearchQuery.maxDaysAhead)),
-      locale: const Locale('tr'),
-    );
-    if (picked != null) onPicked(picked);
-  }
-
-  @override
-  Widget build(BuildContext context) => _ValueBox(
-    key: const Key('date-box'),
-    label: 'Gidiş',
-    value: Formatters.cardDay(date),
-    onTap: () => _pick(context),
-  );
-}
-
 /// Aktarma şehrinde kaç gün kalınacağı. Kutuya dokununca alttan seçenek
 /// listesi açılır.
 class _StopoverBox extends StatelessWidget {
@@ -416,6 +409,67 @@ class _StopoverBox extends StatelessWidget {
         .firstWhere((o) => o.$1 == days, orElse: () => (days, '$days gün kal'))
         .$2,
     onTap: () => _pick(context),
+  );
+}
+
+/// "Yakın havalimanları · 450 km". Dokununca alttan kaydırıcı açılır;
+/// değer ülkeye göre kendiliğinden gelir, çoğu kişi dokunmaz.
+class _RadiusBox extends StatelessWidget {
+  const _RadiusBox({required this.radiusKm, required this.onChanged});
+
+  final int radiusKm;
+  final ValueChanged<int> onChanged;
+
+  Future<void> _open(BuildContext context) => showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: LeylekColors.feather,
+    showDragHandle: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (context) {
+      var km = radiusKm;
+      return StatefulBuilder(
+        builder: (context, setSheet) => SafeArea(
+          child: Padding(
+            key: const Key('radius-picker'),
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _RadiusSlider(
+                  radiusKm: km,
+                  onChanged: (v) {
+                    setSheet(() => km = v);
+                    onChanged(v);
+                  },
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Bu mesafedeki havalimanlarına inip trenle ya da otobüsle '
+                  'devam eden rotalara da bakarız. Varış ülkesine göre '
+                  'kendiliğinden ayarlanır.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.45,
+                    color: LeylekColors.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+  @override
+  Widget build(BuildContext context) => _ValueBox(
+    key: const Key('radius-box'),
+    label: 'Yakın havalimanları',
+    value: '$radiusKm km',
+    onTap: () => _open(context),
   );
 }
 

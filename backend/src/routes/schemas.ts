@@ -31,6 +31,14 @@ export function searchQuerySchema(now: () => number = Date.now) {
   });
 }
 
+/** `/v1/calendar`: tarih şeridindeki günlük en ucuz uçuş fiyatları. */
+export const calendarQuerySchema = z.object({
+  from: z.string().trim().min(2).max(80),
+  to: z.string().trim().min(2).max(80),
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Ay YYYY-AA biçiminde olmalı.'),
+  currency: z.enum(['TRY', 'EUR']).default('TRY'),
+});
+
 export const placesQuerySchema = z.object({
   q: z.string().trim().min(1).max(80),
   lang: z.enum(['tr', 'en']).default('tr'),

@@ -6,8 +6,8 @@ import '../../../../core/theme/leylek_colors.dart';
 
 /// Açılış kartının sağ üst köşesine konmuş, ayakta duran leylek.
 ///
-/// Düz 2D, kontur yok: beyaz gövde, boyun ve baş; gövdenin altında siyah
-/// kanat ucu; turuncu gaga ve bacaklar; tek siyah göz. Baş hafifçe
+/// Düz 2D: bembeyaz gövde, boyun ve baş (gövdenin kenarında yalnızca
+/// zemine ayıran ince açık çizgi); turuncu gaga ve bacaklar; tek siyah göz. Baş hafifçe
 /// sallanır, ara ara göz kırpar. Süstür, ekran okuyucuya görünmez.
 class StandingStork extends StatefulWidget {
   const StandingStork({this.height = 118, super.key});
@@ -101,14 +101,10 @@ class _StorkPainter extends CustomPainter {
       white,
     );
 
-    // Gövde: altında koyu kanat ucu hilal gibi görünür, üstte beyaz oval.
+    // Gövde: düz beyaz oval, zeminden ayrılsın diye ince açık kenar.
     canvas.save();
     canvas.translate(96, 146);
     canvas.rotate(-0.2);
-    canvas.drawOval(
-      Rect.fromCenter(center: const Offset(-6, 9), width: 104, height: 56),
-      ink,
-    );
     canvas.drawOval(
       Rect.fromCenter(center: Offset.zero, width: 108, height: 60),
       Paint()..color = LeylekColors.fieldLine,

@@ -282,7 +282,13 @@ class BoardingPass extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: () => openBookingLink(booking!.url),
                   icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                  label: const Text('Rezervasyona git'),
+                  // İşletmeci bağlantısı yalnızca sitenin ana sayfası; rota
+                  // ve tarih taşımaz, dürüstçe öyle yazılır.
+                  label: Text(
+                    booking!.kind == BookingKind.ground
+                        ? 'İşletmecinin sitesi'
+                        : 'Rezervasyona git',
+                  ),
                 ),
               ),
             ),
@@ -528,6 +534,35 @@ class WaitStrip extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    ),
+  );
+}
+
+/// Kara yolunun tamamı için Haritalar yol tarifi: ilk duraktan son
+/// durağa toplu taşıma, sefer saatleri ve işletmecilerin bilet
+/// bağlantılarıyla. Google Haritalar uygulamasında açılır.
+class RouteLinkButton extends StatelessWidget {
+  const RouteLinkButton({required this.link, super.key});
+
+  final BookingLink link;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 10),
+    child: OutlinedButton.icon(
+      key: const Key('route-link'),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(48),
+        foregroundColor: LeylekColors.skyDeep,
+        side: const BorderSide(color: LeylekColors.fieldLine, width: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      onPressed: () => openBookingLink(link.url, external: true),
+      icon: const Icon(Icons.map_outlined, size: 20),
+      label: const Text(
+        'Sefer saatleri ve biletler · Haritalar',
+        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
       ),
     ),
   );

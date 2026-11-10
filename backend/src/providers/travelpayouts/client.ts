@@ -114,6 +114,13 @@ export class TravelpayoutsClient implements FlightPriceSource {
     return near.filter((q) => Math.abs(dayDiff(q.departIso.slice(0, 10), day)) === closest);
   }
 
+  monthQuotes(originCode: string, destCode: string, month: string): Promise<FlightQuote[]> {
+    if (!this.token) {
+      return Promise.reject(new UpstreamError('travelpayouts', 'status', 'TRAVELPAYOUTS_TOKEN tanımlı değil', 503));
+    }
+    return this.fetch(originCode, destCode, month);
+  }
+
   /** `departure_at` gün (`2026-11-24`) ya da ay (`2026-11`); önbellekli. */
   private fetch(originCode: string, destCode: string, departure: string): Promise<FlightQuote[]> {
     const key = `tp:${originCode}:${destCode}:${departure}:EUR`;

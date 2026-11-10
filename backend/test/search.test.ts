@@ -79,11 +79,21 @@ describe('/search hattı uçtan uca (dış servisler sahte)', () => {
     expect(via.ground!.legs.map((l) => l.line)).toEqual(['S8', 'RE 5']);
     expect(via.ground!.fare.currency).toBe('TRY');
     expect(via.flags).toContain('SEPARATE_TICKETS');
-    // Rezervasyon: havayolunun sitesi + adresi bilinen işletmeci; ortaklık bağlantısı yok
-    expect(via.booking).toEqual([
-      { kind: 'FLIGHT', provider: 'Turkish Airlines', url: 'https://www.turkishairlines.com', lines: ['TK 1'] },
-      { kind: 'GROUND', provider: 'MVV', url: 'https://www.mvv-muenchen.de/', lines: ['S8'] },
+    // Rezervasyon: uçuş için o günün Google Flights araması, adresi bilinen
+    // işletmeci ve kara yolunun tamamı için Haritalar; ortaklık bağlantısı yok
+    expect(via.booking.map((b) => [b.kind, b.provider])).toEqual([
+      ['FLIGHT', 'Turkish Airlines'],
+      ['GROUND', 'MVV'],
+      ['ROUTE', 'Google Haritalar'],
     ]);
+    const flightUrl = new URL(via.booking[0]!.url);
+    expect(flightUrl.hostname).toBe('www.google.com');
+    expect(flightUrl.searchParams.get('q')).toContain('from IST to MUC on 2026-11-20');
+    const route = new URL(via.booking[2]!.url);
+    expect(route.pathname).toBe('/maps/dir/');
+    expect(route.searchParams.get('travelmode')).toBe('transit');
+    expect(via.booking[2]!.lines).toEqual(['S8', 'RE 5']);
+    expect(via.booking.some((b) => /marker|travelpayouts|aviasales/i.test(b.url))).toBe(false);
     // İniş 07:55Z + 90 dk = 09:25Z → 09:30Z kovası; sahte yolculuk 6 dk sonra
     expect(via.ground!.departAt).toBe('2026-11-20T10:36:00+01:00');
     expect(via.ground!.waitMin).toBe(101);
@@ -214,6 +224,19 @@ describe('HTTP katmanı', () => {
       iata: 'MUC',
       radiusKm: 300,
     });
+  });
+
+  it('GET /v1/calendar varışa doğrudan uçuşların günlük en ucuzunu döner', async () => {
+    const a = await app();
+    const res = await a.inject({ method: 'GET', url: `/v1/calendar?from=city:745044&to=Salzburg&month=${DAY.slice(0, 7)}` });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.query).toMatchObject({ to: 'Salzburg', currency: 'TRY' });
+    expect(body.days.length).toBeGreaterThan(0);
+    expect(body.days[0].date.startsWith(DAY.slice(0, 7))).toBe(true);
+    expect(body.days[0].price).toBeGreaterThan(0);
+    const bad = await a.inject({ method: 'GET', url: '/v1/calendar?from=city:745044&to=Salzburg&month=2026-13' });
+    expect(bad.statusCode).toBe(400);
   });
 
   it('yarıçap verilmezse varış ülkesininki kullanılır, sınır 600 km', async () => {

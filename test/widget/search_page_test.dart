@@ -12,6 +12,7 @@ import 'package:leylek/features/route_search/data/repositories/route_search_repo
 import 'package:leylek/features/route_search/domain/usecases/search_routes.dart';
 import 'package:leylek/features/route_search/presentation/cubit/search_form_cubit.dart';
 import 'package:leylek/features/route_search/presentation/motion.dart';
+import 'package:leylek/features/route_search/presentation/pages/place_search_page.dart';
 import 'package:leylek/features/route_search/presentation/widgets/flight_scene.dart';
 import 'package:leylek/features/route_search/presentation/widgets/results_carousel.dart';
 import 'package:leylek/features/route_search/presentation/widgets/search_card.dart';
@@ -52,22 +53,20 @@ void main() {
     }
   }
 
+  /// Satıra dokunur, tam ekran aramada yazar, öneriyi seçer.
   Future<void> pickPlace(
     WidgetTester tester,
     String fieldKey,
     String text,
     String option,
   ) async {
-    await tester.enterText(
-      find.descendant(
-        of: find.byKey(Key(fieldKey)),
-        matching: find.byType(TextField),
-      ),
-      text,
-    );
-    await advance(tester, const Duration(milliseconds: 300));
+    await tester.ensureVisible(find.byKey(Key(fieldKey)));
+    await tester.tap(find.byKey(Key(fieldKey)));
+    await advance(tester, const Duration(milliseconds: 400));
+    await tester.enterText(find.byKey(const Key('place-search-input')), text);
+    await advance(tester, const Duration(milliseconds: 400));
     await tester.tap(find.widgetWithText(ListTile, option));
-    await advance(tester, const Duration(milliseconds: 300));
+    await advance(tester, const Duration(milliseconds: 500));
   }
 
   /// Açılış kaydırılabilir; düğme ekranın altında kalabilir.
@@ -98,10 +97,71 @@ void main() {
     expect(find.byKey(const Key('landing-stork')), findsOneWidget);
     expect(find.text('Bir uçuş yerine,\nbir yolculuk.'), findsOneWidget);
     expect(find.text('Rotaları ara'), findsOneWidget);
-    expect(find.text('Varışa yakın havalimanları'), findsOneWidget);
-    expect(find.text('Konaklamasız'), findsOneWidget);
+    // Kademeli açılış: varış seçilmeden ayrıntılar yok.
+    expect(find.byKey(const Key('card-details')), findsNothing);
+    expect(find.text('Konaklamasız'), findsNothing);
     // Henüz arama yapılmadı.
     expect(find.text('Son arama'), findsNothing);
+
+    await pickPlace(tester, 'to-field', 'salz', 'Salzburg');
+    expect(find.byKey(const Key('card-details')), findsOneWidget);
+    expect(find.byKey(const Key('date-strip')), findsOneWidget);
+    expect(find.text('Konaklamasız'), findsOneWidget);
+    expect(find.text('Yakın havalimanları'), findsOneWidget);
+    // Salzburg'un ülkesi Avusturya: yarıçap 250 km.
+    expect(find.text('250 km'), findsOneWidget);
+    // Kalkış da seçilince örnek fiyat takvimi yüklenir.
+    expect(find.textContaining('Doğrudan uçuşun en ucuz fiyatı'), findsNothing);
+    await pickPlace(tester, 'from-field', 'İstan', 'İstanbul');
+    expect(
+      find.textContaining('Doğrudan uçuşun en ucuz fiyatı'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('tam ekran yer aramada sonuçlar gruplanır, geri dönülebilir', (
+    tester,
+  ) async {
+    phoneScreen(tester);
+    await tester.pumpWidget(
+      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('to-field')));
+    await advance(tester, const Duration(milliseconds: 400));
+    expect(find.byType(PlaceSearchPage), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('place-search-input')), 'sa');
+    await advance(tester, const Duration(milliseconds: 400));
+    expect(find.text('Şehirler'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('place-search-back')));
+    await advance(tester, const Duration(milliseconds: 400));
+    expect(find.byType(PlaceSearchPage), findsNothing);
+    final form = BlocProvider.of<SearchFormCubit>(
+      tester.element(find.byType(SearchCard)),
+    );
+    expect(form.state.to.place, isNull);
+  });
+
+  testWidgets('şeritte güne dokununca tarih değişir', (tester) async {
+    phoneScreen(tester);
+    await tester.pumpWidget(
+      LeylekApp(
+        dependencies: sampleDeps(),
+        timing: _fast,
+        today: DateTime(2026, 11, 10),
+      ),
+    );
+    await pickPlace(tester, 'to-field', 'salz', 'Salzburg');
+    final form = BlocProvider.of<SearchFormCubit>(
+      tester.element(find.byType(SearchCard)),
+    );
+    final next = form.state.date.add(const Duration(days: 1));
+    await tester.tap(
+      find.byKey(Key('day-${next.year}-${next.month}-${next.day}')),
+    );
+    await tester.pump();
+    expect(form.state.date, next);
   });
 
   testWidgets('yapılan arama son aramalara düşer, dokununca form dolar', (
@@ -197,7 +257,10 @@ void main() {
         scrollable: find.byType(Scrollable).at(1),
       );
       expect(find.text('ÖBB'), findsOneWidget);
-      expect(find.text('Rezervasyona git'), findsNWidgets(2));
+      // Uçuşta rezervasyon; trende işletmecinin sitesi (rota taşımaz) ve
+      // kara yolunun tamamı için Haritalar.
+      expect(find.text('Rezervasyona git'), findsOneWidget);
+      expect(find.text('İşletmecinin sitesi'), findsOneWidget);
     },
   );
 
@@ -283,11 +346,13 @@ void main() {
     );
     await tester.pump();
 
+    await pickPlace(tester, 'to-field', 'salz', 'Salzburg');
     final context = tester.element(find.byType(SearchCard));
     final form = BlocProvider.of<SearchFormCubit>(context);
     expect(form.state.stopoverDays, 0);
 
     Future<void> pick(int days) async {
+      await tester.ensureVisible(find.byKey(const Key('stopover-box')));
       await tester.tap(find.byKey(const Key('stopover-box')));
       await advance(tester, const Duration(milliseconds: 500));
       expect(find.byKey(const Key('stopover-picker')), findsOneWidget);

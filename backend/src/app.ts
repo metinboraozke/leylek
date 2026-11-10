@@ -8,7 +8,7 @@ import { AppError } from './core/errors.js';
 import { loggerOptions } from './core/logger.js';
 import type { Indexes } from './data/dataset.js';
 import { PlaceIndex } from './data/place-index.js';
-import { placesQuerySchema, searchQuerySchema } from './routes/schemas.js';
+import { calendarQuerySchema, placesQuerySchema, searchQuerySchema } from './routes/schemas.js';
 import type { SearchService } from './search/pipeline.js';
 import { ATTRIBUTION } from './search/response.js';
 
@@ -119,6 +119,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       stopoverDays: q.stopoverDays,
     });
   });
+
+  app.get('/v1/calendar', async (request) => deps.search.calendar(calendarQuerySchema.parse(request.query)));
 
   app.get('/v1/places', async (request) => {
     const q = placesQuerySchema.parse(request.query);
