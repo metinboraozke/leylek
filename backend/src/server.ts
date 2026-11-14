@@ -26,10 +26,15 @@ if (!config.travelpayoutsToken) {
 }
 
 const cache = new TtlCache();
-const http = (service: string, timeoutMs?: number) =>
-  new HttpClient(service, fetch, config.userAgent, timeoutMs);
+const http = (service: string, timeoutMs?: number, minIntervalMs?: number) =>
+  new HttpClient(service, fetch, config.userAgent, timeoutMs, minIntervalMs);
 
-const transitous = new TransitousClient(http('transitous', 20_000), config.transitousBaseUrl, cache);
+// Transitous istekleri sırayla, aralarında en az TRANSITOUS_MIN_INTERVAL_MS.
+const transitous = new TransitousClient(
+  http('transitous', 20_000, config.transitousMinIntervalMs),
+  config.transitousBaseUrl,
+  cache,
+);
 const budget = new RequestBudget(config.transitousPlanPerMinute, config.transitousPlanPerDay);
 const breaker = new CircuitBreaker();
 const ground = new BudgetedGroundRouter(transitous, cache, budget, breaker);

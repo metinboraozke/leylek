@@ -4,7 +4,7 @@ import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import type { Config } from './config.js';
-import { AppError } from './core/errors.js';
+import { AppError, ENGLISH_MESSAGES } from './core/errors.js';
 import { loggerOptions } from './core/logger.js';
 import type { Indexes } from './data/dataset.js';
 import { PlaceIndex } from './data/place-index.js';
@@ -37,6 +37,11 @@ export function makeIpKeyer(now: () => number = Date.now) {
     }
     return createHmac('sha256', salt).update(ip).digest('base64url').slice(0, 22);
   };
+}
+
+/** Sorgu dizesinde `lang=en` var mı (hata mesajları için). */
+function isEnglish(query: unknown): boolean {
+  return (query as { lang?: unknown } | undefined)?.lang === 'en';
 }
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
@@ -75,15 +80,25 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     skipOnError: true,
     allowList: (request) => request.url === '/health',
     keyGenerator: (request) => `${isPlaces(request.url) ? 'p' : 's'}:${ipKey(request.ip)}`,
-    errorResponseBuilder: (_request, context) => ({
+    errorResponseBuilder: (request, context) => ({
       statusCode: 429,
-      error: { code: 'RATE_LIMITED', message: `Çok fazla arama. ${context.after} sonra tekrar dene.` },
+      error: {
+        code: 'RATE_LIMITED',
+        message: isEnglish(request.query)
+          ? `Too many searches. Try again in ${context.after}.`
+          : `Çok fazla arama. ${context.after} sonra tekrar dene.`,
+      },
     }),
   });
 
   app.setErrorHandler((error, request, reply) => {
+    // İstek İngilizce istediyse, kodu bilinen hatanın mesajı İngilizce.
+    const en = isEnglish(request.query);
+    const say = (code: string, tr: string) => (en ? (ENGLISH_MESSAGES[code] ?? tr) : tr);
     if (error instanceof AppError) {
-      return reply.status(error.status).send({ error: { code: error.code, message: error.message } });
+      return reply
+        .status(error.status)
+        .send({ error: { code: error.code, message: say(error.code, error.message) } });
     }
     if (error instanceof ZodError) {
       const first = error.issues[0];
@@ -91,7 +106,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         error: {
           code: 'INVALID_QUERY',
           field: first?.path.join('.') ?? null,
-          message: first?.message ?? 'Geçersiz istek.',
+          message: say('INVALID_QUERY', first?.message ?? 'Geçersiz istek.'),
         },
       });
     }
@@ -101,7 +116,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     }
     request.log.error({ err: error }, 'Beklenmeyen hata');
     return reply.status(500).send({
-      error: { code: 'INTERNAL', message: 'Beklenmeyen bir sorun oldu. Biraz sonra tekrar dene.' },
+      error: { code: 'INTERNAL', message: say('INTERNAL', 'Beklenmeyen bir sorun oldu. Biraz sonra tekrar dene.') },
     });
   });
 
@@ -117,6 +132,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       maxGroundHours: q.maxGroundHours,
       currency: q.currency,
       stopoverDays: q.stopoverDays,
+      lang: q.lang,
     });
   });
 
@@ -126,7 +142,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     const q = placesQuerySchema.parse(request.query);
     const indexes = deps.indexes();
     if (!indexes) throw new AppError(503, 'DATA_NOT_READY', 'Sunucu verileri henüz yüklenmedi.');
-    return { places: indexes.places.search(q.q, 8).map(PlaceIndex.toSuggestion) };
+    return { places: indexes.places.search(q.q, 8).map((p) => PlaceIndex.toSuggestion(p, q.lang)) };
   });
 
   app.get('/v1/attribution', async () => ({ attribution: ATTRIBUTION }));

@@ -2,6 +2,8 @@
  * Elle tutulan ülke listeleri. Değiştikçe güncellenir.
  */
 
+import { normalize } from '../core/text.js';
+
 /** Schengen bölgesi (2025 itibarıyla Romanya ve Bulgaristan dahil). */
 export const SCHENGEN = new Set([
   'AT', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU',
@@ -118,6 +120,47 @@ export const TURKISH_CITY_NAMES: Record<string, string> = {
   'Iskenderun|TR': 'İskenderun',
   'Isparta|TR': 'Isparta',
 };
+
+const TURKISH_BY_KEY = new Map(
+  Object.entries(TURKISH_CITY_NAMES).map(([key, tr]) => {
+    const [name, country] = key.split('|') as [string, string];
+    return [`${normalize(name)}|${country}`, tr];
+  }),
+);
+
+/**
+ * Şehrin Türkçe adı; yoksa `null`. Aksan ve büyük/küçük harf yok sayılır:
+ * GeoNames "Zürich", "Kraków", "Thessaloníki" yazıyor, tablo "Zurich".
+ */
+export function turkishCityName(name: string, country: string): string | null {
+  return TURKISH_BY_KEY.get(`${normalize(name)}|${country}`) ?? null;
+}
+
+const ENGLISH_BY_TURKISH = new Map(
+  Object.entries(TURKISH_CITY_NAMES).map(([key, tr]) => {
+    const [name, country] = key.split('|') as [string, string];
+    return [`${tr}|${country}`, name];
+  }),
+);
+
+/** Türkçe adı tabloda olan şehrin İngilizce adı ("Münih" → "Munich"). */
+export function englishCityName(name: string, country: string): string {
+  return ENGLISH_BY_TURKISH.get(`${name}|${country}`) ?? name;
+}
+
+export type Lang = 'tr' | 'en';
+
+/** Yerin seçilen dildeki adı: ülke adları Intl'den, şehir adları tablodan. */
+export function localName(place: { name: string; country: string; kind: string }, lang: Lang): string {
+  if (lang === 'tr') return place.name;
+  if (place.kind === 'COUNTRY') return countryNameEn(place.country);
+  return englishCityName(place.name, place.country);
+}
+
+/** Ülke adı seçilen dilde. */
+export function countryName(code: string, lang: Lang): string {
+  return lang === 'en' ? countryNameEn(code) : countryNameTr(code);
+}
 
 /** Ülkelerin halk arasındaki Türkçe adları; resmî adın yanında aranır. */
 export const COUNTRY_ALIASES: Record<string, string[]> = {

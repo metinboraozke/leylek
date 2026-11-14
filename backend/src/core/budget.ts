@@ -50,6 +50,10 @@ export class RequestBudget {
 /**
  * Sigorta: art arda hata ya da tek bir 429 gelirse çağrıları bir süre
  * keser. Zorlanan bir servise yüklenmeye devam etmemek için.
+ *
+ * 429'da süre sunucunun `Retry-After` değeri, yoksa [rateLimitMs] (2 dk):
+ * kısa bir hız sınırı yüzünden 10 dakika boyunca bütün aramaların kara
+ * yolu tahmine düşmesin.
  */
 export class CircuitBreaker {
   private failures = 0;
@@ -59,6 +63,7 @@ export class CircuitBreaker {
     private readonly failureThreshold = 5,
     private readonly openMs = 10 * 60_000,
     private readonly now: Clock = Date.now,
+    private readonly rateLimitMs = 2 * 60_000,
   ) {}
 
   isOpen(): boolean {
@@ -69,9 +74,12 @@ export class CircuitBreaker {
     this.failures = 0;
   }
 
-  recordFailure(rateLimited = false): void {
+  recordFailure(rateLimited = false, retryAfterMs?: number): void {
     this.failures++;
-    if (rateLimited || this.failures >= this.failureThreshold) {
+    if (rateLimited) {
+      this.openUntil = this.now() + Math.min(retryAfterMs ?? this.rateLimitMs, this.openMs);
+      this.failures = 0;
+    } else if (this.failures >= this.failureThreshold) {
       this.openUntil = this.now() + this.openMs;
       this.failures = 0;
     }

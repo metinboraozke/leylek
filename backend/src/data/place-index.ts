@@ -3,11 +3,14 @@ import { haversineKm, type LatLon } from '../core/geo.js';
 import type { AirportIndex } from './airport-index.js';
 import {
   COUNTRY_ALIASES,
+  countryName,
   countryNameEn,
   countryNameTr,
   DATA_COUNTRIES,
+  type Lang,
+  localName,
   radiusForCountry,
-  TURKISH_CITY_NAMES,
+  turkishCityName,
 } from './regions.js';
 import type { Airport, City } from './types.js';
 
@@ -59,7 +62,7 @@ export class PlaceIndex {
     this.entries = cities.map((c) => {
       const nearest = airports.within(c, 50)[0];
       // Veri dosyası eski bir sürümle üretildiyse Türkçe ad burada da uygulanır.
-      const name = TURKISH_CITY_NAMES[`${c.name}|${c.country}`] ?? c.name;
+      const name = turkishCityName(c.name, c.country) ?? c.name;
       const place: Place = {
         id: `city:${c.id}`,
         name,
@@ -215,6 +218,11 @@ export class PlaceIndex {
     return a ? (this.cityForAirport(a)?.name ?? a.municipality) : null;
   }
 
+  /** Havalimanının ülkesi; bilinmiyorsa null. */
+  countryForIata(iata: string): string | null {
+    return this.airports.get(iata)?.country ?? null;
+  }
+
   /** Yakındaki en kalabalık şehir (havalimanının hizmet ettiği şehir). */
   cityNear(point: LatLon, radiusKm = 60): Place | null {
     let best: Place | null = null;
@@ -227,12 +235,12 @@ export class PlaceIndex {
     return best;
   }
 
-  static toSuggestion(place: Place): PlaceSuggestion {
+  static toSuggestion(place: Place, lang: Lang = 'tr'): PlaceSuggestion {
     return {
       id: place.id,
-      name: place.name,
+      name: localName(place, lang),
       countryCode: place.country,
-      countryName: countryNameTr(place.country),
+      countryName: countryName(place.country, lang),
       kind: place.kind,
       iata: place.iata,
       ...(place.kind === 'COUNTRY' ? {} : { radiusKm: radiusForCountry(place.country) }),

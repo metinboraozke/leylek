@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CircuitBreaker, RequestBudget } from '../src/core/budget.js';
 import { TtlCache } from '../src/core/cache.js';
+import { UpstreamError } from '../src/core/errors.js';
+import { HttpClient, type FetchFn } from '../src/core/http.js';
 import { boundingBox, haversineKm, inBox } from '../src/core/geo.js';
 import { requestSerializer } from '../src/core/logger.js';
 import { normalize } from '../src/core/text.js';
@@ -131,6 +133,47 @@ describe('bütçe ve sigorta', () => {
     expect(breaker.isOpen()).toBe(false);
     breaker.recordFailure(true);
     expect(breaker.isOpen()).toBe(true);
+  });
+
+  it('429da kısa süre açılır: Retry-After ya da 2 dk, en fazla tam süre', () => {
+    let t = 0;
+    const breaker = new CircuitBreaker(5, 10 * 60_000, () => t);
+    breaker.recordFailure(true, 30_000);
+    t = 29_000;
+    expect(breaker.isOpen()).toBe(true);
+    t = 31_000;
+    expect(breaker.isOpen()).toBe(false);
+    breaker.recordFailure(true);
+    t = 31_000 + 119_000;
+    expect(breaker.isOpen()).toBe(true);
+    t = 31_000 + 121_000;
+    expect(breaker.isOpen()).toBe(false);
+  });
+});
+
+describe('HttpClient', () => {
+  it('aralık verilince istekleri sırayla ve aralıklı başlatır', async () => {
+    const starts: number[] = [];
+    const fn = (async () => {
+      starts.push(Date.now());
+      return new Response('{}', { status: 200 });
+    }) as unknown as FetchFn;
+    const http = new HttpClient('x', fn, 'ua', 5000, 40);
+    await Promise.all([1, 2, 3].map(() => http.getJson('https://a.example/')));
+    expect(starts).toHaveLength(3);
+    expect(starts[1]! - starts[0]!).toBeGreaterThanOrEqual(35);
+    expect(starts[2]! - starts[1]!).toBeGreaterThanOrEqual(35);
+  });
+
+  it('429da Retry-After süresini hataya taşır', async () => {
+    const fn = (async () =>
+      new Response('', { status: 429, headers: { 'retry-after': '45' } })) as unknown as FetchFn;
+    const err = (await new HttpClient('x', fn, 'ua')
+      .getJson('https://a.example/')
+      .catch((e: unknown) => e)) as UpstreamError;
+    expect(err).toBeInstanceOf(UpstreamError);
+    expect(err.kind).toBe('rate_limited');
+    expect(err.retryAfterMs).toBe(45_000);
   });
 });
 

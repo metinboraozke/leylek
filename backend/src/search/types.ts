@@ -12,6 +12,8 @@ export interface SearchQuery {
   currency: 'TRY' | 'EUR';
   /** Aktarma şehrinde kaç gün kalınacak (0–3). */
   stopoverDays: number;
+  /** Yanıttaki yer adlarının dili; verilmezse Türkçe. */
+  lang?: 'tr' | 'en';
 }
 
 /**

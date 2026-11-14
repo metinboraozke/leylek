@@ -3,7 +3,7 @@ import { Errors } from '../core/errors.js';
 import { haversineKm } from '../core/geo.js';
 import type { Indexes } from '../data/dataset.js';
 import type { Place } from '../data/place-index.js';
-import { DESTINATION_COUNTRIES, radiusForCountry } from '../data/regions.js';
+import { DESTINATION_COUNTRIES, localName, radiusForCountry } from '../data/regions.js';
 import { findCandidates } from './candidates.js';
 import { fetchQuotes, groupByAirport, mapLimit } from './flights.js';
 import { bufferMinutes, computeGround, earliestGroundDepart, estimatedGround } from './ground.js';
@@ -36,6 +36,7 @@ export interface CalendarQuery {
   /** `2026-11` */
   month: string;
   currency: string;
+  lang?: 'tr' | 'en';
 }
 
 export interface CalendarResponse {
@@ -69,7 +70,7 @@ export class SearchService {
   }
 
   search(query: SearchQuery): Promise<SearchResponse> {
-    const key = `search:${query.from}|${query.to}|${query.date}|${query.radiusKm ?? '-'}|${query.maxGroundHours}|${query.currency}|${query.stopoverDays}`;
+    const key = `search:${query.from}|${query.to}|${query.date}|${query.radiusKm ?? '-'}|${query.maxGroundHours}|${query.currency}|${query.stopoverDays}|${query.lang ?? 'tr'}`;
     // Aynı arama 10 dakika içinde gelirse hazır yanıt; aynı anda
     // gelenler tek hesaplamayı bekler.
     return this.deps.cache.singleFlight(key, RESPONSE_TTL, () => this.run(query));
@@ -250,7 +251,7 @@ export class SearchService {
    * kalkış × varış kodu başına ayda bir istek, 6 saat önbellekli.
    */
   calendar(query: CalendarQuery): Promise<CalendarResponse> {
-    const key = `calendar:${query.from}|${query.to}|${query.month}|${query.currency}`;
+    const key = `calendar:${query.from}|${query.to}|${query.month}|${query.currency}|${query.lang ?? 'tr'}`;
     return this.deps.cache.singleFlight(key, CALENDAR_TTL, () => this.runCalendar(query));
   }
 
@@ -265,7 +266,12 @@ export class SearchService {
     if (!from) throw Errors.placeNotFound('from', query.from);
     if (!to) throw Errors.placeNotFound('to', query.to);
     const answer = (days: CalendarResponse['days']): CalendarResponse => ({
-      query: { from: from.name, to: to.name, month: query.month, currency: query.currency },
+      query: {
+        from: localName(from, query.lang ?? 'tr'),
+        to: localName(to, query.lang ?? 'tr'),
+        month: query.month,
+        currency: query.currency,
+      },
       days,
     });
     const monthQuotes = this.deps.flights.monthQuotes?.bind(this.deps.flights);

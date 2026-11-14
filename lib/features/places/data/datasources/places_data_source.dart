@@ -1,3 +1,4 @@
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/network/json_api.dart';
 import '../models/place_dto.dart';
 
@@ -16,7 +17,7 @@ class ApiPlacesDataSource implements PlacesDataSource {
   Future<List<PlaceDto>> suggest(String query) async {
     final json = await _api.getJson(
       '/v1/places',
-      query: {'q': query, 'lang': 'tr'},
+      query: {'q': query, 'lang': S.lang},
     );
     final places = json['places'];
     if (places is! List) throw const FormatException('"places" listesi yok');

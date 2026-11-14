@@ -239,6 +239,26 @@ describe('HTTP katmanı', () => {
     expect(bad.statusCode).toBe(400);
   });
 
+  it('lang=en ile yer adları, ülke adları ve hata mesajları İngilizce', async () => {
+    const a = await app();
+    const places = await a.inject({ method: 'GET', url: '/v1/places?q=m%C3%BCn&lang=en' });
+    expect(places.json().places[0]).toMatchObject({ name: 'Munich', countryName: 'Germany' });
+    const tr = await a.inject({ method: 'GET', url: '/v1/places?q=m%C3%BCn' });
+    expect(tr.json().places[0]).toMatchObject({ name: 'Münih', countryName: 'Almanya' });
+
+    const res = await a.inject({ method: 'GET', url: `/v1/search?from=city:745044&to=Salzburg&date=${DAY}&lang=en` });
+    const body = res.json();
+    expect(body.query.from).toBe('Istanbul');
+    const muc = body.options.find((o: { via?: { iata: string } }) => o.via?.iata === 'MUC');
+    expect(muc?.via?.name).toBe('Munich');
+    expect(body.attribution[1].name).toBe('OpenStreetMap contributors');
+
+    const same = await a.inject({ method: 'GET', url: `/v1/search?from=Salzburg&to=Salzburg&date=${DAY}&lang=en` });
+    expect(same.json().error).toMatchObject({ code: 'SAME_PLACE', message: 'From and to cannot be the same.' });
+    const sameTr = await a.inject({ method: 'GET', url: `/v1/search?from=Salzburg&to=Salzburg&date=${DAY}` });
+    expect(sameTr.json().error.message).toBe('Kalkış ve varış aynı olamaz.');
+  });
+
   it('yarıçap verilmezse varış ülkesininki kullanılır, sınır 600 km', async () => {
     const a = await app();
     const res = await a.inject({ method: 'GET', url: `/v1/search?from=city:745044&to=Salzburg&date=${DAY}` });

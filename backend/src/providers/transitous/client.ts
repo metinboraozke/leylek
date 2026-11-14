@@ -274,7 +274,11 @@ export class BudgetedGroundRouter implements GroundRouter {
     private readonly inner: GroundRouter,
     private readonly cache: TtlCache,
     private readonly budget: { tryTake(): boolean },
-    private readonly breaker: { isOpen(): boolean; recordSuccess(): void; recordFailure(rateLimited?: boolean): void },
+    private readonly breaker: {
+      isOpen(): boolean;
+      recordSuccess(): void;
+      recordFailure(rateLimited?: boolean, retryAfterMs?: number): void;
+    },
   ) {}
 
   plan(request: GroundRequest): Promise<GroundItinerary[]> {
@@ -291,7 +295,8 @@ export class BudgetedGroundRouter implements GroundRouter {
           this.breaker.recordSuccess();
           return result;
         } catch (error) {
-          this.breaker.recordFailure(error instanceof UpstreamError && error.kind === 'rate_limited');
+          const limited = error instanceof UpstreamError && error.kind === 'rate_limited';
+          this.breaker.recordFailure(limited, limited ? error.retryAfterMs : undefined);
           throw error;
         }
       },

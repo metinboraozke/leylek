@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import 'globe.dart';
 import 'stork_lottie.dart';
@@ -34,6 +35,7 @@ class _FlightSceneState extends State<FlightScene>
       AnimationController(vsync: this, duration: widget.duration)
         ..addStatusListener((status) {
           if (status == AnimationStatus.completed) {
+            _cycles++;
             widget.onCycle();
             if (mounted) _t.forward(from: 0);
           }
@@ -47,6 +49,11 @@ class _FlightSceneState extends State<FlightScene>
   )..repeat();
 
   LandShapes? _shapes;
+
+  /// Tamamlanan tur sayısı. Arama uzun sürerse sahne tekrar oynar; dünya
+  /// ise başa sıçramadan dönmeye devam etsin diye dönüş tur sayısıyla
+  /// birlikte hesaplanır (her turda ~50°).
+  int _cycles = 0;
 
   @override
   void initState() {
@@ -73,7 +80,7 @@ class _FlightSceneState extends State<FlightScene>
       color: LeylekColors.skyPale,
       child: Semantics(
         liveRegion: true,
-        label: 'Rotalar aranıyor',
+        label: S.t('Rotalar aranıyor', 'Searching routes'),
         child: LayoutBuilder(
           builder: (context, c) {
             final w = c.maxWidth;
@@ -102,7 +109,7 @@ class _FlightSceneState extends State<FlightScene>
                           shapes: _shapes,
                           center: globeCenter,
                           radius: radius,
-                          rotation: t,
+                          rotation: _cycles + t,
                         ),
                       ),
                     ),
@@ -185,11 +192,20 @@ class SearchProgressText extends StatefulWidget {
   const SearchProgressText({super.key});
 
   /// Adım ve başladığı saniye.
-  static const List<(int, String)> steps = [
-    (0, 'Uçuş fiyatları toplanıyor'),
-    (2, 'Yakın havalimanları karşılaştırılıyor'),
-    (4, 'Tren ve otobüs seferleri kontrol ediliyor'),
-    (12, 'Neredeyse hazır'),
+  static List<(int, String)> get steps => [
+    (0, S.t('Uçuş fiyatları toplanıyor', 'Collecting flight prices')),
+    (
+      2,
+      S.t('Yakın havalimanları karşılaştırılıyor', 'Comparing nearby airports'),
+    ),
+    (
+      4,
+      S.t(
+        'Tren ve otobüs seferleri kontrol ediliyor',
+        'Checking train and bus departures',
+      ),
+    ),
+    (12, S.t('Neredeyse hazır', 'Almost ready')),
   ];
 
   @override

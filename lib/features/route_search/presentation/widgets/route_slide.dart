@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/format/formatters.dart';
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import '../../../../core/time/zoned_time.dart';
 import '../../domain/entities/route_option.dart';
 import '../../domain/entities/search_result.dart';
 import '../labels.dart';
+import 'booking_card.dart';
 import 'itinerary_card.dart';
 import 'journey_cards.dart';
 
@@ -13,7 +15,7 @@ import 'journey_cards.dart';
 ///
 /// Üstte etiket ve büyük "İstanbul → Salzburg"; ardından özet kartı (en
 /// ucuza yeşil para, önerilene mavi tik), adım adım yolculuk planı ve
-/// rotanın her parçası için PAX tarzı biniş kartları. "Rezervasyona git" ilgili kartın içinde.
+/// rotanın her parçası için PAX tarzı biniş kartları. Sağlayıcı düğmesi ilgili kartın içinde.
 class RouteSlide extends StatelessWidget {
   const RouteSlide({
     required this.option,
@@ -46,10 +48,17 @@ class RouteSlide extends StatelessWidget {
       children: [
         Text(
           o.kind == RouteKind.direct
-              ? 'DOĞRUDAN UÇUŞ'
+              ? S.t('DOĞRUDAN UÇUŞ', 'DIRECT FLIGHT')
               : [
-                  'AKTARMALI · ${o.via!.name.toUpperCase()} ÜZERİNDEN',
-                  if (o.stopover != null) '${o.stopover!.days} GÜN KONAKLAMA',
+                  S.t(
+                    'AKTARMALI · ${o.via!.name.toUpperCase()} ÜZERİNDEN',
+                    'VIA ${o.via!.name.toUpperCase()}',
+                  ),
+                  if (o.stopover != null)
+                    S.t(
+                      '${o.stopover!.days} GÜN KONAKLAMA',
+                      '${o.stopover!.days}-DAY STOPOVER',
+                    ),
                 ].join(' · '),
           style: const TextStyle(
             fontSize: 11.5,
@@ -86,10 +95,10 @@ class RouteSlide extends StatelessWidget {
         ],
         const SizedBox(height: 12),
         ItineraryCard(option: o, from: from, to: to),
-        const Padding(
+        Padding(
           padding: EdgeInsets.fromLTRB(4, 20, 4, 10),
           child: Text(
-            'Biletler ve ayrıntılar',
+            S.t('Biletler ve ayrıntılar', 'Tickets and details'),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -102,12 +111,21 @@ class RouteSlide extends StatelessWidget {
         Text(
           [
             if (o.kind == RouteKind.via)
-              'Uçuş ve kara yolu ayrı biletlerdir; uçuş gecikirse kara yolu '
-                  'bileti yanabilir.',
+              S.t(
+                'Uçuş ve kara yolu ayrı biletlerdir; uçuş gecikirse kara yolu '
+                    'bileti yanabilir.',
+                'Flight and ground travel are separate tickets; if the flight '
+                    'is late, the ground ticket may be lost.',
+              ),
             if (result.isSample)
-              'Örnek veri: backend bağlı değil, fiyatlar gerçek değil.',
-            'Uçuş fiyatları son 48 saatte görülen fiyatlardır.',
-            'Veri: ${result.attribution.map((a) => a.name).join(' · ')}',
+              S.t(
+                'Örnek veri: backend bağlı değil, fiyatlar gerçek değil.',
+                'Sample data: no backend connected, prices are not real.',
+              ),
+            S.t(
+              'Uçuş fiyatları son 48 saatte görülen fiyatlardır.',
+              'Flight prices are those seen in the last 48 hours.',
+            ),
           ].join('\n'),
           style: const TextStyle(
             fontSize: 11.5,
@@ -115,6 +133,8 @@ class RouteSlide extends StatelessWidget {
             color: LeylekColors.muted,
           ),
         ),
+        const SizedBox(height: 4),
+        _Attribution(result.attribution),
       ],
     );
   }
@@ -144,7 +164,13 @@ class RouteSlide extends StatelessWidget {
     final ground = o.ground;
     if (ground == null) {
       widgets.add(
-        const WaitStrip(minutes: 45, note: 'havalimanından şehre (tahmini)'),
+        WaitStrip(
+          minutes: 45,
+          note: S.t(
+            'havalimanından şehre (tahmini)',
+            'airport to city (estimate)',
+          ),
+        ),
       );
       return widgets;
     }
@@ -159,7 +185,10 @@ class RouteSlide extends StatelessWidget {
             )
           : WaitStrip(
               minutes: ground.waitMin,
-              note: 'pasaport, bagaj, istasyon',
+              note: S.t(
+                'pasaport, bagaj, istasyon',
+                'passport, baggage, station',
+              ),
             ),
     );
     if (ground.legs.isEmpty) {
@@ -187,7 +216,7 @@ class RouteSlide extends StatelessWidget {
         final gap = prev.arriveAt != null && leg.departAt != null
             ? leg.departAt!.difference(prev.arriveAt!).inMinutes
             : 0;
-        widgets.add(WaitStrip(minutes: gap, note: 'aktarma'));
+        widgets.add(WaitStrip(minutes: gap, note: S.t('aktarma', 'transfer')));
       }
       final last = i == ground.legs.length - 1;
       widgets.add(
@@ -213,6 +242,51 @@ class RouteSlide extends StatelessWidget {
       .toList(growable: false);
 }
 
+/// "Veri: Transitous · OpenStreetMap katkıcıları · …". Adresi olan kaynak
+/// dokunulabilir bağlantıdır: Transitous kullanım koşulu kaynak sayfasına
+/// görünür bir bağlantı, OpenStreetMap de telif sayfasına bağlantı ister.
+class _Attribution extends StatelessWidget {
+  const _Attribution(this.sources);
+
+  final List<Attribution> sources;
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+      fontSize: 11.5,
+      height: 1.5,
+      color: LeylekColors.muted,
+    );
+    return Wrap(
+      key: const Key('attribution'),
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(S.t('Veri: ', 'Data: '), style: style),
+        for (var i = 0; i < sources.length; i++) ...[
+          if (i > 0) const Text(' · ', style: style),
+          if (sources[i].url case final url?)
+            GestureDetector(
+              onTap: () {
+                final uri = Uri.tryParse(url);
+                if (uri != null) openBookingLink(uri);
+              },
+              child: Text(
+                sources[i].name,
+                style: style.copyWith(
+                  color: LeylekColors.skyDeep,
+                  decoration: TextDecoration.underline,
+                  decorationColor: LeylekColors.skyDeep,
+                ),
+              ),
+            )
+          else
+            Text(sources[i].name, style: style),
+        ],
+      ],
+    );
+  }
+}
+
 /// Özet kartı: toplam fiyat, tasarruf, süre ve sağ altta rozetler.
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.option});
@@ -227,8 +301,14 @@ class _SummaryCard extends StatelessWidget {
     if (savings != null && savings.amount != 0) {
       final amount = Formatters.money(savings.abs().amount, savings.currency);
       savingsText = savings.isNegative
-          ? 'Doğrudan uçuştan $amount pahalı'
-          : 'Doğrudan uçuşa göre $amount tasarruf';
+          ? S.t(
+              'Doğrudan uçuştan $amount pahalı',
+              '$amount more than the direct flight',
+            )
+          : S.t(
+              'Doğrudan uçuşa göre $amount tasarruf',
+              '$amount saved vs. the direct flight',
+            );
     }
 
     return Container(
@@ -248,8 +328,8 @@ class _SummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Toplam',
+                Text(
+                  S.t('Toplam', 'Total'),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -286,9 +366,9 @@ class _SummaryCard extends StatelessWidget {
                 Text(
                   [
                     o.stopover == null
-                        ? 'Kapıdan kapıya ${Formatters.duration(o.total.doorToDoorMin)}'
-                        : 'Yolda ${Formatters.duration(o.total.travelMin)} · '
-                              '${Formatters.locative(o.stopover!.city)} ${o.stopover!.days} gün',
+                        ? '${S.t('Kapıdan kapıya', 'Door to door')} ${Formatters.duration(o.total.doorToDoorMin)}'
+                        : '${S.t('Yolda', 'Travelling')} ${Formatters.duration(o.total.travelMin)} · '
+                              '${Formatters.stay(o.stopover!.city, o.stopover!.days)}',
                     if (o.total.extraMin > 0)
                       '+${Formatters.duration(o.total.extraMin)}',
                   ].join(' · '),
@@ -312,19 +392,19 @@ class _SummaryCard extends StatelessWidget {
             ),
           ),
           if (o.isCheapest)
-            const _BadgeIcon(
+            _BadgeIcon(
               key: Key('badge-cheapest'),
               icon: Icons.payments_rounded,
               color: LeylekColors.meadowDeep,
-              label: 'En ucuz',
+              label: S.t('En ucuz', 'Cheapest'),
             ),
           if (o.isCheapest && o.isRecommended) const SizedBox(width: 8),
           if (o.isRecommended)
-            const _BadgeIcon(
+            _BadgeIcon(
               key: Key('badge-recommended'),
               icon: Icons.check_rounded,
               color: LeylekColors.skyDeep,
-              label: 'Önerilen',
+              label: S.t('Önerilen', 'Recommended'),
             ),
         ],
       ),

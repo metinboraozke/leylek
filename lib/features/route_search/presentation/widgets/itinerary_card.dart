@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/format/formatters.dart';
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import '../../domain/entities/route_option.dart';
 import '../labels.dart';
@@ -37,8 +38,8 @@ class ItineraryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Yolculuk planı',
+          Text(
+            S.t('Yolculuk planı', 'Journey plan'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -112,8 +113,13 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
   final steps = <ItineraryStep>[
     ItineraryStep(
       icon: Icons.flight_rounded,
-      mode: f.transfers == 0 ? 'Uçak' : 'Uçak · ${f.transfers} aktarma',
-      kind: 'Uçak',
+      mode: f.transfers == 0
+          ? S.t('Uçak', 'Flight')
+          : S.t(
+              'Uçak · ${f.transfers} aktarma',
+              'Flight · ${f.transfers} stop',
+            ),
+      kind: S.t('Uçak', 'Flight'),
       title: '$from → $flightTo',
       detail: [
         '${f.fromIata ?? ''} ${Formatters.clock(f.departAt.wallClock)} → '
@@ -131,9 +137,12 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
     steps.add(
       ItineraryStep(
         icon: Icons.directions_transit_rounded,
-        mode: 'Havalimanından şehre',
-        title: '$to havalimanı → $to merkez',
-        detail: 'Yaklaşık 45 dk; ulaşımı kendin seçersin',
+        mode: S.t('Havalimanından şehre', 'Airport to city'),
+        title: S.t('$to havalimanı → $to merkez', '$to airport → $to centre'),
+        detail: S.t(
+          'Yaklaşık 45 dk; ulaşımı kendin seçersin',
+          'About 45 min; you choose how',
+        ),
       ),
     );
     return steps;
@@ -152,17 +161,20 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
     steps.add(
       ItineraryStep(
         icon: Icons.directions_transit_rounded,
-        mode: 'Havalimanından şehre',
-        title: '${via.name} havalimanı → ${stay.city} merkez',
-        detail: 'Ulaşımı kendin seçersin',
+        mode: S.t('Havalimanından şehre', 'Airport to city'),
+        title: S.t(
+          '${via.name} havalimanı → ${stay.city} merkez',
+          '${via.name} airport → ${stay.city} centre',
+        ),
+        detail: S.t('Ulaşımı kendin seçersin', 'You choose how'),
         travels: false,
       ),
     );
     steps.add(
       ItineraryStep(
         icon: Icons.hotel_rounded,
-        mode: 'Konaklama',
-        title: '${Formatters.locative(stay.city)} ${stay.days} gün',
+        mode: S.t('Konaklama', 'Stay'),
+        title: Formatters.stay(stay.city, stay.days),
         detail:
             '${Formatters.shortDay(landed)} → '
             '${Formatters.shortDay(ground.departAt.wallClock)}',
@@ -171,16 +183,17 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
     );
   }
 
-  final airport = '${via.name} havalimanı';
+  final airport = S.t('${via.name} havalimanı', '${via.name} airport');
   if (ground.legs.isEmpty) {
     steps.add(
       ItineraryStep(
         icon: Icons.alt_route_rounded,
-        mode: 'Tren / otobüs (tahmini)',
+        mode: S.t('Tren / otobüs (tahmini)', 'Train / bus (estimate)'),
         title: '$airport → $to',
         detail:
             '~${Formatters.duration(ground.durationMin)} · '
-            '${at(ground.departAt.wallClock)} civarı · sefer doğrulanamadı',
+            '${S.t('${at(ground.departAt.wallClock)} civarı', 'around ${at(ground.departAt.wallClock)}')} · '
+            '${S.t('sefer doğrulanamadı', 'departure not verified')}',
       ),
     );
     return steps;
@@ -192,11 +205,11 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
     steps.add(
       ItineraryStep(
         icon: Icons.directions_walk_rounded,
-        mode: 'Havalimanından istasyona',
+        mode: S.t('Havalimanından istasyona', 'Airport to station'),
         title: '$airport → ${access.stop}',
         detail:
-            '~$km km · yürüyerek ~${Formatters.duration(access.walkMin)} '
-            'ya da taksi',
+            '~$km km · ${S.t('yürüyerek', 'walk')} ~${Formatters.duration(access.walkMin)} '
+            '${S.t('ya da taksi', 'or taxi')}',
         travels: false,
       ),
     );
@@ -212,9 +225,9 @@ List<ItineraryStep> itinerarySteps(RouteOption o, String from, String to) {
       steps.add(
         ItineraryStep(
           icon: Icons.directions_walk_rounded,
-          mode: 'Yürüyüş',
+          mode: S.t('Yürüyüş', 'Walk'),
           title: prev == leg.from
-              ? '${leg.from} içinde'
+              ? S.t('${leg.from} içinde', 'within ${leg.from}')
               : '$prev → ${leg.from}',
           detail: '~${Formatters.duration(walk)}',
           travels: false,

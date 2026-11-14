@@ -41,29 +41,35 @@ void main() {
     String text,
     String option,
   ) async {
-    await tester.enterText(
-      find.descendant(
-        of: find.byKey(Key(fieldKey)),
-        matching: find.byType(TextField),
-      ),
-      text,
-    );
+    // Satıra dokununca tam ekran yer arama açılır.
+    await tester.tap(find.byKey(Key(fieldKey)));
+    final input = find.byKey(const Key('place-search-input'));
+    await pumpUntil(tester, input, timeout: const Duration(seconds: 5));
+    await tester.enterText(input, text);
     final tile = find.widgetWithText(ListTile, option);
     await pumpUntil(tester, tile, timeout: const Duration(seconds: 10));
     await tester.tap(tile.first);
-    await tester.pump(const Duration(milliseconds: 300));
+    await pumpUntil(
+      tester,
+      find.byType(SearchCard),
+      timeout: const Duration(seconds: 5),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
   }
 
   testWidgets(
     'İstanbul → Salzburg: ara, sahneyi izle, slaytları gez, forma dön',
     (tester) async {
       final deps = AppDependencies.create(AppConfig.fromEnvironment());
-      await tester.pumpWidget(LeylekApp(dependencies: deps));
+      await tester.pumpWidget(LeylekApp(language: 'tr', dependencies: deps));
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.byType(SearchCard), findsOneWidget);
 
       await pickPlace(tester, 'from-field', 'İstan', 'İstanbul');
       await pickPlace(tester, 'to-field', 'salz', 'Salzburg');
+      // Varış seçilince kart uzar: fiyatlı gün şeridi görünür.
+      expect(find.byKey(const Key('date-strip')), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('search-button')));
       await tester.tap(find.byKey(const Key('search-button')));
 
       await pumpUntil(tester, find.byType(FlightScene));

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import '../../domain/entities/search_result.dart';
 import 'peek_stork.dart';
@@ -89,13 +90,18 @@ class _ResultsCarouselState extends State<ResultsCarousel> {
           ),
         ),
         if (widget.result.warnings.contains(SearchWarning.fewerThanThree))
-          const Positioned(
+          Positioned(
             left: 16,
             right: 96,
             bottom: 12,
             child: SafeArea(
               top: false,
-              child: _Hint('Bu varış için üçten az seçenek bulundu.'),
+              child: _Hint(
+                S.t(
+                  'Bu varış için üçten az seçenek bulundu.',
+                  'Fewer than three options found for this destination.',
+                ),
+              ),
             ),
           ),
       ],
@@ -123,7 +129,7 @@ class _BackButton extends StatelessWidget {
       ),
       child: IconButton(
         key: const Key('back-to-search'),
-        tooltip: 'Aramaya dön',
+        tooltip: S.t('Aramaya dön', 'Back to search'),
         onPressed: onTap,
         icon: const Icon(Icons.arrow_back_rounded, color: LeylekColors.wingtip),
       ),
@@ -201,19 +207,28 @@ class _Empty extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Bu tarih için rota bulunamadı',
+          Text(
+            S.t(
+              'Bu tarih için rota bulunamadı',
+              'No routes found for this date',
+            ),
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Tarihi ya da yarıçapı değiştirip yeniden dene.',
+          Text(
+            S.t(
+              'Tarihi ya da yarıçapı değiştirip yeniden dene.',
+              'Change the date or radius and try again.',
+            ),
             style: TextStyle(color: LeylekColors.muted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          FilledButton(onPressed: onNewSearch, child: const Text('Yeni arama')),
+          FilledButton(
+            onPressed: onNewSearch,
+            child: Text(S.t('Yeni arama', 'New search')),
+          ),
         ],
       ),
     ),

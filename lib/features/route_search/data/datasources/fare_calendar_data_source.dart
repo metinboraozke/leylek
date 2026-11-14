@@ -1,4 +1,5 @@
 import '../../../../core/json/json_reader.dart';
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/network/json_api.dart';
 
 /// `/v1/calendar` yanıtının ham kaynağı.
@@ -15,7 +16,13 @@ class ApiFareCalendarDataSource implements FareCalendarDataSource {
   Future<Map<String, int>> month(String from, String to, String month) async {
     final json = await _api.getJson(
       '/v1/calendar',
-      query: {'from': from, 'to': to, 'month': month, 'currency': 'TRY'},
+      query: {
+        'from': from,
+        'to': to,
+        'month': month,
+        'currency': 'TRY',
+        'lang': S.lang,
+      },
     );
     return {
       for (final day in json.objList('days'))

@@ -1,6 +1,6 @@
 import { haversineKm } from '../../core/geo.js';
 import { normalize } from '../../core/text.js';
-import { DATA_COUNTRIES, TURKISH_CITY_NAMES } from '../regions.js';
+import { DATA_COUNTRIES, turkishCityName } from '../regions.js';
 import type { Airport, City } from '../types.js';
 
 /**
@@ -141,7 +141,7 @@ export function parseGeoNames(tsv: string): City[] {
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
 
     const englishName = f[1] ?? '';
-    const name = TURKISH_CITY_NAMES[`${englishName}|${country}`] ?? englishName;
+    const name = turkishCityName(englishName, country) ?? englishName;
     const keys = new Set<string>([normalize(name), normalize(englishName), normalize(f[2] ?? '')]);
     for (const alt of (f[3] ?? '').split(',')) {
       if (keys.size >= MAX_ALT_KEYS) break;

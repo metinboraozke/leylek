@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:leylek/app/dependencies.dart';
 import 'package:leylek/app/leylek_app.dart';
+import 'package:leylek/core/l10n/strings.dart';
 import 'package:leylek/features/places/data/datasources/sample_places_data_source.dart';
 import 'package:leylek/features/places/data/repositories/places_repository_impl.dart';
 import 'package:leylek/features/places/domain/usecases/suggest_places.dart';
@@ -89,7 +90,7 @@ void main() {
   ) async {
     phoneScreen(tester);
     await tester.pumpWidget(
-      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+      LeylekApp(language: 'tr', dependencies: sampleDeps(), timing: _fast),
     );
     await tester.pump();
 
@@ -119,12 +120,40 @@ void main() {
     );
   });
 
+  testWidgets('ayarlardan İngilizce seçilince arayüz İngilizceye döner', (
+    tester,
+  ) async {
+    phoneScreen(tester);
+    await tester.pumpWidget(
+      LeylekApp(language: 'tr', dependencies: sampleDeps(), timing: _fast),
+    );
+    await tester.pump();
+    expect(find.text('Rotaları ara'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('settings-button')));
+    await advance(tester, const Duration(milliseconds: 500));
+    expect(find.text('Ayarlar'), findsOneWidget);
+    expect(find.byKey(const Key('privacy-link')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('language-en')));
+    await advance(tester, const Duration(milliseconds: 300));
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Privacy policy'), findsOneWidget);
+
+    await tester.pageBack();
+    await advance(tester, const Duration(milliseconds: 500));
+    expect(find.text('Find routes'), findsOneWidget);
+    expect(find.text('Not just a flight,\na journey.'), findsOneWidget);
+    // Sonraki testler için dili geri al.
+    S.lang = 'tr';
+  });
+
   testWidgets('tam ekran yer aramada sonuçlar gruplanır, geri dönülebilir', (
     tester,
   ) async {
     phoneScreen(tester);
     await tester.pumpWidget(
-      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+      LeylekApp(language: 'tr', dependencies: sampleDeps(), timing: _fast),
     );
     await tester.pump();
     await tester.tap(find.byKey(const Key('to-field')));
@@ -147,6 +176,7 @@ void main() {
     phoneScreen(tester);
     await tester.pumpWidget(
       LeylekApp(
+        language: 'tr',
         dependencies: sampleDeps(),
         timing: _fast,
         today: DateTime(2026, 11, 10),
@@ -169,7 +199,7 @@ void main() {
   ) async {
     phoneScreen(tester);
     await tester.pumpWidget(
-      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+      LeylekApp(language: 'tr', dependencies: sampleDeps(), timing: _fast),
     );
     await searchSalzburg(tester);
     await advance(tester, const Duration(milliseconds: 2000));
@@ -198,7 +228,7 @@ void main() {
     (tester) async {
       phoneScreen(tester);
       await tester.pumpWidget(
-        LeylekApp(dependencies: sampleDeps(), timing: _fast),
+        LeylekApp(language: 'tr', dependencies: sampleDeps(), timing: _fast),
       );
       await searchSalzburg(tester);
 
@@ -243,7 +273,7 @@ void main() {
       expect(find.text('2 / 4'), findsOneWidget);
       expect(find.byKey(const Key('badge-recommended')), findsOneWidget);
 
-      // Biniş kartları: uçuş ve iki kara bacağı; "Rezervasyona git" ilgili
+      // Biniş kartları: uçuş ve iki kara bacağı; sağlayıcı düğmesi ilgili
       // kartın içinde (Pegasus uçuşu ve ÖBB treni, IVB otobüsünün bağlantısı yok).
       await tester.scrollUntilVisible(
         find.text('Pegasus'),
@@ -251,16 +281,34 @@ void main() {
         scrollable: find.byType(Scrollable).at(1),
       );
       expect(find.text('Pegasus'), findsOneWidget);
+      // Düğme doğrudan bilet vaat etmez, gidilen siteyi yazar.
+      await tester.scrollUntilVisible(
+        find.text('Sağlayıcının sitesine git'),
+        200,
+        scrollable: find.byType(Scrollable).at(1),
+      );
+      expect(find.text('Sağlayıcının sitesine git'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('ÖBB'),
         300,
         scrollable: find.byType(Scrollable).at(1),
       );
       expect(find.text('ÖBB'), findsOneWidget);
-      // Uçuşta rezervasyon; trende işletmecinin sitesi (rota taşımaz) ve
-      // kara yolunun tamamı için Haritalar.
-      expect(find.text('Rezervasyona git'), findsOneWidget);
-      expect(find.text('İşletmecinin sitesi'), findsOneWidget);
+      // Trende işletmecinin sitesi (rota ve tarih taşımaz).
+      expect(find.text('İşletmecinin sitesine git'), findsOneWidget);
+      // Transitous koşulu: kaynak sayfasına görünür bağlantı.
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('attribution')).last,
+        300,
+        scrollable: find.byType(Scrollable).at(1),
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('attribution')).last,
+          matching: find.text('Transitous'),
+        ),
+        findsOneWidget,
+      );
     },
   );
 
@@ -270,6 +318,7 @@ void main() {
       phoneScreen(tester);
       await tester.pumpWidget(
         LeylekApp(
+          language: 'tr',
           dependencies: sampleDeps(latency: const Duration(milliseconds: 2500)),
           timing: _fast,
         ),
@@ -288,7 +337,7 @@ void main() {
     (tester) async {
       phoneScreen(tester);
       await tester.pumpWidget(
-        LeylekApp(dependencies: sampleDeps(), timing: _fast),
+        LeylekApp(language: 'tr', dependencies: sampleDeps(), timing: _fast),
       );
       await searchSalzburg(tester);
       await advance(tester, const Duration(milliseconds: 2000));
@@ -303,7 +352,7 @@ void main() {
   testWidgets('sol üstteki geri düğmesi sonuçtan forma döner', (tester) async {
     phoneScreen(tester);
     await tester.pumpWidget(
-      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+      LeylekApp(language: 'tr', dependencies: sampleDeps(), timing: _fast),
     );
     await searchSalzburg(tester);
     await advance(tester, const Duration(milliseconds: 2000));
@@ -320,7 +369,7 @@ void main() {
   ) async {
     phoneScreen(tester);
     await tester.pumpWidget(
-      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+      LeylekApp(language: 'tr', dependencies: sampleDeps(), timing: _fast),
     );
     await searchSalzburg(tester);
     await advance(tester, const Duration(milliseconds: 2000));
@@ -342,7 +391,7 @@ void main() {
   ) async {
     phoneScreen(tester);
     await tester.pumpWidget(
-      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+      LeylekApp(language: 'tr', dependencies: sampleDeps(), timing: _fast),
     );
     await tester.pump();
 
@@ -375,7 +424,7 @@ void main() {
   ) async {
     phoneScreen(tester);
     await tester.pumpWidget(
-      LeylekApp(dependencies: sampleDeps(), timing: _fast),
+      LeylekApp(language: 'tr', dependencies: sampleDeps(), timing: _fast),
     );
     await pickPlace(tester, 'from-field', 'İstan', 'İstanbul');
     await tapSearch(tester);

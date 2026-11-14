@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/result/result.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import '../../../places/domain/entities/place.dart';
@@ -116,7 +117,7 @@ class _PlaceSearchPageState extends State<PlaceSearchPage> {
                 children: [
                   IconButton(
                     key: const Key('place-search-back'),
-                    tooltip: 'Geri',
+                    tooltip: S.t('Geri', 'Back'),
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(
                       Icons.arrow_back_rounded,
@@ -152,8 +153,11 @@ class _PlaceSearchPageState extends State<PlaceSearchPage> {
                   letterSpacing: -0.3,
                   color: LeylekColors.ink,
                 ),
-                decoration: const InputDecoration(
-                  hintText: 'Şehir, havalimanı ya da ülke',
+                decoration: InputDecoration(
+                  hintText: S.t(
+                    'Şehir, havalimanı ya da ülke',
+                    'City, airport or country',
+                  ),
                   hintStyle: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
@@ -178,12 +182,17 @@ class _PlaceSearchPageState extends State<PlaceSearchPage> {
 
   Widget _resultsList() {
     if (_searched && _results.isEmpty) {
-      return const _Hint('Bu adla bir yer bulamadık. Başka bir yazım dene.');
+      return _Hint(
+        S.t(
+          'Bu adla bir yer bulamadık. Başka bir yazım dene.',
+          'We couldn\'t find that place. Try another spelling.',
+        ),
+      );
     }
     final groups = [
-      ('Şehirler', PlaceKind.city),
-      ('Havalimanları', PlaceKind.airport),
-      ('Ülkeler', PlaceKind.country),
+      (S.t('Şehirler', 'Cities'), PlaceKind.city),
+      (S.t('Havalimanları', 'Airports'), PlaceKind.airport),
+      (S.t('Ülkeler', 'Countries'), PlaceKind.country),
     ];
     return ListView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -205,15 +214,19 @@ class _PlaceSearchPageState extends State<PlaceSearchPage> {
       for (final s in recent) ...[?s.toPlace, ?s.fromPlace],
     ];
     if (places.isEmpty) {
-      return const _Hint(
-        'Bir şehir, havalimanı ya da ülke adı yaz. "Ülke" seçersen '
-        'o ülkenin tüm havalimanlarına bakarız.',
+      return _Hint(
+        S.t(
+          'Bir şehir, havalimanı ya da ülke adı yaz. "Ülke" seçersen '
+              'o ülkenin tüm havalimanlarına bakarız.',
+          'Type a city, airport or country. Pick a country and we check '
+              'all of its airports.',
+        ),
       );
     }
     return ListView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       children: [
-        const _Section('Son aramadan'),
+        _Section(S.t('Son aramadan', 'From your last search')),
         for (final place in places)
           _PlaceTile(
             place: place,
@@ -255,8 +268,12 @@ class _PlaceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle = switch (place.kind) {
-      PlaceKind.country => 'Ülke · tüm havalimanları',
-      PlaceKind.airport => 'Havalimanı · ${place.countryName}',
+      PlaceKind.country => S.t(
+        'Ülke · tüm havalimanları',
+        'Country · all airports',
+      ),
+      PlaceKind.airport =>
+        '${S.t('Havalimanı', 'Airport')} · ${place.countryName}',
       PlaceKind.city => place.countryName,
     };
     return ListTile(

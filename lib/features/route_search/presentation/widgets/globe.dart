@@ -38,7 +38,8 @@ class LandShapes {
 }
 
 /// Ekranın altında yükselen dünya. Yalnızca üst kısmı görünür; [rotation]
-/// 0→1 ilerledikçe kıtalar soldan sağa kayar.
+/// 0→1 ilerledikçe kıtalar soldan sağa kayar. 1'i aşan değerler dönüşü
+/// sürdürür (uçuş sahnesinin ikinci, üçüncü turu).
 class GlobePainter extends CustomPainter {
   GlobePainter({
     required this.shapes,

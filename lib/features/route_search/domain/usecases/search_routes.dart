@@ -1,4 +1,5 @@
 import '../../../../core/error/failure.dart';
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/result/result.dart';
 import '../../../../core/text/normalize.dart';
 import '../../../../core/usecase/use_case.dart';
@@ -30,20 +31,20 @@ class SearchRoutes implements UseCase<SearchResult, SearchQuery> {
 
   ValidationFailure? validate(SearchQuery q) {
     if (q.from.trim().isEmpty) {
-      return const ValidationFailure(
-        'Nereden yola çıkacağını seç.',
+      return ValidationFailure(
+        S.t('Nereden yola çıkacağını seç.', 'Choose where you start.'),
         field: ValidationField.from,
       );
     }
     if (q.to.trim().isEmpty) {
-      return const ValidationFailure(
-        'Nereye gideceğini seç.',
+      return ValidationFailure(
+        S.t('Nereye gideceğini seç.', 'Choose where you are going.'),
         field: ValidationField.to,
       );
     }
     if (normalizeForSearch(q.from) == normalizeForSearch(q.to)) {
-      return const ValidationFailure(
-        'Kalkış ve varış aynı olamaz.',
+      return ValidationFailure(
+        S.t('Kalkış ve varış aynı olamaz.', 'From and to cannot be the same.'),
         field: ValidationField.to,
       );
     }
@@ -52,35 +53,47 @@ class SearchRoutes implements UseCase<SearchResult, SearchQuery> {
     final today = DateTime(now.year, now.month, now.day);
     final day = DateTime(q.date.year, q.date.month, q.date.day);
     if (day.isBefore(today)) {
-      return const ValidationFailure(
-        'Geçmiş bir tarih seçilemez.',
+      return ValidationFailure(
+        S.t('Geçmiş bir tarih seçilemez.', 'You cannot pick a past date.'),
         field: ValidationField.date,
       );
     }
     if (day.difference(today).inDays > SearchQuery.maxDaysAhead) {
-      return const ValidationFailure(
-        'En fazla ${SearchQuery.maxDaysAhead} gün sonrası aranabilir.',
+      return ValidationFailure(
+        S.t(
+          'En fazla ${SearchQuery.maxDaysAhead} gün sonrası aranabilir.',
+          'You can search up to ${SearchQuery.maxDaysAhead} days ahead.',
+        ),
         field: ValidationField.date,
       );
     }
 
     if (q.stopoverDays < 0 || q.stopoverDays > SearchQuery.maxStopoverDays) {
-      return const ValidationFailure(
-        'Konaklama 0–${SearchQuery.maxStopoverDays} gün olabilir.',
+      return ValidationFailure(
+        S.t(
+          'Konaklama 0–${SearchQuery.maxStopoverDays} gün olabilir.',
+          'A stopover can be 0–${SearchQuery.maxStopoverDays} days.',
+        ),
         field: ValidationField.stopover,
       );
     }
     if (q.radiusKm < SearchQuery.minRadiusKm ||
         q.radiusKm > SearchQuery.maxRadiusKm) {
-      return const ValidationFailure(
-        'Yarıçap ${SearchQuery.minRadiusKm}–${SearchQuery.maxRadiusKm} km arasında olmalı.',
+      return ValidationFailure(
+        S.t(
+          'Yarıçap ${SearchQuery.minRadiusKm}–${SearchQuery.maxRadiusKm} km arasında olmalı.',
+          'Radius must be ${SearchQuery.minRadiusKm}–${SearchQuery.maxRadiusKm} km.',
+        ),
         field: ValidationField.radius,
       );
     }
     if (q.maxGroundHours < SearchQuery.minGroundHours ||
         q.maxGroundHours > SearchQuery.maxGroundHoursLimit) {
-      return const ValidationFailure(
-        'Kara yolculuğu 1–8 saat arasında olmalı.',
+      return ValidationFailure(
+        S.t(
+          'Kara yolculuğu 1–8 saat arasında olmalı.',
+          'Ground travel must be 1–8 hours.',
+        ),
         field: ValidationField.maxGroundHours,
       );
     }

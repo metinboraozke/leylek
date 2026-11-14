@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/format/formatters.dart';
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import '../../domain/entities/recent_search.dart';
 import '../cubit/recent_searches_cubit.dart';
@@ -55,8 +56,8 @@ class _RecentTile extends StatelessWidget {
                 color: LeylekColors.muted,
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Son arama',
+              Text(
+                S.t('Son arama', 'Last search'),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,

@@ -262,7 +262,7 @@ class Stopover extends Equatable {
 /// ve işletmecilerin bilet bağlantıları orada).
 enum BookingKind { flight, ground, route }
 
-/// "Rezervasyona git" kartı: sağlayıcının kendi sitesi, ortaklık işaretsiz.
+/// Biniş kartındaki bağlantı: sağlayıcının sitesi, ortaklık işaretsiz.
 class BookingLink extends Equatable {
   const BookingLink({
     required this.kind,

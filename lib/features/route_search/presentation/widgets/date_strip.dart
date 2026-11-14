@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/format/formatters.dart';
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import '../../domain/entities/search_query.dart';
 import '../cubit/fare_calendar_cubit.dart';
@@ -110,7 +110,7 @@ class _DateStripState extends State<DateStrip> {
       initialDate: widget.date.isBefore(_today) ? _today : widget.date,
       firstDate: _today,
       lastDate: _today.add(const Duration(days: SearchQuery.maxDaysAhead)),
-      locale: const Locale('tr'),
+      locale: Locale(S.lang),
     );
     if (picked != null) widget.onPicked(picked);
   }
@@ -135,10 +135,10 @@ class _DateStripState extends State<DateStrip> {
       children: [
         Row(
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(left: 4),
               child: Text(
-                'Gidiş',
+                S.t('Gidiş', 'Departure'),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -160,7 +160,7 @@ class _DateStripState extends State<DateStrip> {
               dimension: 34,
               child: IconButton(
                 key: const Key('date-box'),
-                tooltip: 'Takvimden seç',
+                tooltip: S.t('Takvimden seç', 'Pick from calendar'),
                 padding: EdgeInsets.zero,
                 onPressed: _openCalendar,
                 icon: const Icon(
@@ -209,10 +209,13 @@ class _DateStripState extends State<DateStrip> {
           ),
         ),
         if (prices.prices.isNotEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(left: 4, top: 4),
             child: Text(
-              'Doğrudan uçuşun en ucuz fiyatı, ₺ · yeşil: ayın en ucuzu',
+              S.t(
+                'Doğrudan uçuşun en ucuz fiyatı, ₺ · yeşil: ayın en ucuzu',
+                'Cheapest direct flight, ₺ · green: cheapest of the month',
+              ),
               style: TextStyle(fontSize: 11, color: LeylekColors.muted),
             ),
           ),
@@ -236,8 +239,6 @@ class _DayChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  static final NumberFormat _number = NumberFormat.decimalPattern('tr_TR');
-
   @override
   Widget build(BuildContext context) {
     final fg = selected ? LeylekColors.feather : LeylekColors.ink;
@@ -252,7 +253,7 @@ class _DayChip extends StatelessWidget {
       selected: selected,
       label:
           '${Formatters.day(day)}'
-          '${price == null ? '' : ', ${_number.format(price)} lira'}',
+          '${price == null ? '' : ', ${Formatters.number(price!)} ${S.t('lira', 'lira')}'}',
       excludeSemantics: true,
       child: Material(
         color: selected ? LeylekColors.skyDeep : LeylekColors.field,
@@ -265,7 +266,7 @@ class _DayChip extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                DateFormat('EEE', 'tr').format(day),
+                Formatters.weekday(day),
                 style: TextStyle(fontSize: 11, color: soft),
               ),
               Text(
@@ -278,7 +279,7 @@ class _DayChip extends StatelessWidget {
                 ),
               ),
               Text(
-                price == null ? '–' : _number.format(price),
+                price == null ? '–' : Formatters.number(price!),
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: cheapest || selected

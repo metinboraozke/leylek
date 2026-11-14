@@ -1,5 +1,6 @@
 import { toOffsetIso } from '../core/time.js';
 import type { Place, PlaceIndex } from '../data/place-index.js';
+import { englishCityName, type Lang, localName } from '../data/regions.js';
 import { bookingLinks } from './booking.js';
 import type { Dropped, RankedCard, SearchQuery } from './types.js';
 
@@ -16,6 +17,18 @@ export const ATTRIBUTION = [
   { name: 'Uçuş fiyatları: Aviasales verisi, son 48 saatte görülen', url: null },
 ];
 
+const ATTRIBUTION_EN = [
+  { name: 'Transitous', url: 'https://transitous.org/sources/' },
+  { name: 'OpenStreetMap contributors', url: 'https://www.openstreetmap.org/copyright' },
+  { name: 'OurAirports', url: 'https://ourairports.com/data/' },
+  { name: 'GeoNames', url: 'https://www.geonames.org/' },
+  { name: 'Flight prices: Aviasales data, seen in the last 48 hours', url: null },
+];
+
+export function attributionFor(lang: Lang) {
+  return lang === 'en' ? ATTRIBUTION_EN : ATTRIBUTION;
+}
+
 export interface ResponseContext {
   query: SearchQuery;
   from: Place;
@@ -29,14 +42,29 @@ export interface ResponseContext {
   now: number;
 }
 
+function departureCity(ctx: ResponseContext, iata: string, lang: Lang): string | undefined {
+  const name = ctx.places.cityNameForIata(iata);
+  if (!name) return undefined;
+  if (lang === 'tr') return name;
+  // Kalkış şehirleri çoğunlukla Türkiye'de; tabloda yoksa ad aynen kalır.
+  const country = ctx.places.countryForIata(iata);
+  return country ? englishCityName(name, country) : name;
+}
+
 export function toResponse(ctx: ResponseContext) {
   const money = (eur: number) => Math.round(eur * ctx.rate);
+  const lang: Lang = ctx.query.lang ?? 'tr';
+  // Havalimanının şehri seçilen dilde ("Münih" / "Munich").
+  const airportCity = (a: RankedCard['airport']) => {
+    const city = ctx.places.cityForAirport(a);
+    return city ? localName(city, lang) : a.municipality;
+  };
   const recommended = ctx.cards.find((c) => c.badges.includes('RECOMMENDED'));
 
   return {
     query: {
-      from: ctx.from.name,
-      to: ctx.to.name,
+      from: localName(ctx.from, lang),
+      to: localName(ctx.to, lang),
       // Ülke seçildiyse uygulama her kartta inilen şehri gösterir.
       fromKind: ctx.from.kind,
       toKind: ctx.to.kind,
@@ -55,17 +83,17 @@ export function toResponse(ctx: ResponseContext) {
         c.kind === 'VIA'
           ? {
               iata: c.airport.iata,
-              name: ctx.places.cityForAirport(c.airport)?.name ?? c.airport.municipality,
+              name: airportCity(c.airport),
               country: c.airport.country,
               distanceKm: Math.round(c.distanceKm),
             }
           : undefined,
       // Kalkılan şehir ("Ankara"); kalkış ülke olunca kartın kalkışı.
-      departureCity: ctx.places.cityNameForIata(c.flight.originAirport) ?? undefined,
+      departureCity: departureCity(ctx, c.flight.originAirport, lang),
       // Doğrudan uçuşta inilen şehir ("Milano"); varış ülke olunca kartın varışı.
       arrivalCity:
         c.kind === 'DIRECT'
-          ? (ctx.places.cityForAirport(c.airport)?.name ?? c.airport.municipality)
+          ? airportCity(c.airport)
           : undefined,
       flight: {
         airport: c.kind === 'DIRECT' ? c.airport.iata : undefined,
@@ -114,7 +142,7 @@ export function toResponse(ctx: ResponseContext) {
       },
       stopover:
         c.stopoverDays > 0
-          ? { days: c.stopoverDays, city: ctx.places.cityForAirport(c.airport)?.name ?? c.airport.municipality }
+          ? { days: c.stopoverDays, city: airportCity(c.airport) }
           : undefined,
       score: Math.round(c.score * 100) / 100,
       flags: [...c.flags],
@@ -122,7 +150,7 @@ export function toResponse(ctx: ResponseContext) {
     })),
     dropped: ctx.dropped,
     warnings: ctx.warnings,
-    attribution: ATTRIBUTION,
+    attribution: attributionFor(lang),
     meta: { generatedAt: new Date(ctx.now).toISOString(), sample: false },
   };
 }

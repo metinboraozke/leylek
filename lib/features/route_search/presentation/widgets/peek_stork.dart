@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
 
 /// Ekranın alt köşesinden başını uzatan leylek.
@@ -99,7 +100,7 @@ class _PeekStorkState extends State<PeekStork> with TickerProviderStateMixin {
     if (onTap == null) return ExcludeSemantics(child: head);
     return Semantics(
       button: true,
-      label: 'Yeni arama',
+      label: S.t('Yeni arama', 'New search'),
       child: GestureDetector(onTap: onTap, child: head),
     );
   }

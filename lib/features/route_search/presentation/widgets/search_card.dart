@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import '../../domain/entities/search_query.dart';
 import '../cubit/search_cubit.dart';
@@ -62,7 +63,7 @@ class SearchCard extends StatelessWidget {
           _PlacesBox(
             from: PlaceField(
               key: const Key('from-field'),
-              label: 'Nereden',
+              label: S.t('Nereden', 'From'),
               marker: const _OriginMarker(),
               value: state.from,
               onSelected: form.selectFrom,
@@ -70,7 +71,7 @@ class SearchCard extends StatelessWidget {
             ),
             to: PlaceField(
               key: const Key('to-field'),
-              label: 'Nereye',
+              label: S.t('Nereye', 'To'),
               marker: const _DestinationMarker(),
               value: state.to,
               onSelected: form.selectTo,
@@ -135,10 +136,10 @@ class SearchCard extends StatelessWidget {
             onPressed: search is SearchInProgress
                 ? null
                 : () => context.read<SearchCubit>().search(state.toQuery()),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Rotaları ara'),
+                Text(S.t('Rotaları ara', 'Find routes')),
                 SizedBox(width: 14),
                 Icon(Icons.arrow_forward_rounded, size: 22),
               ],
@@ -265,7 +266,7 @@ class _SwapButton extends StatelessWidget {
     child: SizedBox.square(
       dimension: 44,
       child: IconButton(
-        tooltip: 'Kalkış ve varışı değiştir',
+        tooltip: S.t('Kalkış ve varışı değiştir', 'Swap from and to'),
         padding: EdgeInsets.zero,
         onPressed: onPressed,
         icon: const Icon(
@@ -339,12 +340,11 @@ class _StopoverBox extends StatelessWidget {
   final int days;
   final ValueChanged<int> onChanged;
 
-  static const _options = [
-    (0, 'Konaklamasız'),
-    (1, '1 gün kal'),
-    (2, '2 gün kal'),
-    (3, '3 gün kal'),
-  ];
+  static const _options = [0, 1, 2, 3];
+
+  static String _label(int days) => days == 0
+      ? S.t('Konaklamasız', 'No stopover')
+      : S.t('$days gün kal', '$days-day stopover');
 
   Future<void> _pick(BuildContext context) async {
     final picked = await showModalBottomSheet<int>(
@@ -360,10 +360,13 @@ class _StopoverBox extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(24, 0, 24, 6),
               child: Text(
-                'Aktarma şehrinde ara tatil',
+                S.t(
+                  'Aktarma şehrinde ara tatil',
+                  'Stopover in the transfer city',
+                ),
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -371,12 +374,12 @@ class _StopoverBox extends StatelessWidget {
                 ),
               ),
             ),
-            for (final (value, label) in _options)
+            for (final value in _options)
               ListTile(
                 key: Key('stopover-$value'),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 title: Text(
-                  label,
+                  _label(value),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: value == days
@@ -404,10 +407,8 @@ class _StopoverBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _ValueBox(
     key: const Key('stopover-box'),
-    label: 'Ara tatil',
-    value: _options
-        .firstWhere((o) => o.$1 == days, orElse: () => (days, '$days gün kal'))
-        .$2,
+    label: S.t('Ara tatil', 'Stopover'),
+    value: _label(days),
     onTap: () => _pick(context),
   );
 }
@@ -446,10 +447,15 @@ class _RadiusBox extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Bu mesafedeki havalimanlarına inip trenle ya da otobüsle '
-                  'devam eden rotalara da bakarız. Varış ülkesine göre '
-                  'kendiliğinden ayarlanır.',
+                Text(
+                  S.t(
+                    'Bu mesafedeki havalimanlarına inip trenle ya da otobüsle '
+                        'devam eden rotalara da bakarız. Varış ülkesine göre '
+                        'kendiliğinden ayarlanır.',
+                    'We also look at landing at airports within this distance '
+                        'and continuing by train or bus. Set automatically for '
+                        'the destination country.',
+                  ),
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.45,
@@ -467,7 +473,7 @@ class _RadiusBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _ValueBox(
     key: const Key('radius-box'),
-    label: 'Yakın havalimanları',
+    label: S.t('Yakın havalimanları', 'Nearby airports'),
     value: '$radiusKm km',
     onTap: () => _open(context),
   );
@@ -485,9 +491,9 @@ class _RadiusSlider extends StatelessWidget {
     children: [
       Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              'Varışa yakın havalimanları',
+              S.t('Varışa yakın havalimanları', 'Airports near destination'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

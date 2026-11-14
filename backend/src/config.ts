@@ -21,7 +21,10 @@ const schema = z.object({
   TRAVELPAYOUTS_BASE_URL: z.string().url().default('https://api.travelpayouts.com'),
   ECB_RATES_URL: z.string().url().default('https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml'),
   TRANSITOUS_PLAN_PER_MINUTE: z.coerce.number().int().positive().default(30),
-  TRANSITOUS_PLAN_PER_DAY: z.coerce.number().int().positive().default(3000),
+  // Transitous kullanım koşulu: günde 720'den fazla /plan isteği için önce
+  // haber verilmeli (transitous.org/api). Sınırın altında kalınır.
+  TRANSITOUS_PLAN_PER_DAY: z.coerce.number().int().positive().default(700),
+  TRANSITOUS_MIN_INTERVAL_MS: z.coerce.number().int().min(0).default(400),
 
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(20),
   // Öneriler her harfte istenir ve bellekten döner; aramadan ayrı ve geniş sayılır.
@@ -42,6 +45,7 @@ export interface Config {
   ecbRatesUrl: string;
   transitousPlanPerMinute: number;
   transitousPlanPerDay: number;
+  transitousMinIntervalMs: number;
   rateLimitPerMinute: number;
   placesRateLimitPerMinute: number;
   dataDir: string;
@@ -64,6 +68,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
     ecbRatesUrl: e.ECB_RATES_URL,
     transitousPlanPerMinute: e.TRANSITOUS_PLAN_PER_MINUTE,
     transitousPlanPerDay: e.TRANSITOUS_PLAN_PER_DAY,
+    transitousMinIntervalMs: e.TRANSITOUS_MIN_INTERVAL_MS,
     rateLimitPerMinute: e.RATE_LIMIT_PER_MINUTE,
     placesRateLimitPerMinute: e.PLACES_RATE_LIMIT_PER_MINUTE,
     dataDir: e.DATA_DIR,

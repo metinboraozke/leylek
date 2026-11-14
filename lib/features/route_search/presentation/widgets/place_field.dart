@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import '../../../places/domain/entities/place.dart';
 import '../cubit/search_form_cubit.dart';
@@ -45,7 +46,8 @@ class PlaceField extends StatelessWidget {
     final text = place?.name ?? value.text;
     return Semantics(
       button: true,
-      label: '$label: ${text.isEmpty ? 'seçilmedi' : text}',
+      label:
+          '$label: ${text.isEmpty ? S.t('seçilmedi', 'not selected') : text}',
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -77,8 +79,8 @@ class PlaceField extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text.rich(
                       text.isEmpty
-                          ? const TextSpan(
-                              text: 'Şehir ara',
+                          ? TextSpan(
+                              text: S.t('Şehir ara', 'Search a city'),
                               style: TextStyle(
                                 fontWeight: FontWeight.w500,
                                 color: LeylekColors.muted,

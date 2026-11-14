@@ -1,4 +1,5 @@
 import '../../../../core/json/json_reader.dart';
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/network/json_api.dart';
 import '../../domain/entities/search_query.dart';
 
@@ -23,7 +24,7 @@ class ApiRouteSearchDataSource implements RouteSearchDataSource {
       'stopoverDays': query.stopoverDays,
       'maxGroundHours': query.maxGroundHours,
       'currency': query.currency,
-      'lang': 'tr',
+      'lang': S.lang,
     },
   );
 }

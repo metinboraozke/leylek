@@ -1,0 +1,54 @@
+# Canlı sunucu izleme.
+#
+# 15 dakikada bir Railway'deki backend'i yoklar. Sunucu cevap vermezse,
+# veri yüklenmemişse ya da yer önerisi boş dönerse iş kırmızıya düşer ve
+# GitHub depo sahibine e-posta atar (Ayarlar → Notifications → Actions).
+# Transitous sigortası açıksa yalnızca uyarı yazar: 429 sonrası birkaç
+# dakika açık kalması normaldir, kendiliğinden kapanır.
+#
+# Arama yapmaz: uçuş ve Transitous kotasını harcamaz.
+name: Canlı sunucu izleme
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BASE: https://leylek-production.up.railway.app
+    steps:
+      - name: /health
+        run: |
+          set -euo pipefail
+          body=$(curl -fsS --retry 3 --retry-delay 20 --max-time 20 "$BASE/health")
+          echo "$body"
+          status=$(echo "$body" | jq -r '.status')
+          if [ "$status" != "ok" ]; then
+            echo "::error::Sunucu hazır değil (status=$status)"
+            exit 1
+          fi
+          circuit=$(echo "$body" | jq -r '.transitous.circuit // "unknown"')
+          day=$(echo "$body" | jq -r '.transitous.budgetLeft.day // "?"')
+          if [ "$circuit" = "open" ]; then
+            echo "::warning::Transitous sigortası açık; kara yolları şu an tahminle dönüyor."
+          fi
+          if [ "$day" != "?" ] && [ "$day" -lt 50 ]; then
+            echo "::warning::Transitous günlük bütçesi bitmek üzere (kalan $day)."
+          fi
+
+      - name: Yer önerisi
+        run: |
+          set -euo pipefail
+          count=$(curl -fsS --retry 3 --retry-delay 20 --max-time 20 "$BASE/v1/places?q=salzburg" | jq '.places | length')
+          if [ "$count" -lt 1 ]; then
+            echo "::error::Yer önerisi boş döndü"
+            exit 1
+          fi
+          echo "Öneri sayısı: $count"

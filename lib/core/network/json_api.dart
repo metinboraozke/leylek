@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../json/json_reader.dart';
+import '../l10n/strings.dart';
 
 /// Backend'e GET isteği atıp JSON nesnesi döndüren en küçük arayüz.
 ///
@@ -80,13 +81,20 @@ class DioJsonApi implements JsonApi {
     if (body is Map<String, dynamic> && body['error'] is Map<String, dynamic>) {
       final err = body.obj('error');
       return ApiException(
-        err.strOrNull('message') ?? 'Sunucu isteği tamamlayamadı.',
+        err.strOrNull('message') ??
+            S.t(
+              'Sunucu isteği tamamlayamadı.',
+              "The server couldn't complete the request.",
+            ),
         code: err.strOrNull('code'),
         statusCode: response.statusCode,
       );
     }
     return ApiException(
-      'Sunucu isteği tamamlayamadı.',
+      S.t(
+        'Sunucu isteği tamamlayamadı.',
+        "The server couldn't complete the request.",
+      ),
       statusCode: response.statusCode,
     );
   }

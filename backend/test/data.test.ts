@@ -1,3 +1,4 @@
+import { turkishCityName } from '../src/data/regions.js';
 import { describe, expect, it } from 'vitest';
 import { parseCityCodes, parseCsv, parseGeoNames, parseOurAirports } from '../src/data/import/parse.js';
 import { findCandidates } from '../src/search/candidates.js';
@@ -59,6 +60,13 @@ describe('yer dizini', () => {
     expect(ix.places.search('munchen')[0]?.name).toBe('Münih');
     expect(ix.places.search('salz')[0]?.name).toBe('Salzburg');
     expect(ix.places.search('istanbul')[0]?.name).toBe('İstanbul');
+  });
+
+  it('Türkçe ad, kaynaktaki aksanlı yazımla da eşleşir', () => {
+    expect(turkishCityName('Zürich', 'CH')).toBe('Zürih');
+    expect(turkishCityName('Kraków', 'PL')).toBe('Krakov');
+    expect(turkishCityName('Thessaloníki', 'GR')).toBe('Selanik');
+    expect(turkishCityName('Zürich', 'DE')).toBeNull();
   });
 
   it('ülkeyi Türkçe ve İngilizce adla, şehirlerin önünde önerir', () => {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
+import '../../../settings/settings_page.dart';
 import '../cubit/recent_searches_cubit.dart';
 import '../cubit/search_cubit.dart';
 import '../cubit/search_form_cubit.dart';
@@ -242,21 +244,45 @@ class _Headline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'leylek',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.2,
-            color: LeylekColors.skyDeep,
-          ),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'leylek',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                  color: LeylekColors.skyDeep,
+                ),
+              ),
+            ),
+            // Ayarlar ve Hakkında: dil, gizlilik, kaynaklar.
+            SizedBox.square(
+              dimension: 36,
+              child: IconButton(
+                key: const Key('settings-button'),
+                tooltip: S.t('Ayarlar', 'Settings'),
+                padding: EdgeInsets.zero,
+                onPressed: () => SettingsPage.open(context),
+                icon: const Icon(
+                  Icons.tune_rounded,
+                  size: 22,
+                  color: LeylekColors.skyDeep,
+                ),
+              ),
+            ),
+          ],
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
-          'Bir uçuş yerine,\nbir yolculuk.',
+          S.t(
+            'Bir uçuş yerine,\nbir yolculuk.',
+            'Not just a flight,\na journey.',
+          ),
           style: TextStyle(
             fontSize: 38,
             fontWeight: FontWeight.w800,
@@ -267,7 +293,10 @@ class _Headline extends StatelessWidget {
         ),
         SizedBox(height: 12),
         Text(
-          'Aktarma şehirlerinde ara tatillerle\nrotanı birlikte kuralım.',
+          S.t(
+            'Aktarma şehirlerinde ara tatillerle\nrotanı birlikte kuralım.',
+            "Let's build your route together,\nwith stopovers along the way.",
+          ),
           style: TextStyle(
             fontSize: 16,
             height: 1.45,

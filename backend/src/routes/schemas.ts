@@ -37,6 +37,7 @@ export const calendarQuerySchema = z.object({
   to: z.string().trim().min(2).max(80),
   month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Ay YYYY-AA biçiminde olmalı.'),
   currency: z.enum(['TRY', 'EUR']).default('TRY'),
+  lang: z.enum(['tr', 'en']).default('tr'),
 });
 
 export const placesQuerySchema = z.object({

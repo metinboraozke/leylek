@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../l10n/strings.dart';
 
 /// Kullanıcıya gösterilebilecek hata.
 ///
@@ -17,10 +18,17 @@ sealed class Failure extends Equatable {
 
 /// Bağlantı yok ya da istek zaman aşımına uğradı. Yeniden denemek mantıklı.
 final class NetworkFailure extends Failure {
-  const NetworkFailure([
-    super.message =
+  const NetworkFailure([this._custom]) : super('');
+
+  final String? _custom;
+
+  @override
+  String get message =>
+      _custom ??
+      S.t(
         'Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.',
-  ]);
+        "Couldn't connect. Check your internet and try again.",
+      );
 }
 
 /// Sunucu isteği anladı ama yanıt veremedi (4xx/5xx).
@@ -49,7 +57,15 @@ enum ValidationField { from, to, date, radius, maxGroundHours, stopover }
 
 /// Beklenmeyen durum: bozuk yanıt biçimi gibi. Kullanıcıya genel mesaj.
 final class UnexpectedFailure extends Failure {
-  const UnexpectedFailure([
-    super.message = 'Beklenmeyen bir sorun oldu. Biraz sonra tekrar dene.',
-  ]);
+  const UnexpectedFailure([this._custom]) : super('');
+
+  final String? _custom;
+
+  @override
+  String get message =>
+      _custom ??
+      S.t(
+        'Beklenmeyen bir sorun oldu. Biraz sonra tekrar dene.',
+        'Something went wrong. Try again in a moment.',
+      );
 }

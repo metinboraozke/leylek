@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/format/formatters.dart';
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/leylek_colors.dart';
 import '../../domain/entities/route_option.dart';
 import '../labels.dart';
@@ -11,7 +12,7 @@ import 'booking_card.dart';
 /// PAX'teki `BoardingPassCard` ile aynı yapı: beyaz kart, yumuşak gölge;
 /// üstte etiket hapı ve tarih, iki uçta büyük kodlar ve aradaki süre
 /// çizgisi; çentikli kesikli ayırıcı; altta işletmeci ve fiyat; en altta
-/// kartın içinde "Rezervasyona git" düğmesi.
+/// kartın içinde gidilen siteyi yazan düğme (bkz. [bookingButtonLabel]).
 class BoardingPass extends StatelessWidget {
   const BoardingPass({
     required this.label,
@@ -45,20 +46,25 @@ class BoardingPass extends StatelessWidget {
     return BoardingPass(
       fromCity: fromCity,
       toCity: toCity,
-      label: 'UÇUŞ',
+      label: S.t('UÇUŞ', 'FLIGHT'),
       date: date,
       from: f.fromIata ?? '—',
       to: f.toIata ?? f.airportIata ?? '—',
       fromTime: Formatters.clock(f.departAt.wallClock),
       toTime: Formatters.clock(f.arriveAt.wallClock),
       duration: Formatters.duration(f.duration.inMinutes),
-      detail: f.transfers == 0 ? 'Aktarmasız' : '${f.transfers} aktarma',
+      detail: f.transfers == 0
+          ? S.t('Aktarmasız', 'Non-stop')
+          : S.t('${f.transfers} aktarma', '${f.transfers} stop'),
       icon: Icons.flight_rounded,
       provider: booking?.provider ?? f.airline,
       providerDetail: [
         '${f.airline} ${f.flightNumber ?? ''}'.trim(),
         if (f.priceSeenHoursAgo != null)
-          'fiyat ${_age(f.priceSeenHoursAgo!)} görüldü',
+          S.t(
+            'fiyat ${_age(f.priceSeenHoursAgo!)} görüldü',
+            'price seen ${_age(f.priceSeenHoursAgo!)}',
+          ),
       ].join(' • '),
       price: Formatters.money(f.price.amount, f.price.currency),
       booking: booking,
@@ -106,20 +112,23 @@ class BoardingPass extends StatelessWidget {
     String to,
   ) {
     return BoardingPass(
-      label: 'KARA YOLU · TAHMİNİ',
+      label: S.t('KARA YOLU · TAHMİNİ', 'GROUND · ESTIMATE'),
       date: date,
       from: from,
       to: to,
       fromTime: '~${Formatters.clock(g.departAt.wallClock)}',
       toTime: '~${Formatters.clock(g.arriveAt.wallClock)}',
       duration: '~${Formatters.duration(g.durationMin)}',
-      detail: 'Tren / otobüs',
+      detail: S.t('Tren / otobüs', 'Train / bus'),
       icon: Icons.alt_route_rounded,
-      provider: 'Sefer bilgisi doğrulanamadı',
+      provider: S.t('Sefer bilgisi doğrulanamadı', 'Departure not verified'),
       price: '~${Formatters.money(g.fare.amount, g.fare.currency)}',
-      note:
-          'Süre ve fiyat mesafeden tahmin edildi; yola çıkmadan önce sefer '
-          'saatlerini kontrol et.',
+      note: S.t(
+        'Süre ve fiyat mesafeden tahmin edildi; yola çıkmadan önce sefer '
+            'saatlerini kontrol et.',
+        'Time and price are estimated from distance; check the timetable '
+            'before you go.',
+      ),
       compactEndpoints: true,
     );
   }
@@ -150,8 +159,9 @@ class BoardingPass extends StatelessWidget {
   final String? fromCity;
   final String? toCity;
 
-  static String _age(int hours) =>
-      hours < 24 ? '$hours saat önce' : '${hours ~/ 24} gün önce';
+  static String _age(int hours) => hours < 24
+      ? S.t('$hours saat önce', '$hours h ago')
+      : S.t('${hours ~/ 24} gün önce', '${hours ~/ 24} days ago');
 
   @override
   Widget build(BuildContext context) {
@@ -282,13 +292,9 @@ class BoardingPass extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: () => openBookingLink(booking!.url),
                   icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                  // İşletmeci bağlantısı yalnızca sitenin ana sayfası; rota
-                  // ve tarih taşımaz, dürüstçe öyle yazılır.
-                  label: Text(
-                    booking!.kind == BookingKind.ground
-                        ? 'İşletmecinin sitesi'
-                        : 'Rezervasyona git',
-                  ),
+                  // Hiçbir bağlantı doğrudan bilet kesmez; düğme gidilen
+                  // siteyi söyler ([bookingButtonLabel]).
+                  label: Text(bookingButtonLabel(booking!)),
                 ),
               ),
             ),
@@ -296,6 +302,28 @@ class BoardingPass extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Biniş kartındaki düğme. Leylek bilet satmaz, bağlantılar da bileti
+/// doğrudan kesmez: uçuşta o günün Google Flights araması, trende
+/// işletmecinin ana sayfası açılır. Düğme bu yüzden "Rezervasyona git"
+/// değil, gidilen siteyi yazar.
+String bookingButtonLabel(BookingLink link) {
+  final host = link.url.host;
+  if (host.endsWith('google.com') && link.url.path.startsWith('/travel')) {
+    return S.t("Google Flights'a git", 'Open Google Flights');
+  }
+  return switch (link.kind) {
+    BookingKind.ground => S.t(
+      'İşletmecinin sitesine git',
+      'Open operator website',
+    ),
+    BookingKind.route => S.t("Google Haritalar'a git", 'Open Google Maps'),
+    BookingKind.flight => S.t(
+      'Sağlayıcının sitesine git',
+      'Open provider website',
+    ),
+  };
 }
 
 IconData modeIcon(TransitMode mode) => switch (mode) {
@@ -560,8 +588,11 @@ class RouteLinkButton extends StatelessWidget {
       ),
       onPressed: () => openBookingLink(link.url, external: true),
       icon: const Icon(Icons.map_outlined, size: 20),
-      label: const Text(
-        'Sefer saatleri ve biletler · Haritalar',
+      label: Text(
+        S.t(
+          "Google Haritalar'a git · sefer saatleri",
+          'Open Google Maps · timetables',
+        ),
         style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
       ),
     ),
@@ -605,7 +636,10 @@ class StayStrip extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${Formatters.locative(city)} $days gün kal',
+                  S.t(
+                    '${Formatters.locative(city)} $days gün kal',
+                    'Stay $days ${days == 1 ? 'day' : 'days'} in $city',
+                  ),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -621,8 +655,11 @@ class StayStrip extends StatelessWidget {
                       color: LeylekColors.wingtip,
                     ),
                   ),
-                const Text(
-                  'Havalimanından şehre ulaşım ve konaklama fiyata dahil değil.',
+                Text(
+                  S.t(
+                    'Havalimanından şehre ulaşım ve konaklama fiyata dahil değil.',
+                    'Airport transfer and accommodation are not included.',
+                  ),
                   style: TextStyle(fontSize: 12, color: LeylekColors.muted),
                 ),
               ],

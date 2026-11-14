@@ -1,7 +1,11 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../core/l10n/language_cubit.dart';
+import '../core/l10n/strings.dart';
 import '../core/theme/leylek_theme.dart';
 import '../features/places/domain/usecases/suggest_places.dart';
 import '../features/route_search/data/repositories/recent_searches_repository_impl.dart';
@@ -20,6 +24,8 @@ class LeylekApp extends StatelessWidget {
     this.today,
     this.timing,
     this.recentSearches,
+    this.language,
+    this.languageStore,
     super.key,
   });
 
@@ -34,6 +40,12 @@ class LeylekApp extends StatelessWidget {
   /// Son aramaların deposu; verilmezse yalnızca bellekte tutulur.
   final RecentSearchesRepository? recentSearches;
 
+  /// İlk dil; verilmezse cihaz dili. Kayıtlı bir seçim varsa o geçerli.
+  final String? language;
+
+  /// Dil seçiminin kaydı; verilmezse yalnızca bellekte tutulur.
+  final LanguageStore? languageStore;
+
   @override
   Widget build(BuildContext context) {
     final now = today ?? DateTime.now();
@@ -41,6 +53,14 @@ class LeylekApp extends StatelessWidget {
       value: dependencies.suggestPlaces,
       child: MultiBlocProvider(
         providers: [
+          BlocProvider(
+            create: (_) => LanguageCubit(
+              languageStore ?? MemoryLanguageStore(),
+              initial:
+                  language ??
+                  S.fromDevice(PlatformDispatcher.instance.locale.languageCode),
+            ),
+          ),
           BlocProvider(
             // Varsayılan tarih bir hafta sonrası: bugüne uçuş fiyatı
             // verisi çoğu zaman yok, bir hafta sonrası daha anlamlı.
@@ -58,16 +78,24 @@ class LeylekApp extends StatelessWidget {
             ),
           ),
         ],
-        child: MaterialApp(
-          title: 'Leylek',
-          debugShowCheckedModeBanner: false,
-          theme: LeylekTheme.light(),
-          locale: const Locale('tr'),
-          supportedLocales: const [Locale('tr'), Locale('en')],
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          home: timing == null
-              ? const SearchPage()
-              : SearchMotion(timing: timing!, child: const SearchPage()),
+        child: BlocBuilder<LanguageCubit, String>(
+          builder: (context, lang) => MaterialApp(
+            title: 'Leylek',
+            debugShowCheckedModeBanner: false,
+            theme: LeylekTheme.light(),
+            locale: Locale(lang),
+            supportedLocales: const [Locale('tr'), Locale('en')],
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
+            // Dil değişince ekran baştan kurulur: metinler statik okunduğu
+            // için (S.t) sabit widget'lar da yeni dille çizilsin. Form ve
+            // son aramalar cubit'lerde, kaybolmaz.
+            home: KeyedSubtree(
+              key: ValueKey(lang),
+              child: timing == null
+                  ? const SearchPage()
+                  : SearchMotion(timing: timing!, child: const SearchPage()),
+            ),
+          ),
         ),
       ),
     );
