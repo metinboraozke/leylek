@@ -295,7 +295,7 @@ void main() {
       );
       expect(find.text('ÖBB'), findsOneWidget);
       // Trende işletmecinin sitesi (rota ve tarih taşımaz).
-      expect(find.text('İşletmecinin sitesine git'), findsOneWidget);
+      expect(find.text('İlgili siteye git'), findsOneWidget);
       // Transitous koşulu: kaynak sayfasına görünür bağlantı.
       await tester.scrollUntilVisible(
         find.byKey(const Key('attribution')).last,

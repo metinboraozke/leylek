@@ -314,10 +314,7 @@ String bookingButtonLabel(BookingLink link) {
     return S.t("Google Flights'a git", 'Open Google Flights');
   }
   return switch (link.kind) {
-    BookingKind.ground => S.t(
-      'İşletmecinin sitesine git',
-      'Open operator website',
-    ),
+    BookingKind.ground => S.t('İlgili siteye git', 'Go to the site'),
     BookingKind.route => S.t("Google Haritalar'a git", 'Open Google Maps'),
     BookingKind.flight => S.t(
       'Sağlayıcının sitesine git',

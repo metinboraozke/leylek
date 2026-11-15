@@ -26,7 +26,7 @@ void main() {
     );
     expect(
       bookingButtonLabel(_link(BookingKind.ground, 'https://www.oebb.at/')),
-      'İşletmecinin sitesine git',
+      'İlgili siteye git',
     );
     expect(
       bookingButtonLabel(
